@@ -33,6 +33,11 @@ export function configureApiClient(next: ApiClientHandlers) {
   refreshInFlight = null
 }
 
+// 토큰을 다시 받아도 복구할 수 없는 인증 실패 (refresh 만료·폐기, Bearer 누락·위조)
+function isAuthFailure(error: ApiError): boolean {
+  return error.code === 'REFRESH_INVALID' || error.code === 'UNAUTHORIZED'
+}
+
 // 동시에 여러 요청이 TOKEN_EXPIRED를 받아도 refresh는 한 번만 보낸다.
 function refreshOnce(): Promise<string | null> {
   if (!refreshInFlight) {
@@ -102,14 +107,14 @@ export async function apiRequest<T = void>(
       // 재시도는 한 번만 한다. 또 401이면 그대로 에러로 올린다.
       response = await send(path, options, token)
     } else {
-      if (error.code === 'REFRESH_INVALID') handlers.onAuthFailure()
+      if (isAuthFailure(error)) handlers.onAuthFailure()
       throw error
     }
   }
 
   if (!response.ok) {
     const error = await toApiError(response)
-    if (error.code === 'REFRESH_INVALID') handlers.onAuthFailure()
+    if (isAuthFailure(error)) handlers.onAuthFailure()
     throw error
   }
 

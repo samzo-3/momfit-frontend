@@ -154,6 +154,17 @@ describe('에러 처리', () => {
     expect(handlers.refreshAccessToken).not.toHaveBeenCalled()
   })
 
+  it('UNAUTHORIZED를 받으면 refresh 없이 onAuthFailure를 호출한다', async () => {
+    const handlers = setup()
+    fetchMock.mockResolvedValueOnce(errorResponse(401, 'UNAUTHORIZED'))
+
+    await expect(apiRequest('/users/me')).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    })
+    expect(handlers.onAuthFailure).toHaveBeenCalledTimes(1)
+    expect(handlers.refreshAccessToken).not.toHaveBeenCalled()
+  })
+
   it('INVALID_CREDENTIALS는 refresh 없이 그대로 에러로 올린다', async () => {
     const handlers = setup()
     fetchMock.mockResolvedValueOnce(errorResponse(401, 'INVALID_CREDENTIALS'))
