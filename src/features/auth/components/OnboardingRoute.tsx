@@ -8,7 +8,7 @@ function OnboardingRoute() {
 
   if (status === 'initializing') return <LoadingScreen />
   if (!user) return <Navigate to="/login" replace />
-  if (user.onboardingCompleted) return <Navigate to="/" replace />
+  if (user.onboardingCompleted) return <Navigate to="/home" replace />
   return <Outlet />
 }
 

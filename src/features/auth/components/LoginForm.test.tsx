@@ -39,7 +39,7 @@ afterEach(() => {
 })
 
 describe('로그인 화면', () => {
-  it('로그인에 성공하면 세션을 시작하고 홈으로 이동한다', async () => {
+  it('로그인에 성공하면 세션을 시작하고 /home으로 이동한다', async () => {
     mockApi(fetchMock, {
       'POST /api/auth/login': () => jsonResponse(200, tokenBody),
       'GET /api/users/me': () => jsonResponse(200, userBody),
@@ -48,7 +48,7 @@ describe('로그인 화면', () => {
 
     await fillAndSubmit()
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/home'))
     expect(useAuthStore.getState().status).toBe('authenticated')
     expect(useAuthStore.getState().accessToken).toBe('access-1')
     expect(requestsTo(fetchMock, 'POST /api/auth/login')[0][1]?.body).toBe(
@@ -61,11 +61,11 @@ describe('로그인 화면', () => {
       'POST /api/auth/login': () => jsonResponse(200, tokenBody),
       'GET /api/users/me': () => jsonResponse(200, userBody),
     })
-    const router = renderApp('/login', { from: { pathname: '/' } })
+    const router = renderApp('/login', { from: { pathname: '/home' } })
 
     await fillAndSubmit()
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/home'))
   })
 
   it('온보딩 전 사용자는 로그인 후 /onboarding으로 이동한다', async () => {

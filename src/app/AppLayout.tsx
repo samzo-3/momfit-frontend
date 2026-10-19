@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import SiteFooter from './SiteFooter'
 import SiteHeader from './SiteHeader'
 
 function AppLayout() {
@@ -8,6 +9,7 @@ function AppLayout() {
       <div className="flex-1 bg-surface">
         <Outlet />
       </div>
+      <SiteFooter />
     </div>
   )
 }

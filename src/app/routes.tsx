@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router-dom'
 import { OnboardingRoute, PublicOnlyRoute, RequireAuth } from '../features/auth'
 import AppLayout from './AppLayout'
 import HomePage from '../pages/HomePage'
+import LandingPage from '../pages/LandingPage'
 import LoginPage from '../pages/LoginPage'
 import NotFoundPage from '../pages/NotFoundPage'
 import OnboardingPage from '../pages/OnboardingPage'
@@ -12,8 +13,10 @@ export const routes: RouteObject[] = [
   {
     element: <AppLayout />,
     children: [
+      // 누구나 볼 수 있는 첫 화면
+      { path: '/', element: <LandingPage /> },
       {
-        // 로그인하지 않은 사용자용. 로그인한 사용자는 /로 보낸다.
+        // 로그인하지 않은 사용자용. 로그인한 사용자는 /home으로 보낸다.
         element: <PublicOnlyRoute />,
         children: [
           { path: '/login', element: <LoginPage /> },
@@ -29,7 +32,7 @@ export const routes: RouteObject[] = [
       {
         // 로그인한 사용자만. 이후 보호 경로는 여기에 추가한다.
         element: <RequireAuth />,
-        children: [{ path: '/', element: <HomePage /> }],
+        children: [{ path: '/home', element: <HomePage /> }],
       },
       { path: '*', element: <NotFoundPage /> },
     ],

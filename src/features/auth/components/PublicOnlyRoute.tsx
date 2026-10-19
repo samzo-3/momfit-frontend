@@ -16,7 +16,7 @@ function PublicOnlyRoute() {
   if (user) {
     if (!user.onboardingCompleted) return <Navigate to="/onboarding" replace />
     const from = (location.state as RedirectState | null)?.from?.pathname
-    return <Navigate to={from ?? '/'} replace />
+    return <Navigate to={from ?? '/home'} replace />
   }
   return <Outlet />
 }

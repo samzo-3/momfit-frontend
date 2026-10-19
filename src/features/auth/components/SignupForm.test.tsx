@@ -91,14 +91,14 @@ afterEach(() => {
 })
 
 describe('회원가입 화면', () => {
-  it('모든 단계를 마치면 가입하고 로그인 상태로 홈으로 이동한다', async () => {
+  it('모든 단계를 마치면 가입하고 로그인 상태로 /home으로 이동한다', async () => {
     mockApi(fetchMock, defaultHandlers())
     const router = renderApp('/signup')
 
     const user = await fillSignup()
     await user.click(button('가입하기'))
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/home'))
     expect(useAuthStore.getState().status).toBe('authenticated')
     const [, init] = requestsTo(fetchMock, 'POST /api/auth/signup')[0]
     expect(JSON.parse(String(init?.body))).toEqual({
