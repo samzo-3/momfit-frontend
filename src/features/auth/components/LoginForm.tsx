@@ -39,7 +39,6 @@ function LoginForm({ notice, providerError }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       {notice && <Notice kind="success">{notice}</Notice>}
-      <SocialLoginSection />
       <TextField
         label="아이디"
         autoComplete="username"
@@ -58,6 +57,7 @@ function LoginForm({ notice, providerError }: LoginFormProps) {
       <Button type="submit" fullWidth disabled={login.isPending}>
         {login.isPending ? '로그인 중...' : '로그인'}
       </Button>
+      <SocialLoginSection />
       <div className="flex justify-between text-sm">
         <TextLink to="/signup">회원가입</TextLink>
         <TextLink to="/password/reset">비밀번호 찾기</TextLink>

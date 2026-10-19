@@ -33,6 +33,38 @@ describe('카카오 로그인 버튼', () => {
     expect(screen.getByText('또는')).toBeInTheDocument()
     expect(screen.getByLabelText('아이디')).toBeInTheDocument()
   })
+
+  it.each([
+    ['/login', '로그인'],
+    ['/signup', '가입하기'],
+  ])(
+    '%s에서는 주요 제출 버튼 아래에 구분선과 카카오 버튼이 순서대로 온다',
+    (path, submitName) => {
+      renderApp(path)
+
+      const submit = screen.getByRole('button', { name: submitName })
+      const divider = screen.getByText('또는')
+      const kakao = screen.getByRole('link', { name: '카카오로 시작하기' })
+      const follows = (a: Node, b: Node) =>
+        Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+      expect(follows(submit, divider)).toBe(true)
+      expect(follows(divider, kakao)).toBe(true)
+    },
+  )
+
+  it('로그인 화면에서는 카카오 버튼이 회원가입·비밀번호 찾기 링크보다 위에 있다', () => {
+    renderApp('/login')
+
+    const kakao = screen.getByRole('link', { name: '카카오로 시작하기' })
+    const signup = screen.getByRole('link', { name: '회원가입' })
+    expect(
+      Boolean(
+        kakao.compareDocumentPosition(signup) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true)
+  })
 })
 
 describe('카카오 로그인 실패 안내', () => {

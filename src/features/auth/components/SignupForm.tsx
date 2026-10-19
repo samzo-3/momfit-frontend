@@ -158,7 +158,6 @@ function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-      <SocialLoginSection />
       <div className="flex flex-col gap-2">
         <TextField
           label="아이디"
@@ -269,6 +268,7 @@ function SignupForm() {
       <Button type="submit" fullWidth disabled={signup.isPending}>
         {signup.isPending ? '가입 중...' : '가입하기'}
       </Button>
+      <SocialLoginSection />
       <p className="text-center text-sm text-ink-secondary">
         이미 계정이 있나요? <TextLink to="/login">로그인</TextLink>
       </p>
