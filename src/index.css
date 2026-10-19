@@ -1,1 +1,56 @@
 @import 'tailwindcss';
+
+/* 디자인 토큰. 레퍼런스: apple.com/kr 의 절제된 색·알약형 버튼·넉넉한 여백 (자산은 사용하지 않음) */
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro KR', 'SF Pro Text',
+    'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Helvetica Neue',
+    Arial, sans-serif;
+
+  --color-ink: #1d1d1f;
+  --color-ink-secondary: #6e6e73;
+  --color-surface: #f5f5f7;
+  --color-line: #d2d2d7;
+  --color-accent: #0071e3;
+  --color-accent-hover: #0077ed;
+  --color-link: #0066cc;
+  --color-danger: #d70015;
+  --color-success: #248a3d;
+
+  /* 화면이 바뀔 때 새 화면이 살짝 올라오며 나타난다. 과하지 않게 6px, 220ms */
+  --animate-page-in: page-in 220ms ease-out;
+
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-white font-sans text-ink;
+    /* 한글은 어절 단위로 줄바꿈하고, 너무 긴 문자열만 강제로 끊는다 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  h1,
+  h2 {
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
