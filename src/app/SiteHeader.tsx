@@ -1,12 +1,23 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../features/auth'
 import Button from '../shared/components/Button'
 import ButtonLink from '../shared/components/ButtonLink'
+import ConfirmDialog from '../shared/components/ConfirmDialog'
 import TextLink from '../shared/components/TextLink'
 
 // 반투명 상단 내비게이션. 로그인 상태에 따라 오른쪽 버튼이 바뀐다.
 function SiteHeader() {
   const { status, isAuthenticated, logout } = useAuth()
+  const [confirmingLogout, setConfirmingLogout] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    await logout()
+    setLoggingOut(false)
+    setConfirmingLogout(false)
+  }
 
   return (
     <header className="sticky top-0 z-10 border-b border-line/60 bg-white/80 backdrop-blur-md">
@@ -18,9 +29,16 @@ function SiteHeader() {
           MomFit
         </Link>
         {isAuthenticated && (
-          <Button variant="secondary" size="sm" onClick={() => void logout()}>
-            로그아웃
-          </Button>
+          <div className="flex items-center gap-4 text-sm">
+            <TextLink to="/me">내 정보</TextLink>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setConfirmingLogout(true)}
+            >
+              로그아웃
+            </Button>
+          </div>
         )}
         {status === 'unauthenticated' && (
           <div className="flex items-center gap-4 text-sm">
@@ -31,6 +49,16 @@ function SiteHeader() {
           </div>
         )}
       </nav>
+
+      <ConfirmDialog
+        open={confirmingLogout}
+        title="로그아웃하시겠어요?"
+        description="이 기기에서 로그아웃합니다."
+        confirmLabel={loggingOut ? '로그아웃 중...' : '로그아웃'}
+        pending={loggingOut}
+        onConfirm={() => void handleLogout()}
+        onCancel={() => setConfirmingLogout(false)}
+      />
     </header>
   )
 }
