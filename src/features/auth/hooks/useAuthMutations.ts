@@ -1,13 +1,15 @@
 import { useMutation } from '@tanstack/react-query'
 import {
   requestCheckLoginId,
+  requestDeleteAccount,
   requestLogin,
   requestResetPassword,
   requestSendEmailCode,
   requestSignup,
+  requestUpdateProfile,
   requestVerifyEmailCode,
 } from '../api/auth-api'
-import { startSession } from '../auth-session'
+import { setCurrentUser, startSession } from '../auth-session'
 import type { SignupInput } from '../types'
 
 // 로그인·가입 성공 시 받은 access 토큰으로 세션을 시작한다.
@@ -44,4 +46,16 @@ export function useVerifyEmailCode() {
 
 export function useResetPassword() {
   return useMutation({ mutationFn: requestResetPassword })
+}
+
+export function useUpdateProfile() {
+  return useMutation({
+    mutationFn: requestUpdateProfile,
+    onSuccess: setCurrentUser,
+  })
+}
+
+// 인증 상태 정리와 화면 이동은 호출하는 쪽에서 순서를 정한다.
+export function useDeleteAccount() {
+  return useMutation({ mutationFn: requestDeleteAccount })
 }

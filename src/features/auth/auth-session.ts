@@ -1,5 +1,6 @@
 import { configureApiClient } from '../../shared/api'
 import { fetchMe, requestLogout, requestRefresh } from './api/auth-api'
+import type { User } from './types'
 import { useAuthStore } from './store/auth-store'
 
 let refreshInFlight: Promise<string | null> | null = null
@@ -57,6 +58,16 @@ export function initializeAuth(): Promise<void> {
     })
   }
   return initializeInFlight
+}
+
+// 내 정보를 수정한 뒤 화면 전체가 같은 값을 보도록 현재 사용자를 갱신한다.
+export function setCurrentUser(user: User) {
+  useAuthStore.getState().setSession(user)
+}
+
+// 서버에서 계정이 삭제된 뒤 이 기기의 인증 상태를 지운다. (서버 요청 없음)
+export function clearSession() {
+  useAuthStore.getState().clear()
 }
 
 export async function logout(): Promise<void> {

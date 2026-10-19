@@ -22,6 +22,13 @@ export interface TokenResponse {
 
 export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated'
 
+// PATCH /users/me로 보낼 수 있는 항목. 바꿀 항목만 담는다.
+export interface ProfilePatch {
+  nickname?: string
+  dueDate?: string
+  exerciseLevel?: ExerciseLevel
+}
+
 export type EmailPurpose = 'signup' | 'password_reset'
 
 export interface SignupInput {

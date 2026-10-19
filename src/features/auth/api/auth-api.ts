@@ -3,6 +3,7 @@ import type {
   EmailPurpose,
   EmailVerificationResult,
   ExerciseLevel,
+  ProfilePatch,
   SignupInput,
   TokenResponse,
   User,
@@ -134,4 +135,20 @@ export function requestResetPassword(input: {
       new_password: input.newPassword,
     },
   })
+}
+
+export async function requestUpdateProfile(patch: ProfilePatch): Promise<User> {
+  const body: Record<string, string> = {}
+  if (patch.nickname !== undefined) body.nickname = patch.nickname
+  if (patch.dueDate !== undefined) body.due_date = patch.dueDate
+  if (patch.exerciseLevel !== undefined) {
+    body.exercise_level = patch.exerciseLevel
+  }
+  return toUser(
+    await apiRequest<UserResponse>('/users/me', { method: 'PATCH', body }),
+  )
+}
+
+export function requestDeleteAccount(): Promise<void> {
+  return apiRequest('/users/me', { method: 'DELETE' })
 }

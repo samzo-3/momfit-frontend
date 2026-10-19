@@ -17,12 +17,7 @@ import {
 import EmailVerificationField, {
   type VerifiedEmail,
 } from './EmailVerificationField'
-
-const EXERCISE_LEVELS: { value: ExerciseLevel; label: string }[] = [
-  { value: 'low', label: '하' },
-  { value: 'medium', label: '중' },
-  { value: 'high', label: '상' },
-]
+import ExerciseLevelField from './ExerciseLevelField'
 
 type Errors = Partial<
   Record<
@@ -244,32 +239,14 @@ function SignupForm() {
         hint="임신 주차는 출산 예정일로 계산합니다."
       />
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-sm font-medium">운동 경험</legend>
-        <div className="flex gap-2">
-          {EXERCISE_LEVELS.map((level) => (
-            <label key={level.value} className="flex-1 cursor-pointer">
-              <input
-                type="radio"
-                name="exerciseLevel"
-                value={level.value}
-                checked={exerciseLevel === level.value}
-                onChange={() => {
-                  setExerciseLevel(level.value)
-                  clearError('exerciseLevel')
-                }}
-                className="peer sr-only"
-              />
-              <span className="block rounded-full border border-line px-4 py-2.5 text-center transition-colors peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
-                {level.label}
-              </span>
-            </label>
-          ))}
-        </div>
-        {errors.exerciseLevel && (
-          <Notice kind="error">{errors.exerciseLevel}</Notice>
-        )}
-      </fieldset>
+      <ExerciseLevelField
+        value={exerciseLevel}
+        onChange={(level) => {
+          setExerciseLevel(level)
+          clearError('exerciseLevel')
+        }}
+        error={errors.exerciseLevel}
+      />
 
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-2 text-sm font-medium">약관 동의</legend>
