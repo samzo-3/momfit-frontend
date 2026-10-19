@@ -3,6 +3,7 @@ import {
   requestCheckLoginId,
   requestDeleteAccount,
   requestLogin,
+  requestOnboarding,
   requestResetPassword,
   requestSendEmailCode,
   requestSignup,
@@ -58,4 +59,12 @@ export function useUpdateProfile() {
 // 인증 상태 정리와 화면 이동은 호출하는 쪽에서 순서를 정한다.
 export function useDeleteAccount() {
   return useMutation({ mutationFn: requestDeleteAccount })
+}
+
+// 온보딩을 마치면 현재 사용자를 갱신한다. 라우트 가드가 알맞은 화면으로 이동시킨다.
+export function useCompleteOnboarding() {
+  return useMutation({
+    mutationFn: requestOnboarding,
+    onSuccess: setCurrentUser,
+  })
 }

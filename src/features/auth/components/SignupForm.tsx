@@ -14,6 +14,7 @@ import {
   validateNickname,
   validatePassword,
 } from '../validation'
+import ConsentFields from './ConsentFields'
 import EmailVerificationField, {
   type VerifiedEmail,
 } from './EmailVerificationField'
@@ -248,34 +249,19 @@ function SignupForm() {
         error={errors.exerciseLevel}
       />
 
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-2 text-sm font-medium">약관 동의</legend>
-        <label className="flex items-start gap-3 text-[15px]">
-          <input
-            type="checkbox"
-            checked={terms}
-            onChange={(event) => {
-              setTerms(event.target.checked)
-              clearError('consents')
-            }}
-            className="mt-0.5 size-5 accent-accent"
-          />
-          이용약관에 동의합니다. (필수)
-        </label>
-        <label className="flex items-start gap-3 text-[15px]">
-          <input
-            type="checkbox"
-            checked={healthData}
-            onChange={(event) => {
-              setHealthData(event.target.checked)
-              clearError('consents')
-            }}
-            className="mt-0.5 size-5 accent-accent"
-          />
-          건강정보(출산 예정일, 운동 경험) 수집·이용에 동의합니다. (필수)
-        </label>
-        {errors.consents && <Notice kind="error">{errors.consents}</Notice>}
-      </fieldset>
+      <ConsentFields
+        terms={terms}
+        healthData={healthData}
+        onTermsChange={(checked) => {
+          setTerms(checked)
+          clearError('consents')
+        }}
+        onHealthDataChange={(checked) => {
+          setHealthData(checked)
+          clearError('consents')
+        }}
+        error={errors.consents}
+      />
 
       {formError && <Notice kind="error">{formError}</Notice>}
       <Button type="submit" fullWidth disabled={signup.isPending}>
