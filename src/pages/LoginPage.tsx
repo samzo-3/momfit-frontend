@@ -1,6 +1,15 @@
-// 화면 구현 전까지 라우팅 대상으로만 쓰는 자리 표시 화면이다.
+import { useLocation } from 'react-router-dom'
+import { LoginForm } from '../features/auth'
+import PageShell from '../shared/components/PageShell'
+
 function LoginPage() {
-  return <h1 className="text-2xl font-bold">로그인</h1>
+  const state = useLocation().state as { notice?: string } | null
+
+  return (
+    <PageShell title="로그인" description="맘핏 계정으로 로그인하세요.">
+      <LoginForm notice={state?.notice} />
+    </PageShell>
+  )
 }
 
 export default LoginPage

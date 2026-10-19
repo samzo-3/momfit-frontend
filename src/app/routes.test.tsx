@@ -1,13 +1,6 @@
-import { render, screen } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { screen } from '@testing-library/react'
 import { resetAuthStore, signIn, signOut } from '../test/auth-test-utils'
-import { routes } from './routes'
-
-function renderAt(path: string) {
-  const router = createMemoryRouter(routes, { initialEntries: [path] })
-  render(<RouterProvider router={router} />)
-  return router
-}
+import { renderApp } from '../test/render-app'
 
 function heading(name: string) {
   return screen.getByRole('heading', { name })
@@ -19,7 +12,7 @@ beforeEach(() => {
 
 describe('routes', () => {
   it('존재하지 않는 경로에서 404 화면을 보여준다', () => {
-    renderAt('/no-such-page')
+    renderApp('/no-such-page')
     expect(heading('페이지를 찾을 수 없습니다')).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: '홈으로 돌아가기' }),
@@ -30,19 +23,19 @@ describe('routes', () => {
 describe('보호 라우트', () => {
   it('로그인한 사용자는 루트 경로에서 홈 화면을 본다', () => {
     signIn()
-    renderAt('/')
+    renderApp('/')
     expect(heading('맘핏')).toBeInTheDocument()
   })
 
   it('세션을 복구하는 동안에는 로딩 화면을 보여준다', () => {
-    const router = renderAt('/')
+    const router = renderApp('/')
     expect(screen.getByRole('status')).toHaveTextContent('불러오는 중')
     expect(router.state.location.pathname).toBe('/')
   })
 
   it('로그인하지 않았으면 /login으로 보내고 원래 경로를 기억한다', () => {
     signOut()
-    const router = renderAt('/')
+    const router = renderApp('/')
     expect(heading('로그인')).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
     expect(router.state.location.state.from.pathname).toBe('/')
@@ -50,7 +43,7 @@ describe('보호 라우트', () => {
 
   it('온보딩을 마치지 않았으면 보호 경로 대신 /onboarding으로 보낸다', () => {
     signIn({ onboardingCompleted: false })
-    const router = renderAt('/')
+    const router = renderApp('/')
     expect(heading('온보딩')).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/onboarding')
   })
@@ -58,7 +51,7 @@ describe('보호 라우트', () => {
 
 describe('로그인 상태에 따른 공개 경로', () => {
   it('로딩 중에는 /login을 바로 보여주지 않는다', () => {
-    renderAt('/login')
+    renderApp('/login')
     expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
@@ -66,7 +59,7 @@ describe('로그인 상태에 따른 공개 경로', () => {
     '비로그인 사용자는 %s를 볼 수 있다',
     (path) => {
       signOut()
-      renderAt(path)
+      renderApp(path)
       expect(
         screen.getByRole('heading', { name: /로그인|회원가입/ }),
       ).toBeInTheDocument()
@@ -77,7 +70,7 @@ describe('로그인 상태에 따른 공개 경로', () => {
     '로그인한 사용자가 %s에 접근하면 /로 보낸다',
     (path) => {
       signIn()
-      const router = renderAt(path)
+      const router = renderApp(path)
       expect(router.state.location.pathname).toBe('/')
       expect(heading('맘핏')).toBeInTheDocument()
     },
@@ -85,7 +78,7 @@ describe('로그인 상태에 따른 공개 경로', () => {
 
   it('온보딩 전 사용자가 /login에 접근하면 /onboarding으로 보낸다', () => {
     signIn({ onboardingCompleted: false })
-    const router = renderAt('/login')
+    const router = renderApp('/login')
     expect(router.state.location.pathname).toBe('/onboarding')
   })
 })
@@ -93,19 +86,19 @@ describe('로그인 상태에 따른 공개 경로', () => {
 describe('/onboarding', () => {
   it('온보딩 전 사용자는 볼 수 있다', () => {
     signIn({ onboardingCompleted: false })
-    renderAt('/onboarding')
+    renderApp('/onboarding')
     expect(heading('온보딩')).toBeInTheDocument()
   })
 
   it('비로그인 사용자는 /login으로 보낸다', () => {
     signOut()
-    const router = renderAt('/onboarding')
+    const router = renderApp('/onboarding')
     expect(router.state.location.pathname).toBe('/login')
   })
 
   it('온보딩을 마친 사용자는 /로 보낸다', () => {
     signIn()
-    const router = renderAt('/onboarding')
+    const router = renderApp('/onboarding')
     expect(router.state.location.pathname).toBe('/')
   })
 })
