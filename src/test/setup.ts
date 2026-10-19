@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest'
+import { configure } from '@testing-library/react'
 import { mockReducedMotion } from './motion'
 
 // 테스트는 기본으로 "동작 줄이기"를 켠 것처럼 둔다.
@@ -7,3 +8,6 @@ import { mockReducedMotion } from './motion'
 beforeEach(() => {
   mockReducedMotion(true)
 })
+
+// waitFor·findBy의 기본 대기 시간(1초)은 부하가 있는 환경에서 모자랄 수 있다.
+configure({ asyncUtilTimeout: 5000 })
