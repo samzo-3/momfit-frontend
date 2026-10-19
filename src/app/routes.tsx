@@ -5,6 +5,7 @@ import HomePage from '../pages/HomePage'
 import LoginPage from '../pages/LoginPage'
 import NotFoundPage from '../pages/NotFoundPage'
 import OnboardingPage from '../pages/OnboardingPage'
+import PasswordResetPage from '../pages/PasswordResetPage'
 import SignupPage from '../pages/SignupPage'
 
 export const routes: RouteObject[] = [
@@ -17,6 +18,7 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/login', element: <LoginPage /> },
           { path: '/signup', element: <SignupPage /> },
+          { path: '/password/reset', element: <PasswordResetPage /> },
         ],
       },
       {

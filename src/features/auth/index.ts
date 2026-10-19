@@ -1,6 +1,7 @@
 export { default as AuthBootstrap } from './components/AuthBootstrap'
 export { default as LoginForm } from './components/LoginForm'
 export { default as OnboardingRoute } from './components/OnboardingRoute'
+export { default as PasswordResetForm } from './components/PasswordResetForm'
 export { default as PublicOnlyRoute } from './components/PublicOnlyRoute'
 export { default as RequireAuth } from './components/RequireAuth'
 export { default as SignupForm } from './components/SignupForm'
