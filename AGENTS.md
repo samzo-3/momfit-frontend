@@ -6,8 +6,8 @@
 ## 기술 스택
 
 - React 19.3.1, TypeScript 6.x, Vite 8.3.4, Node.js 24.x LTS (팀 확정 버전)
-- React Router, TanStack Query(서버 상태), Zustand(클라이언트 상태), Tailwind CSS, Recharts (제안)
-- 테스트: Vitest + React Testing Library, 린트·포맷: ESLint + Prettier (제안)
+- React Router, TanStack Query(서버 상태), Zustand(클라이언트 상태), Tailwind CSS, Recharts
+- 테스트: Vitest + React Testing Library, 린트·포맷: ESLint + Prettier
 - 자세 인식: 백엔드에서 MediaPipe(Python) 사용 예정. 프론트 연동 방식은 **미정** (담당자 확정 후 기재)
 - 백엔드: FastAPI (별도 저장소, Python 3.12), 배포: Vercel
 - 상세와 선택 이유는 [docs/tech-stack.md](docs/tech-stack.md)
