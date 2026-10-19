@@ -1,5 +1,13 @@
+import { RouterProvider } from 'react-router-dom'
+import { Providers } from './app/providers'
+import { router } from './app/router'
+
 function App() {
-  return <h1>맘핏</h1>
+  return (
+    <Providers>
+      <RouterProvider router={router} />
+    </Providers>
+  )
 }
 
 export default App
