@@ -132,10 +132,13 @@ describe('SiteHeader', () => {
 
       await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
       expect(requestsTo(fetchMock, 'POST /api/auth/logout')).toHaveLength(1)
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-      expect(
-        screen.queryByRole('button', { name: '로그아웃' }),
-      ).not.toBeInTheDocument()
+      // 모달은 로그아웃이 끝난 뒤에 닫히므로, 화면 기준으로 기다린다.
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+        expect(
+          screen.queryByRole('button', { name: '로그아웃' }),
+        ).not.toBeInTheDocument()
+      })
     })
 
     it('요청 중에는 버튼을 잠그고 닫히지 않는다', async () => {

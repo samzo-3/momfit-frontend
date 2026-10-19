@@ -89,8 +89,11 @@ describe('비밀번호 재설정 화면', () => {
     await user.click(button('비밀번호 변경'))
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
-    expect(screen.getByRole('status')).toHaveTextContent(
-      '비밀번호가 변경되었습니다.',
+    // 라우터 상태가 바뀐 시점과 화면이 갱신되는 시점 사이에 틈이 있으므로 화면 기준으로 기다린다.
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        '비밀번호가 변경되었습니다.',
+      ),
     )
     expect(
       JSON.parse(
