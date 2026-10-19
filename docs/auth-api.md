@@ -153,6 +153,10 @@
 
 `/auth/email/send-code`, `/auth/password/reset`, `/auth/logout`, `DELETE /users/me`는 본문 없이 `204`를 반환한다.
 
+`/auth/signup`은 `201`, `/auth/login`·`/auth/refresh`는 `200`을 반환한다.
+
+refresh 쿠키의 이름은 `refresh_token`, `Path`는 `/api/auth`다. 인증 경로 외에는 전송되지 않는다.
+
 ## 임신 주차 계산 규칙
 
 `pregnancy_week`는 **백엔드만** 계산한다. 프론트는 `GET /users/me`의 값을 표시만 하고 다시 계산하지 않는다.
@@ -183,6 +187,7 @@ pregnancy_week = 임신 일수 ÷ 7 (내림)        # "28주 3일"이면 28
 | --- | --- | --- |
 | 401 | `TOKEN_EXPIRED` | `/auth/refresh`를 1회 시도하고 원 요청을 재시도 |
 | 401 | `REFRESH_INVALID` | 인증 상태를 초기화하고 `/login`으로 이동 |
+| 401 | `UNAUTHORIZED` | Bearer 토큰이 없거나 유효하지 않음 (만료는 `TOKEN_EXPIRED`). 인증 상태를 초기화하고 `/login`으로 이동 |
 | 401 | `INVALID_CREDENTIALS` | 폼에 에러 표시. 아이디가 없는 경우와 비밀번호가 틀린 경우에 같은 메시지를 쓴다 |
 | 400 | `CODE_INVALID` | 인증 코드 입력 에러 표시 |
 | 400 | `CODE_EXPIRED` | 코드 재발송 안내 |
@@ -191,7 +196,7 @@ pregnancy_week = 임신 일수 ÷ 7 (내림)        # "28주 3일"이면 28
 | 409 | `LOGIN_ID_EXISTS` | 가입 폼 에러 |
 | 409 | `EMAIL_EXISTS` | 가입 폼 에러 |
 | 422 | `VALIDATION_ERROR` | 필드별 에러 표시 |
-| 429 | `RATE_LIMITED` | 잠시 후 다시 시도하라는 안내. 로그인 실패 횟수 제한에도 쓴다 |
+| 429 | `RATE_LIMITED` | 잠시 후 다시 시도하라는 안내. 현재는 이메일 코드 발송 제한에만 쓴다 |
 
 ## 프론트엔드 구현 메모
 
@@ -210,6 +215,7 @@ pregnancy_week = 임신 일수 ÷ 7 (내림)        # "28주 3일"이면 28
 
 ## 미정 / 이후 범위
 
+- 로그인 실패 횟수 제한 (`429 RATE_LIMITED`). 아이디 존재 여부가 드러나지 않도록 존재하지 않는 아이디도 함께 기록해야 하고, IP 단위 제한과 계정 잠금 악용(DoS)도 함께 검토한다
 - 네이버 로그인
 - 로컬 계정과 카카오 계정 연동 (로그인 상태에서 "카카오 연결" 방식)
 - `due_date`와 `exercise_level`를 운동 담당자도 쓰는지 확인 (쓴다면 이 스키마가 공유 계약이 된다)
