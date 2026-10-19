@@ -1,11 +1,12 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ComponentProps } from 'react'
 import {
   buttonClass,
   type ButtonSize,
   type ButtonVariant,
 } from './button-styles'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// ComponentProps는 React 19에서 ref도 일반 prop으로 포함한다.
+interface ButtonProps extends ComponentProps<'button'> {
   variant?: ButtonVariant
   size?: ButtonSize
   fullWidth?: boolean
