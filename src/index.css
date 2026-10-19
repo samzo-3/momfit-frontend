@@ -16,6 +16,20 @@
   --color-link: #0066cc;
   --color-danger: #d70015;
   --color-success: #248a3d;
+
+  /* 화면이 바뀔 때 새 화면이 살짝 올라오며 나타난다. 과하지 않게 6px, 220ms */
+  --animate-page-in: page-in 220ms ease-out;
+
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 
 @layer base {

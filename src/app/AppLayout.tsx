@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import PageTransition from './PageTransition'
 import SiteFooter from './SiteFooter'
 import SiteHeader from './SiteHeader'
 
@@ -7,7 +8,9 @@ function AppLayout() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <div className="flex-1 bg-surface">
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </div>
       <SiteFooter />
     </div>
