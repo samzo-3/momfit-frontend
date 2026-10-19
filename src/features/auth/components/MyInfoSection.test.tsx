@@ -124,6 +124,19 @@ describe('내 정보 - 수정', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('닉네임 입력칸에 예시 문구가 있고, 비우면 그 문구가 보인다', async () => {
+    signIn({ nickname: '테스트맘' })
+    renderApp('/me')
+    const user = await startEditing()
+
+    const field = screen.getByLabelText('닉네임')
+    expect(field).toHaveAttribute('placeholder', '1~20자 (공백만은 불가)')
+    await user.clear(field)
+
+    expect(field).toHaveValue('')
+    expect(screen.getByPlaceholderText('1~20자 (공백만은 불가)')).toBe(field)
+  })
+
   it('수정 중에는 회원 탈퇴 영역을 숨긴다', async () => {
     signIn()
     renderApp('/me')

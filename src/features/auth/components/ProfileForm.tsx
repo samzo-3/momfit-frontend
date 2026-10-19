@@ -100,6 +100,7 @@ function ProfileForm({ user, onSaved, onCancel }: ProfileFormProps) {
         autoComplete="nickname"
         autoFocus
         value={nickname}
+        placeholder="1~20자 (공백만은 불가)"
         onChange={(event) => {
           setNickname(event.target.value)
           edit('nickname')
