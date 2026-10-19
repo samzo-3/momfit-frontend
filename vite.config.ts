@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
       globals: true,
+      // userEvent로 화면 전체를 렌더하는 테스트가 많아, 느린 환경에서는 기본 5초가 부족하다.
+      testTimeout: 15000,
     },
   }
 })
