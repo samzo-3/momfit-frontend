@@ -22,7 +22,7 @@
 | `link` | `#0066cc` | 텍스트 링크 |
 | `danger` / `success` | `#d70015` / `#248a3d` | 오류 / 성공 메시지 |
 
-글꼴은 시스템 글꼴(`-apple-system`, `SF Pro KR`, `Apple SD Gothic Neo`, `Noto Sans KR`, `Malgun Gothic`) 순이다. 별도 웹폰트는 쓰지 않는다.
+한글은 어절 단위로 줄바꿈한다(`word-break: keep-all`). 글꼴은 시스템 글꼴(`-apple-system`, `SF Pro KR`, `Apple SD Gothic Neo`, `Noto Sans KR`, `Malgun Gothic`) 순이다. 별도 웹폰트는 쓰지 않는다.
 
 ## 공통 컴포넌트 (`src/shared/components`)
 
@@ -31,11 +31,16 @@
 | `Button` | 알약형 버튼. `variant`(`primary`/`secondary`), `size`(`md`/`sm`). `type` 기본값은 `button` |
 | `TextField` | 라벨·힌트·에러가 연결된 입력. 에러는 `role="alert"` |
 | `Notice` | 폼 전체 메시지. 오류는 `alert`, 성공은 `status` |
+| `ButtonLink` | 화면 이동용 링크를 `Button`과 같은 알약 모양으로 보여줌 (`button-styles.ts`에서 모양 공유) |
 | `TextLink` | 라우터 링크의 텍스트 링크 스타일 |
 | `PageShell` | 큰 제목과 설명 아래 흰 카드를 두는 화면 틀 |
 | `LoadingScreen` | 세션 복구 중 표시 |
 
-앱 공통 틀은 `src/app/AppLayout.tsx`(반투명 상단 내비게이션 `SiteHeader` + 회색 배경)다.
+앱 공통 틀은 `src/app/AppLayout.tsx`(반투명 상단 내비게이션 `SiteHeader` + 회색 배경 + `SiteFooter`)다. `SiteFooter`는 모든 화면에 의학적 면책 문구를 보여준다.
+
+## 랜딩 페이지
+
+`/`의 랜딩은 `src/features/landing`의 섹션(`LandingHero`, `FeatureTiles`, `HowItWorks`, `FinalCta`)을 `pages/LandingPage.tsx`에서 조합한다. 흰색과 회색 섹션을 번갈아 배치하고, 로그인 상태는 페이지가 읽어 버튼(`actions`)만 넘긴다. 세션을 복구하는 동안에는 버튼 자리를 비워 두어 잘못된 버튼이 잠깐 보이지 않게 한다. 기능 소개 문구는 기획 기준이라 구현 상태에 맞춰 갱신해야 한다.
 
 ## 접근성
 
