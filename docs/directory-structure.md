@@ -6,8 +6,9 @@
 
 ```
 src/
-├── app/            # 앱 진입점, 라우터, 전역 Provider
+├── app/            # 라우트 정의(routes.tsx), 라우터(router.tsx), 전역 Provider(providers.tsx)
 ├── pages/          # 라우트 단위 화면 (조립만 하고 로직은 features에 둔다)
+├── test/           # 테스트 공통 설정 (setup.ts)
 ├── features/       # 기능별 코드 (컴포넌트, 훅, API, 타입)
 │   ├── auth/       # 로그인, 회원가입, 인증 상태
 │   ├── dashboard/  # 운동 기록, 리포트, 차트
