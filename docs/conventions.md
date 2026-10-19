@@ -1,6 +1,6 @@
 # 코드 컨벤션
 
-> 상태: **제안**. Git(커밋·브랜치·PR) 규칙은 [git-convention.md](git-convention.md)를 따른다.
+> 상태: 확정. Git(커밋·브랜치·PR) 규칙은 [git-convention.md](git-convention.md)를 따른다.
 
 ## 네이밍
 
