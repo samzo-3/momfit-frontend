@@ -1,6 +1,15 @@
-// 화면 구현 전까지 라우팅 대상으로만 쓰는 자리 표시 화면이다.
+import { SignupForm } from '../features/auth'
+import PageShell from '../shared/components/PageShell'
+
 function SignupPage() {
-  return <h1 className="text-2xl font-bold">회원가입</h1>
+  return (
+    <PageShell
+      title="회원가입"
+      description="이메일 인증 후 몇 가지 정보만 입력하면 시작할 수 있어요."
+    >
+      <SignupForm />
+    </PageShell>
+  )
 }
 
 export default SignupPage
