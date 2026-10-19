@@ -49,6 +49,27 @@ describe('보호 라우트 (/home)', () => {
   })
 })
 
+describe('내 정보 (/me)', () => {
+  it('로그인한 사용자는 볼 수 있다', () => {
+    signIn()
+    renderApp('/me')
+    expect(heading('내 정보')).toBeInTheDocument()
+  })
+
+  it('비로그인 사용자는 /login으로 보내고 원래 경로를 기억한다', () => {
+    signOut()
+    const router = renderApp('/me')
+    expect(router.state.location.pathname).toBe('/login')
+    expect(router.state.location.state.from.pathname).toBe('/me')
+  })
+
+  it('온보딩 전 사용자는 /onboarding으로 보낸다', () => {
+    signIn({ onboardingCompleted: false })
+    const router = renderApp('/me')
+    expect(router.state.location.pathname).toBe('/onboarding')
+  })
+})
+
 describe('랜딩 (/)', () => {
   it.each([
     ['세션을 복구하는 동안', () => {}],

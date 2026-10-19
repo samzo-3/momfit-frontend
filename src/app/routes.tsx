@@ -4,6 +4,7 @@ import AppLayout from './AppLayout'
 import HomePage from '../pages/HomePage'
 import LandingPage from '../pages/LandingPage'
 import LoginPage from '../pages/LoginPage'
+import MePage from '../pages/MePage'
 import NotFoundPage from '../pages/NotFoundPage'
 import OnboardingPage from '../pages/OnboardingPage'
 import PasswordResetPage from '../pages/PasswordResetPage'
@@ -32,7 +33,10 @@ export const routes: RouteObject[] = [
       {
         // 로그인한 사용자만. 이후 보호 경로는 여기에 추가한다.
         element: <RequireAuth />,
-        children: [{ path: '/home', element: <HomePage /> }],
+        children: [
+          { path: '/home', element: <HomePage /> },
+          { path: '/me', element: <MePage /> },
+        ],
       },
       { path: '*', element: <NotFoundPage /> },
     ],

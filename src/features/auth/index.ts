@@ -1,4 +1,6 @@
 export { default as AuthBootstrap } from './components/AuthBootstrap'
+export { default as DeleteAccountSection } from './components/DeleteAccountSection'
+export { default as MyInfoSection } from './components/MyInfoSection'
 export { default as LoginForm } from './components/LoginForm'
 export { default as OnboardingRoute } from './components/OnboardingRoute'
 export { default as PasswordResetForm } from './components/PasswordResetForm'
