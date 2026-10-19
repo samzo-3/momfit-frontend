@@ -37,6 +37,9 @@ function EmailVerificationField({
   const [step, setStep] = useState<Step>('input')
   const [cooldown, setCooldown] = useState(0)
   const [localError, setLocalError] = useState<string | null>(null)
+  // 입력칸을 한 번 벗어난 뒤부터 형식 오류를 실시간으로 보여준다.
+  const [emailTouched, setEmailTouched] = useState(false)
+  const [codeTouched, setCodeTouched] = useState(false)
   const sendCode = useSendEmailCode()
   const verifyCode = useVerifyEmailCode()
 
@@ -105,6 +108,12 @@ function EmailVerificationField({
   }
 
   const shownError = localError ?? error ?? null
+  const liveEmailError =
+    emailTouched && email.trim() ? validateEmail(email) : null
+  const liveCodeError =
+    codeTouched && code && !/^\d{6}$/.test(code)
+      ? '6자리 숫자 인증 코드를 입력해 주세요.'
+      : null
 
   return (
     <fieldset className="flex flex-col gap-3">
@@ -114,9 +123,14 @@ function EmailVerificationField({
         type="email"
         autoComplete="email"
         value={email}
-        onChange={(event) => setEmail(event.target.value)}
+        placeholder="example@email.com"
+        onChange={(event) => {
+          setEmail(event.target.value)
+          setLocalError(null)
+        }}
+        onBlur={() => setEmailTouched(true)}
         disabled={step !== 'input'}
-        error={step === 'sent' ? null : shownError}
+        error={step === 'sent' ? null : (shownError ?? liveEmailError)}
         hint={
           purpose === 'password_reset' && step === 'sent'
             ? '가입된 이메일이면 인증 코드가 발송됩니다.'
@@ -142,8 +156,13 @@ function EmailVerificationField({
             autoComplete="one-time-code"
             maxLength={6}
             value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
-            error={shownError}
+            placeholder="6자리 숫자"
+            onChange={(event) => {
+              setCode(event.target.value.replace(/\D/g, ''))
+              setLocalError(null)
+            }}
+            onBlur={() => setCodeTouched(true)}
+            error={shownError ?? liveCodeError}
             hint="메일로 받은 6자리 숫자를 입력해 주세요. (10분 안에 입력)"
           />
           <div className="flex flex-wrap gap-2">

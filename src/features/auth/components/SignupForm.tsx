@@ -35,6 +35,9 @@ type Errors = Partial<
   >
 >
 
+type LiveField =
+  'loginId' | 'password' | 'passwordConfirm' | 'nickname' | 'dueDate'
+
 function SignupForm() {
   const [loginId, setLoginId] = useState('')
   // null: 아직 확인하지 않음 / true: 사용 가능 / false: 이미 사용 중
@@ -50,10 +53,46 @@ function SignupForm() {
   // 값이 바뀌면 이메일 인증을 처음부터 다시 시작한다.
   const [verificationKey, setVerificationKey] = useState(0)
   const [errors, setErrors] = useState<Errors>({})
+  // 입력칸을 한 번 벗어난 뒤부터 형식 오류를 보여준다. (입력하는 도중에 빨갛게 깜빡이지 않도록)
+  const [touched, setTouched] = useState<Partial<Record<LiveField, boolean>>>(
+    {},
+  )
   const [formError, setFormError] = useState<string | null>(null)
   const checkLoginId = useCheckLoginId()
   const signup = useSignup()
   const range = dueDateRange()
+
+  function touch(name: LiveField) {
+    setTouched((current) =>
+      current[name] ? current : { ...current, [name]: true },
+    )
+  }
+
+  // 입력 중 형식 검사. 값이 비어 있으면 제출할 때만 안내하고, 한 번 벗어난 칸만 보여준다.
+  const liveErrors: Errors = {
+    loginId:
+      touched.loginId && loginId
+        ? (validateLoginId(loginId) ?? undefined)
+        : undefined,
+    password:
+      touched.password && password
+        ? (validatePassword(password) ?? undefined)
+        : undefined,
+    passwordConfirm:
+      touched.passwordConfirm && passwordConfirm && passwordConfirm !== password
+        ? '비밀번호가 일치하지 않습니다.'
+        : undefined,
+    nickname:
+      touched.nickname && nickname
+        ? (validateNickname(nickname) ?? undefined)
+        : undefined,
+    dueDate:
+      touched.dueDate && dueDate
+        ? (validateDueDate(dueDate) ?? undefined)
+        : undefined,
+  }
+  // 제출·서버 오류가 있으면 그것을 먼저 보여주고, 없으면 실시간 형식 오류를 보여준다.
+  const shown = (name: keyof Errors) => errors[name] ?? liveErrors[name]
 
   function clearError(name: keyof Errors) {
     setErrors((current) => ({ ...current, [name]: undefined }))
@@ -164,8 +203,10 @@ function SignupForm() {
           autoComplete="username"
           autoCapitalize="none"
           value={loginId}
+          placeholder="예) momfit01"
           onChange={(event) => handleLoginIdChange(event.target.value)}
-          error={errors.loginId}
+          onBlur={() => touch('loginId')}
+          error={shown('loginId')}
           hint="영문 소문자와 숫자 4~20자"
         />
         <div className="flex items-center gap-3">
@@ -188,11 +229,13 @@ function SignupForm() {
         type="password"
         autoComplete="new-password"
         value={password}
+        placeholder="8자 이상, 영문과 숫자 포함"
         onChange={(event) => {
           setPassword(event.target.value)
           clearError('password')
         }}
-        error={errors.password}
+        onBlur={() => touch('password')}
+        error={shown('password')}
         hint="8자 이상, 영문과 숫자 포함"
       />
       <TextField
@@ -200,21 +243,25 @@ function SignupForm() {
         type="password"
         autoComplete="new-password"
         value={passwordConfirm}
+        placeholder="비밀번호를 한 번 더 입력"
         onChange={(event) => {
           setPasswordConfirm(event.target.value)
           clearError('passwordConfirm')
         }}
-        error={errors.passwordConfirm}
+        onBlur={() => touch('passwordConfirm')}
+        error={shown('passwordConfirm')}
       />
       <TextField
         label="닉네임"
         autoComplete="nickname"
         value={nickname}
+        placeholder="1~20자 (공백만은 불가)"
         onChange={(event) => {
           setNickname(event.target.value)
           clearError('nickname')
         }}
-        error={errors.nickname}
+        onBlur={() => touch('nickname')}
+        error={shown('nickname')}
       />
 
       <EmailVerificationField
@@ -237,7 +284,8 @@ function SignupForm() {
           setDueDate(event.target.value)
           clearError('dueDate')
         }}
-        error={errors.dueDate}
+        onBlur={() => touch('dueDate')}
+        error={shown('dueDate')}
         hint="임신 주차는 출산 예정일로 계산합니다."
       />
 

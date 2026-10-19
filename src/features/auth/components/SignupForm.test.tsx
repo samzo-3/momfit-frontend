@@ -402,3 +402,234 @@ describe('이메일 인증 입력', () => {
     expect(screen.queryByLabelText('인증 코드')).not.toBeInTheDocument()
   })
 })
+
+describe('회원가입 - 플레이스홀더', () => {
+  it('각 입력칸에 예시 문구를 보여준다', () => {
+    renderApp('/signup')
+
+    expect(screen.getByLabelText('아이디')).toHaveAttribute(
+      'placeholder',
+      '예) momfit01',
+    )
+    expect(screen.getByLabelText('비밀번호')).toHaveAttribute(
+      'placeholder',
+      '8자 이상, 영문과 숫자 포함',
+    )
+    expect(screen.getByLabelText('비밀번호 확인')).toHaveAttribute(
+      'placeholder',
+      '비밀번호를 한 번 더 입력',
+    )
+    expect(screen.getByLabelText('닉네임')).toHaveAttribute(
+      'placeholder',
+      '1~20자 (공백만은 불가)',
+    )
+    expect(screen.getByLabelText('이메일')).toHaveAttribute(
+      'placeholder',
+      'example@email.com',
+    )
+  })
+
+  it('인증 코드 입력칸에도 예시 문구가 있다', async () => {
+    mockApi(fetchMock, defaultHandlers())
+    renderApp('/signup')
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('이메일'), 'mom@example.com')
+    await user.click(button('인증 코드 발송'))
+
+    expect(await screen.findByLabelText('인증 코드')).toHaveAttribute(
+      'placeholder',
+      '6자리 숫자',
+    )
+  })
+})
+
+describe('회원가입 - 입력 중 형식 검사', () => {
+  const ID_ERROR = '영문 소문자와 숫자 4~20자로 입력해 주세요.'
+  const PASSWORD_ERROR = '8자 이상, 영문과 숫자를 포함해 주세요.'
+  const MISMATCH = '비밀번호가 일치하지 않습니다.'
+
+  it('입력하는 도중에는 오류를 보여주지 않고, 칸을 벗어나면 보여준다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('아이디'), 'ab')
+    expect(screen.queryByText(ID_ERROR)).not.toBeInTheDocument()
+
+    await user.tab()
+
+    expect(screen.getByText(ID_ERROR)).toBeInTheDocument()
+  })
+
+  it('형식이 맞지 않으면 테두리가 빨갛게 바뀌고 접근성 오류 상태가 된다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+    const field = screen.getByLabelText('아이디')
+
+    await user.type(field, 'ab')
+    await user.tab()
+
+    expect(field).toHaveAttribute('aria-invalid', 'true')
+    expect(field).toHaveClass('border-danger')
+  })
+
+  it('이미 벗어난 칸은 고치는 즉시 오류가 사라진다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+    const field = screen.getByLabelText('아이디')
+    await user.type(field, 'ab')
+    await user.tab()
+    expect(screen.getByText(ID_ERROR)).toBeInTheDocument()
+
+    await user.click(field)
+    await user.type(field, 'cd')
+
+    expect(screen.queryByText(ID_ERROR)).not.toBeInTheDocument()
+    expect(field).not.toHaveAttribute('aria-invalid')
+    expect(field).not.toHaveClass('border-danger')
+  })
+
+  it('이미 벗어난 칸은 다시 틀리게 고치면 즉시 오류가 나타난다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+    const field = screen.getByLabelText('아이디')
+    await user.type(field, 'abcd')
+    await user.tab()
+    expect(screen.queryByText(ID_ERROR)).not.toBeInTheDocument()
+
+    await user.click(field)
+    await user.type(field, '!')
+
+    expect(screen.getByText(ID_ERROR)).toBeInTheDocument()
+  })
+
+  it('비어 있는 칸은 벗어나도 오류를 보여주지 않는다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+
+    await user.click(screen.getByLabelText('아이디'))
+    await user.tab()
+    await user.click(screen.getByLabelText('비밀번호'))
+    await user.tab()
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('비밀번호 형식을 검사한다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('비밀번호'), 'short1')
+    await user.tab()
+    expect(screen.getByText(PASSWORD_ERROR)).toBeInTheDocument()
+
+    await user.click(screen.getByLabelText('비밀번호'))
+    await user.type(screen.getByLabelText('비밀번호'), 'abcd')
+    expect(screen.queryByText(PASSWORD_ERROR)).not.toBeInTheDocument()
+  })
+
+  it('비밀번호 확인이 다르면 보여주고, 비밀번호를 바꿔 맞추면 사라진다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('비밀번호'), 'password1')
+    await user.type(screen.getByLabelText('비밀번호 확인'), 'password2')
+    await user.tab()
+    expect(screen.getByText(MISMATCH)).toBeInTheDocument()
+
+    const password = screen.getByLabelText('비밀번호')
+    await user.clear(password)
+    await user.type(password, 'password2')
+
+    expect(screen.queryByText(MISMATCH)).not.toBeInTheDocument()
+  })
+
+  it('닉네임이 공백뿐이면 벗어날 때 오류를 보여준다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('닉네임'), '   ')
+    await user.tab()
+
+    expect(
+      screen.getByText('닉네임은 1~20자로 입력해 주세요.'),
+    ).toBeInTheDocument()
+  })
+
+  it('이메일 형식이 틀리면 벗어날 때 오류를 보여주고, 고치면 사라진다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+    const field = screen.getByLabelText('이메일')
+
+    await user.type(field, 'not-an-email')
+    await user.tab()
+    expect(
+      screen.getByText('이메일 형식이 올바르지 않습니다.'),
+    ).toBeInTheDocument()
+    expect(field).toHaveClass('border-danger')
+
+    await user.clear(field)
+    await user.type(field, 'mom@example.com')
+
+    expect(
+      screen.queryByText('이메일 형식이 올바르지 않습니다.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('인증 코드가 6자리가 아니면 벗어날 때 오류를 보여준다', async () => {
+    mockApi(fetchMock, defaultHandlers())
+    renderApp('/signup')
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('이메일'), 'mom@example.com')
+    await user.click(button('인증 코드 발송'))
+
+    await user.type(await screen.findByLabelText('인증 코드'), '12')
+    await user.tab()
+
+    expect(
+      screen.getByText('6자리 숫자 인증 코드를 입력해 주세요.'),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByLabelText('인증 코드'))
+    await user.type(screen.getByLabelText('인증 코드'), '3456')
+    expect(
+      screen.queryByText('6자리 숫자 인증 코드를 입력해 주세요.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('범위를 벗어난 출산 예정일은 벗어날 때 오류를 보여준다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('출산 예정일'), '2020-01-01')
+    await user.tab()
+
+    expect(
+      screen.getByText('출산 예정일은 오늘부터 280일 이내여야 합니다.'),
+    ).toBeInTheDocument()
+  })
+
+  it('제출 시 나온 안내가 있으면 그것을 먼저 보여주고, 고치면 실시간 검사로 이어진다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('비밀번호'), 'short1')
+    await user.click(button('가입하기'))
+    expect(screen.getAllByText(PASSWORD_ERROR)).toHaveLength(1)
+
+    await user.type(screen.getByLabelText('비밀번호'), 'abcdef')
+
+    expect(screen.queryByText(PASSWORD_ERROR)).not.toBeInTheDocument()
+  })
+
+  it('형식 오류가 있어도 비어 있는 칸의 제출 안내는 그대로 나온다', async () => {
+    renderApp('/signup')
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('아이디'), 'ab')
+    await user.tab()
+
+    await user.click(button('가입하기'))
+
+    expect(screen.getAllByText(ID_ERROR)).toHaveLength(1)
+    expect(screen.getByText('운동 경험을 선택해 주세요.')).toBeInTheDocument()
+    expect(screen.getByText('이메일 인증을 완료해 주세요.')).toBeInTheDocument()
+  })
+})
