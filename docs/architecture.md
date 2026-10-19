@@ -26,13 +26,11 @@
 
 - 웹캠 접근은 HTTPS에서만 가능하다. Vercel은 기본 HTTPS를 제공한다.
 - Vercel(HTTPS)에서 백엔드를 호출하려면 백엔드도 **HTTPS**여야 한다(mixed content 차단).
-- 백엔드에서 Vercel 도메인에 대한 **CORS 허용**이 필요하다.
-- API 주소는 환경 변수(`VITE_API_BASE_URL`)로 주입한다.
+- 브라우저는 항상 상대 경로 `/api/*`로 호출한다. 운영은 Vercel rewrites(`vercel.json`), 개발은 Vite proxy(`API_PROXY_TARGET`)가 백엔드로 넘겨 same-origin을 유지한다. 그래서 CORS 설정이 필요 없다.
 
-## 인증 (미확정, 백엔드와 합의 필요)
+## 인증
 
-- 토큰 방식(JWT 등)과 보관 위치(메모리, 쿠키, localStorage)
-- 토큰 만료·갱신 처리
+토큰 방식, 보관 위치, 갱신 처리, API 계약은 [auth-api.md](auth-api.md)를 따른다.
 
 ## 자세 분석 (미정)
 
