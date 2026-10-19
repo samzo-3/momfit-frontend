@@ -4,9 +4,16 @@ import Notice from '../../../shared/components/Notice'
 import TextLink from '../../../shared/components/TextLink'
 import TextField from '../../../shared/components/TextField'
 import { errorMessage } from '../form-errors'
+import SocialLoginSection from './SocialLoginSection'
 import { useLogin } from '../hooks/useAuthMutations'
 
-function LoginForm({ notice }: { notice?: string }) {
+interface LoginFormProps {
+  notice?: string
+  // 카카오 로그인 실패 등 폼 밖에서 전달된 오류
+  providerError?: string | null
+}
+
+function LoginForm({ notice, providerError }: LoginFormProps) {
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -24,11 +31,15 @@ function LoginForm({ notice }: { notice?: string }) {
   }
 
   const formError =
-    validationError ?? (login.isError ? errorMessage(login.error) : null)
+    validationError ??
+    (login.isError ? errorMessage(login.error) : null) ??
+    providerError ??
+    null
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       {notice && <Notice kind="success">{notice}</Notice>}
+      <SocialLoginSection />
       <TextField
         label="아이디"
         autoComplete="username"

@@ -15,6 +15,7 @@ import {
   validatePassword,
 } from '../validation'
 import ConsentFields from './ConsentFields'
+import SocialLoginSection from './SocialLoginSection'
 import EmailVerificationField, {
   type VerifiedEmail,
 } from './EmailVerificationField'
@@ -157,6 +158,7 @@ function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+      <SocialLoginSection />
       <div className="flex flex-col gap-2">
         <TextField
           label="아이디"

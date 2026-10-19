@@ -16,6 +16,8 @@
   --color-link: #0066cc;
   --color-danger: #d70015;
   --color-success: #248a3d;
+  /* 카카오 로그인 버튼 배경 (카카오 디자인 가이드의 노란색) */
+  --color-kakao: #fee500;
 
   /* 화면이 바뀔 때 새 화면이 살짝 올라오며 나타난다. 과하지 않게 6px, 220ms */
   --animate-page-in: page-in 220ms ease-out;
