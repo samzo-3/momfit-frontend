@@ -3,6 +3,9 @@ import { ApiError } from '../../../shared/api'
 import Button from '../../../shared/components/Button'
 import Notice from '../../../shared/components/Notice'
 import TextLink from '../../../shared/components/TextLink'
+import FieldAction from '../../../shared/components/FieldAction'
+import InfoTip from '../../../shared/components/InfoTip'
+import StatusIcon from '../../../shared/components/StatusIcon'
 import TextField from '../../../shared/components/TextField'
 import { errorMessage, serverFieldErrors } from '../form-errors'
 import { useCheckLoginId, useSignup } from '../hooks/useAuthMutations'
@@ -16,6 +19,7 @@ import {
 } from '../validation'
 import ConsentFields from './ConsentFields'
 import SocialLoginSection from './SocialLoginSection'
+import FieldStatus from './FieldStatus'
 import EmailVerificationField, {
   type VerifiedEmail,
 } from './EmailVerificationField'
@@ -128,6 +132,41 @@ function SignupForm() {
     })
   }
 
+  // 아이디 칸 안 오른쪽: 형식이 맞으면 "중복 확인" 버튼, 확인 중에는 로딩, 결과가 나오면 체크(사용 가능)나 느낌표(사용 중).
+  // 결과 문구는 화면에 보이지 않게 두고 스크린리더에만 읽히게 하며, "사용 중" 안내는 칸 아래 오류 문구가 맡는다.
+  // 형식 오류도 같은 느낌표 툴팁으로 보여준다. (형식이 틀리면 중복 확인 버튼이 없어 자리가 겹치지 않는다)
+  const loginIdFormatError = validateLoginId(loginId)
+  const loginIdFormatTip =
+    loginIdFormatError !== null && shown('loginId') === loginIdFormatError
+  const loginIdCheckStatus = checkLoginId.isPending ? (
+    <>
+      <StatusIcon kind="loading" />
+      <span role="status" className="sr-only">
+        아이디를 확인하는 중입니다.
+      </span>
+    </>
+  ) : loginIdAvailable === true ? (
+    <>
+      <StatusIcon kind="success" />
+      <span role="status" className="sr-only">
+        사용 가능한 아이디입니다.
+      </span>
+    </>
+  ) : loginIdAvailable === false ? (
+    // 사용 중이라는 사유는 칸 아래 문구 대신 이 느낌표 아이콘의 툴팁으로 보여준다.
+    // 나타난 직후 3초 동안은 열어 두어 왜 빨간지 바로 알 수 있게 한다.
+    <InfoTip
+      variant="error"
+      label="아이디를 사용할 수 없는 이유"
+      text={shown('loginId') ?? '이미 사용 중인 아이디입니다.'}
+      autoOpenFor={3000}
+    />
+  ) : loginIdFormatTip ? (
+    <FieldStatus label="아이디" error={loginIdFormatError} valid={false} />
+  ) : loginId && !validateLoginId(loginId) ? (
+    <FieldAction onClick={handleCheckLoginId}>중복 확인</FieldAction>
+  ) : null
+
   function validate(): Errors {
     const next: Errors = {}
     const loginIdError = validateLoginId(loginId)
@@ -197,35 +236,23 @@ function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-      <div className="flex flex-col gap-2">
-        <TextField
-          label="아이디"
-          autoComplete="username"
-          autoCapitalize="none"
-          value={loginId}
-          placeholder="예) momfit01"
-          onChange={(event) => handleLoginIdChange(event.target.value)}
-          onBlur={() => touch('loginId')}
-          error={shown('loginId')}
-          hint="영문 소문자와 숫자 4~20자"
-        />
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleCheckLoginId}
-            disabled={checkLoginId.isPending}
-          >
-            중복 확인
-          </Button>
-          {loginIdAvailable === true && (
-            <Notice kind="success">사용 가능한 아이디입니다.</Notice>
-          )}
-        </div>
-      </div>
+      <TextField
+        label="아이디"
+        floatingLabel
+        autoComplete="username"
+        autoCapitalize="none"
+        value={loginId}
+        placeholder="영문 소문자·숫자 4~20자 (예: momfit01)"
+        onChange={(event) => handleLoginIdChange(event.target.value)}
+        onBlur={() => touch('loginId')}
+        error={shown('loginId')}
+        hideErrorMessage={loginIdAvailable === false || loginIdFormatTip}
+        trailing={loginIdCheckStatus}
+      />
 
       <TextField
         label="비밀번호"
+        floatingLabel
         type="password"
         autoComplete="new-password"
         value={password}
@@ -236,10 +263,18 @@ function SignupForm() {
         }}
         onBlur={() => touch('password')}
         error={shown('password')}
-        hint="8자 이상, 영문과 숫자 포함"
+        hideErrorMessage
+        trailing={
+          <FieldStatus
+            label="비밀번호"
+            error={shown('password')}
+            valid={!!password && !validatePassword(password)}
+          />
+        }
       />
       <TextField
         label="비밀번호 확인"
+        floatingLabel
         type="password"
         autoComplete="new-password"
         value={passwordConfirm}
@@ -250,9 +285,18 @@ function SignupForm() {
         }}
         onBlur={() => touch('passwordConfirm')}
         error={shown('passwordConfirm')}
+        hideErrorMessage
+        trailing={
+          <FieldStatus
+            label="비밀번호 확인"
+            error={shown('passwordConfirm')}
+            valid={!!passwordConfirm && passwordConfirm === password}
+          />
+        }
       />
       <TextField
         label="닉네임"
+        floatingLabel
         autoComplete="nickname"
         value={nickname}
         placeholder="1~20자 (공백만은 불가)"
@@ -262,7 +306,17 @@ function SignupForm() {
         }}
         onBlur={() => touch('nickname')}
         error={shown('nickname')}
+        hideErrorMessage
+        trailing={
+          <FieldStatus
+            label="닉네임"
+            error={shown('nickname')}
+            valid={!!nickname && !validateNickname(nickname)}
+          />
+        }
       />
+
+      <hr className="border-line" />
 
       <EmailVerificationField
         key={verificationKey}
@@ -276,6 +330,12 @@ function SignupForm() {
 
       <TextField
         label="출산 예정일"
+        labelAddon={
+          <InfoTip
+            label="출산 예정일 도움말"
+            text="임신 주차는 출산 예정일로 계산합니다."
+          />
+        }
         type="date"
         min={range.min}
         max={range.max}
@@ -286,7 +346,6 @@ function SignupForm() {
         }}
         onBlur={() => touch('dueDate')}
         error={shown('dueDate')}
-        hint="임신 주차는 출산 예정일로 계산합니다."
       />
 
       <ExerciseLevelField

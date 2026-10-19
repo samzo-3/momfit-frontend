@@ -82,6 +82,7 @@ function PasswordResetForm() {
         <>
           <TextField
             label="새 비밀번호"
+            floatingLabel
             type="password"
             autoComplete="new-password"
             value={newPassword}
@@ -94,6 +95,7 @@ function PasswordResetForm() {
           />
           <TextField
             label="새 비밀번호 확인"
+            floatingLabel
             type="password"
             autoComplete="new-password"
             value={confirm}

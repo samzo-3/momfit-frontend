@@ -41,6 +41,7 @@ function LoginForm({ notice, providerError }: LoginFormProps) {
       {notice && <Notice kind="success">{notice}</Notice>}
       <TextField
         label="아이디"
+        floatingLabel
         autoComplete="username"
         autoCapitalize="none"
         value={loginId}
@@ -48,6 +49,7 @@ function LoginForm({ notice, providerError }: LoginFormProps) {
       />
       <TextField
         label="비밀번호"
+        floatingLabel
         type="password"
         autoComplete="current-password"
         value={password}

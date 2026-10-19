@@ -95,3 +95,40 @@ describe('카카오 로그인 실패 안내', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })
+
+describe('로그인 폼 - 입력칸 안의 라벨', () => {
+  it('아이디와 비밀번호 라벨이 입력칸 안에 겹쳐 놓인다', () => {
+    renderApp('/login')
+
+    for (const name of ['아이디', '비밀번호']) {
+      const input = screen.getByLabelText(name)
+      expect(input.parentElement).toHaveClass('relative')
+      expect(screen.getByText(name).parentElement).toBe(input.parentElement)
+    }
+  })
+
+  it('가입 화면의 텍스트 입력칸도 라벨이 칸 안에 겹쳐 놓인다', () => {
+    renderApp('/signup')
+
+    for (const name of [
+      '아이디',
+      '비밀번호',
+      '비밀번호 확인',
+      '닉네임',
+      '이메일',
+    ]) {
+      const input = screen.getByLabelText(name)
+      expect(input.parentElement).toHaveClass('relative')
+    }
+  })
+
+  it('가입 화면의 출산 예정일만 라벨이 칸 위에 있고 옆에 도움말 아이콘이 있다', () => {
+    renderApp('/signup')
+
+    const input = screen.getByLabelText('출산 예정일')
+    expect(input.parentElement).not.toHaveClass('relative')
+    expect(
+      screen.getByRole('button', { name: '출산 예정일 도움말' }),
+    ).toBeInTheDocument()
+  })
+})
