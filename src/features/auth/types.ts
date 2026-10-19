@@ -21,3 +21,21 @@ export interface TokenResponse {
 }
 
 export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated'
+
+export type EmailPurpose = 'signup' | 'password_reset'
+
+export interface SignupInput {
+  loginId: string
+  password: string
+  nickname: string
+  email: string
+  emailVerificationToken: string
+  dueDate: string
+  exerciseLevel: ExerciseLevel
+  consents: { terms: boolean; healthData: boolean }
+}
+
+export interface EmailVerificationResult {
+  emailVerificationToken: string
+  expiresIn: number
+}

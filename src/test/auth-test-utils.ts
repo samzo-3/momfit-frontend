@@ -58,3 +58,37 @@ export const userBody = {
   exercise_level: 'low',
   onboarding_completed: true,
 }
+
+export interface MockRequest {
+  body: Record<string, unknown> | undefined
+  url: string
+}
+
+type MockHandler = (request: MockRequest) => Response | Promise<Response>
+
+// "METHOD /경로" → 핸들러. 등록하지 않은 요청이 오면 테스트가 실패하도록 에러를 던진다.
+export function mockApi(
+  fetchMock: ReturnType<typeof vi.fn<typeof fetch>>,
+  handlers: Record<string, MockHandler>,
+) {
+  fetchMock.mockImplementation(async (input, init) => {
+    const url = String(input)
+    const key = `${init?.method ?? 'GET'} ${url.split('?')[0]}`
+    const handler = handlers[key]
+    if (!handler) throw new Error(`mock되지 않은 요청: ${key}`)
+    return handler({
+      url,
+      body: init?.body ? JSON.parse(String(init.body)) : undefined,
+    })
+  })
+}
+
+export function requestsTo(
+  fetchMock: ReturnType<typeof vi.fn<typeof fetch>>,
+  key: string,
+) {
+  return fetchMock.mock.calls.filter(
+    ([input, init]) =>
+      `${init?.method ?? 'GET'} ${String(input).split('?')[0]}` === key,
+  )
+}
