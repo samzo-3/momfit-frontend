@@ -1,10 +1,13 @@
 export type ButtonVariant =
-  'primary' | 'secondary' | 'danger' | 'danger-outline'
+  'primary' | 'brand' | 'secondary' | 'danger' | 'danger-outline'
 export type ButtonSize = 'md' | 'sm' | 'lg'
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
     'bg-accent text-white hover:bg-accent-hover disabled:bg-accent/40 border border-transparent',
+  // 살구 면(primary) 위에서 쓰는 테라코타 버튼
+  brand:
+    'bg-brand text-white hover:bg-brand-hover disabled:bg-brand/40 border border-transparent',
   secondary:
     'border border-accent text-accent bg-transparent hover:bg-accent/5 disabled:border-line disabled:text-ink-secondary/60 disabled:hover:bg-transparent',
   danger:

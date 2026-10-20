@@ -18,6 +18,21 @@
   --color-link: #0066cc;
   --color-danger: #d70015;
   --color-success: #248a3d;
+  /* 서비스 대표 색(살구). 면·배경에 쓰고, 글자와 버튼은 아래 어두운 짝(brand, cocoa)을 쓴다. 현재는 /home에서 쓴다 */
+  --color-primary: #f4e3da;
+  --color-primary-soft: #fbf4ef;
+  --color-primary-strong: #e6cfc2;
+  /* 주 버튼·강조 (흰 글자 대비 5.05:1) */
+  --color-brand: #a9583f;
+  --color-brand-hover: #97492f;
+  /* 살구 면 위의 강조 글자·링크 (대비 5.09:1. brand는 4.05:1이라 글자에는 모자라다) */
+  --color-brand-text: #97492f;
+  /* 살구 면 위의 글자 (대비 10.9:1 / 4.7:1) */
+  --color-cocoa: #3b2a24;
+  --color-cocoa-secondary: #7a5f54;
+  /* 보조 색 */
+  --color-sage: #4f6f54;
+  --color-sage-soft: #e3ebdf;
   /* 카카오 로그인 버튼 배경 (카카오 디자인 가이드의 노란색) */
   --color-kakao: #fee500;
 
