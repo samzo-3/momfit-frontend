@@ -21,7 +21,7 @@
 | `accent` / `accent-hover` | `#0071e3` / `#0077ed` | 주 버튼, 선택 상태, 포커스 |
 | `link` | `#0066cc` | 텍스트 링크 |
 | `danger` / `success` | `#d70015` / `#248a3d` | 오류 / 성공 메시지 |
-| `primary` / `primary-soft` / `primary-strong` | `#f4e3da` / `#fbf4ef` / `#e6cfc2` | 서비스 대표 색(살구). 히어로·강조 면, 연한 배경, 구분선·눌림 상태. 너무 밝아(흰색 대비 1.25:1) 글자·버튼에는 쓰지 않는다. 현재는 `/home`에서 쓴다 |
+| `primary` / `primary-soft` / `primary-strong` | `#f4e3da` / `#fbf4ef` / `#e6cfc2` | 서비스 대표 색(살구). 히어로·강조 면, 연한 배경, 구분선·눌림 상태. 너무 밝아(흰색 대비 1.25:1) 글자·버튼에는 쓰지 않는다. 현재는 `/home`, 랜딩(`/`), 푸터에서 쓴다 |
 | `brand-text` | `#97492f` | 살구 면 위의 강조 글자·밑줄 링크(대비 5.09:1). `brand`는 4.05:1이라 글자에는 모자라다. `/home` 히어로 링크가 쓴다 |
 | `brand` / `brand-hover` | `#a9583f` / `#97492f` | 살구 면 위의 주 버튼(`Button variant="brand"`). 흰 글자 대비 5.05:1 |
 | `cocoa` / `cocoa-secondary` | `#3b2a24` / `#7a5f54` | 살구 면 위의 제목·본문 / 보조 문구(대비 10.9:1 / 4.7:1) |
@@ -118,3 +118,15 @@
 - 슬라이드의 이동 수단은 버튼이 아니라 **밑줄 링크 + 화살표**다(`brand-text` 색, 가리키면 코코아 색으로 바뀌고 화살표가 살짝 움직임). 문구와 사진이 주인공이 되도록 조용하게 둔다.
 - 슬라이드 문구는 운동 이름 없이 상태·감정 중심이고, 운동이 정해지지 않아 모든 버튼이 운동 고르기(`/workouts`)로 간다. 두 번째 슬라이드는 닉네임과 임신 주차로 인사한다.
 - 이미지는 `src/features/home/assets`에 있다 (`hero-stretch-warm`, `hero-stretch-window`, `hero-meditation`).
+
+## 랜딩(`/`)과 푸터
+
+- 랜딩은 살구색 계열로 구간을 번갈아 칠한다: 히어로(`primary-soft`, 넓은 면에 대표 색을 크게 칠하면 무거워 보여 연하게 둔다) → 기능 소개(`primary`, 흰 카드 + `primary-strong` 테두리) → 시작 방법(흰 바탕) → 마지막 안내(`primary`). 제목·본문은 `cocoa`, 강조 글자와 숫자는 `brand-text`다.
+- 랜딩 버튼은 `brand`(채움)와 `brand-outline`(테두리) 변형을 쓴다. 푸터는 `primary` 바탕에 `cocoa-secondary` 글자다.
+
+## 화면 색 적용 현황
+
+- 모든 화면(헤더, 푸터, 랜딩, 홈, 내 정보, 로그인, 회원가입, 비밀번호 재설정, 가입 마무리, 운동 고르기, 404, 로딩)이 살구색 계열이다. `PageShell tone="warm"`이 배경(`primary-soft`)과 제목·설명 글자(`cocoa`)를 정한다.
+- 주 버튼은 `brand`, 보조 버튼은 `brand-outline`, 링크는 `TextLink tone="brand"`(`brand-text`)를 쓴다. 위험한 동작(탈퇴)은 의미 색인 빨강을 유지한다.
+- 포커스 링은 모든 화면에서 `brand`다. 입력칸 테두리(`field`)와 오류 표시(분홍 배경·빨간 테두리)는 기존 그대로다.
+- 파랑 `accent`와 `Button`의 `primary`/`secondary` 변형은 더 이상 화면에서 쓰지 않는다. 쓰는 곳이 생기기 전까지 정의만 남겨 둔다.

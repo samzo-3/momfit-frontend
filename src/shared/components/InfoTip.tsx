@@ -72,7 +72,7 @@ function InfoTip({
         className={
           isError
             ? 'grid place-items-center rounded-full'
-            : 'grid size-5 place-items-center rounded-full bg-ink-secondary text-xs leading-none font-semibold text-white'
+            : 'grid size-5 place-items-center rounded-full bg-cocoa-secondary text-xs leading-none font-semibold text-white'
         }
       >
         {isError ? <StatusIcon kind="error" /> : '?'}
@@ -82,7 +82,7 @@ function InfoTip({
         id={tooltipId}
         role="tooltip"
         hidden={!open}
-        className={`absolute z-20 w-max max-w-64 rounded-lg px-3 py-2 text-xs font-normal shadow-lg ${isError ? 'top-1/2 left-full ml-2 -translate-y-1/2 border border-line bg-white text-ink' : 'top-full left-0 mt-2 bg-ink text-white'}`}
+        className={`absolute z-20 w-max max-w-64 rounded-lg px-3 py-2 text-xs font-normal shadow-lg ${isError ? 'top-1/2 left-full ml-2 -translate-y-1/2 border border-primary-strong bg-white text-cocoa' : 'top-full left-0 mt-2 bg-cocoa text-white'}`}
       >
         {text}
       </span>

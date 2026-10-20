@@ -27,6 +27,16 @@ describe('WorkoutsPage', () => {
     expect(router.state.location.pathname).toBe('/home')
   })
 
+  it('살구색 바탕이고 홈으로 버튼은 대표 색 테두리다', () => {
+    signIn()
+    renderApp('/workouts')
+
+    expect(screen.getByRole('main')).toHaveClass('bg-primary-soft')
+    expect(screen.getByRole('link', { name: '홈으로' })).toHaveClass(
+      'border-brand-text',
+    )
+  })
+
   it('홈의 버튼으로 들어올 수 있다', async () => {
     signIn()
     const router = renderApp('/home')

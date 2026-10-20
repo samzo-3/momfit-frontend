@@ -4,10 +4,10 @@ import KakaoLoginButton from './KakaoLoginButton'
 function SocialLoginSection() {
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 text-sm text-ink-secondary">
-        <hr className="flex-1 border-line" />
+      <div className="flex items-center gap-3 text-sm text-cocoa-secondary">
+        <hr className="flex-1 border-primary-strong" />
         <span>또는</span>
-        <hr className="flex-1 border-line" />
+        <hr className="flex-1 border-primary-strong" />
       </div>
       <KakaoLoginButton />
     </div>

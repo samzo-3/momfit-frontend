@@ -56,13 +56,22 @@ function LoginForm({ notice, providerError }: LoginFormProps) {
         onChange={(event) => setPassword(event.target.value)}
       />
       {formError && <Notice kind="error">{formError}</Notice>}
-      <Button type="submit" fullWidth disabled={login.isPending}>
+      <Button
+        type="submit"
+        variant="brand"
+        fullWidth
+        disabled={login.isPending}
+      >
         {login.isPending ? '로그인 중...' : '로그인'}
       </Button>
       <SocialLoginSection />
       <div className="flex justify-between text-sm">
-        <TextLink to="/signup">회원가입</TextLink>
-        <TextLink to="/password/reset">비밀번호 찾기</TextLink>
+        <TextLink to="/signup" tone="brand">
+          회원가입
+        </TextLink>
+        <TextLink to="/password/reset" tone="brand">
+          비밀번호 찾기
+        </TextLink>
       </div>
     </form>
   )

@@ -117,13 +117,18 @@ function OnboardingForm({ user }: { user: User }) {
         }}
         error={errors.consents}
       />
-      <p className="text-xs text-ink-secondary">
+      <p className="text-xs text-cocoa-secondary">
         MomFit은 의학적 진단이나 치료를 대신하지 않습니다. 운동을 시작하기 전에
         담당 전문의와 상담하세요.
       </p>
 
       {formError && <Notice kind="error">{formError}</Notice>}
-      <Button type="submit" fullWidth disabled={onboarding.isPending}>
+      <Button
+        type="submit"
+        variant="brand"
+        fullWidth
+        disabled={onboarding.isPending}
+      >
         {onboarding.isPending ? '저장 중...' : '시작하기'}
       </Button>
     </form>

@@ -109,7 +109,7 @@ describe('InfoTip (오류 변형)', () => {
 
     await userEvent.setup().hover(button)
     const tooltip = screen.getByRole('tooltip')
-    expect(tooltip).toHaveClass('bg-white', 'text-ink', 'left-full')
+    expect(tooltip).toHaveClass('bg-white', 'text-cocoa', 'left-full')
     expect(tooltip).not.toHaveClass('bg-danger')
   })
 
@@ -178,5 +178,14 @@ describe('InfoTip (자동으로 열어 두기)', () => {
     render(<InfoTip text="설명" />)
 
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+  })
+})
+
+describe('InfoTip (살구색 화면 색)', () => {
+  it('도움말 말풍선은 코코아색 바탕이다', async () => {
+    render(<InfoTip text="설명" />)
+
+    await userEvent.setup().hover(screen.getByRole('button'))
+    expect(screen.getByRole('tooltip')).toHaveClass('bg-cocoa', 'text-white')
   })
 })

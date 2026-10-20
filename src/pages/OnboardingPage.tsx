@@ -9,6 +9,7 @@ function OnboardingPage() {
 
   return (
     <PageShell
+      tone="warm"
       title="추가 정보 입력"
       description="카카오 계정으로 가입을 마무리하려면 몇 가지 정보가 필요해요."
     >
