@@ -28,7 +28,7 @@ function ExerciseLevelField({
               onChange={() => onChange(level.value)}
               className="peer sr-only"
             />
-            <span className="block rounded-full border border-primary-strong px-4 py-2.5 text-center transition-colors peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand">
+            <span className="block rounded-full border border-primary-strong px-4 py-2.5 text-center transition-colors peer-checked:border-brand peer-checked:bg-brand peer-checked:text-on-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus">
               {level.label}
             </span>
           </label>

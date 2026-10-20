@@ -155,7 +155,7 @@ function Carousel({ label, slides, autoPlayMs = 0, className }: CarouselProps) {
                 className="grid size-6 place-items-center rounded-full"
               >
                 <span
-                  className={`block h-2 rounded-full transition-all ${position === index ? 'w-5 bg-brand' : 'w-2 bg-primary-strong'}`}
+                  className={`block h-2 rounded-full transition-all ${position === index ? 'w-5 bg-brand-text' : 'w-2 bg-primary-strong'}`}
                 />
               </button>
             ))}

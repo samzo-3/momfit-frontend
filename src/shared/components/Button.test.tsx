@@ -13,12 +13,12 @@ describe('Button', () => {
     )
   })
 
-  it('brand 변형은 테라코타 배경에 흰 글자다', () => {
+  it('brand 변형은 대표 색 배경에 on-brand 글자다', () => {
     render(<Button variant="brand">시작</Button>)
 
     expect(screen.getByRole('button', { name: '시작' })).toHaveClass(
       'bg-brand',
-      'text-white',
+      'text-on-brand',
       'hover:bg-brand-hover',
     )
   })

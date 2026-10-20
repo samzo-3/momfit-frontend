@@ -12,7 +12,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
     'bg-accent text-white hover:bg-accent-hover disabled:bg-accent/40 border border-transparent',
   // 살구 면(primary) 위에서 쓰는 테라코타 버튼
   brand:
-    'bg-brand text-white hover:bg-brand-hover disabled:bg-brand/40 border border-transparent',
+    'bg-brand text-on-brand hover:bg-brand-hover disabled:bg-brand/40 border border-transparent',
   // 살구 면 위의 보조 버튼. 글자는 대비가 충분한 brand-text를 쓴다.
   'brand-outline':
     'border border-brand-text text-brand-text bg-transparent hover:bg-brand/10 disabled:border-line disabled:text-ink-secondary/60 disabled:hover:bg-transparent',

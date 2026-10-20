@@ -83,7 +83,7 @@ function JourneyCard({
             <span
               data-testid={`stage-fill-${item.key}`}
               style={{ width: `${stageFill(item, pregnancyWeek) * 100}%` }}
-              className="block h-full rounded-full bg-brand"
+              className="block h-full rounded-full bg-brand-text"
             />
           </span>
         ))}
@@ -124,7 +124,7 @@ function WeeklyCard({ workoutsPath }: { workoutsPath: string }) {
             key={day}
             aria-label={`${WEEKDAYS[day]}요일${day === today ? ' (오늘)' : ''}`}
             aria-current={day === today ? 'date' : undefined}
-            className={`grid size-7 place-items-center rounded-full text-xs ${day === today ? 'bg-white font-semibold text-brand-text ring-2 ring-brand' : 'bg-primary text-cocoa-secondary'}`}
+            className={`grid size-7 place-items-center rounded-full text-xs ${day === today ? 'bg-white font-semibold text-brand-text ring-2 ring-brand-text' : 'bg-primary text-cocoa-secondary'}`}
           >
             {WEEKDAYS[day]}
           </li>

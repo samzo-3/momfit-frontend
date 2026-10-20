@@ -11,7 +11,7 @@ function ProfileSummary({ user }: { user: User }) {
     >
       <div
         aria-hidden="true"
-        className="grid size-20 place-items-center rounded-full bg-brand text-3xl font-semibold text-white"
+        className="grid size-20 place-items-center rounded-full bg-brand text-3xl font-semibold text-on-brand"
       >
         {initial}
       </div>
