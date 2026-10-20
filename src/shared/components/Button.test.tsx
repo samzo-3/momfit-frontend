@@ -24,6 +24,18 @@ describe('Button', () => {
   })
 })
 
+describe('Button brand-outline', () => {
+  it('테두리와 글자는 brand-text 색이고 배경은 투명하다', () => {
+    render(<Button variant="brand-outline">로그인</Button>)
+
+    expect(screen.getByRole('button', { name: '로그인' })).toHaveClass(
+      'border-brand-text',
+      'text-brand-text',
+      'bg-transparent',
+    )
+  })
+})
+
 describe('ButtonLink', () => {
   it('brand 변형도 같은 알약 모양을 쓴다', () => {
     render(

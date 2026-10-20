@@ -21,23 +21,25 @@ function FeatureTiles() {
   return (
     <section
       aria-labelledby="landing-features-title"
-      className="bg-surface px-4 py-16 sm:py-24"
+      className="bg-primary px-4 py-16 sm:py-24"
     >
       <div className="mx-auto max-w-5xl">
         <h2
           id="landing-features-title"
-          className="text-center text-4xl font-semibold sm:text-5xl"
+          className="text-center text-4xl font-semibold text-cocoa sm:text-5xl"
         >
-          맘핏이 함께해요
+          MomFit이 함께해요
         </h2>
         <ul className="mt-12 grid gap-4 sm:grid-cols-2">
           {FEATURES.map((feature) => (
             <li
               key={feature.title}
-              className="flex min-h-44 flex-col rounded-3xl bg-white p-8 sm:min-h-60 sm:p-10"
+              className="flex min-h-44 flex-col rounded-3xl bg-white p-8 ring-1 ring-primary-strong sm:min-h-60 sm:p-10"
             >
-              <h3 className="text-3xl font-semibold">{feature.title}</h3>
-              <p className="mt-3 text-[17px] text-ink-secondary">
+              <h3 className="text-3xl font-semibold text-cocoa">
+                {feature.title}
+              </h3>
+              <p className="mt-3 text-[17px] text-cocoa-secondary">
                 {feature.description}
               </p>
             </li>
