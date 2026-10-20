@@ -1,13 +1,17 @@
-import { useLocation } from 'react-router-dom'
-import { LoginForm } from '../features/auth'
+import { useLocation, useSearchParams } from 'react-router-dom'
+import { kakaoErrorMessage, LoginForm } from '../features/auth'
 import PageShell from '../shared/components/PageShell'
 
 function LoginPage() {
   const state = useLocation().state as { notice?: string } | null
+  const [searchParams] = useSearchParams()
 
   return (
     <PageShell title="로그인" description="맘핏 계정으로 로그인하세요.">
-      <LoginForm notice={state?.notice} />
+      <LoginForm
+        notice={state?.notice}
+        providerError={kakaoErrorMessage(searchParams.get('error'))}
+      />
     </PageShell>
   )
 }

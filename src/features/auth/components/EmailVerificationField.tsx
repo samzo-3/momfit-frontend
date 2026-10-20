@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '../../../shared/api'
-import Button from '../../../shared/components/Button'
-import Notice from '../../../shared/components/Notice'
+import FieldStatus from './FieldStatus'
+import FieldAction from '../../../shared/components/FieldAction'
+import StatusIcon from '../../../shared/components/StatusIcon'
 import TextField from '../../../shared/components/TextField'
 import { errorMessage } from '../form-errors'
 import { useSendEmailCode, useVerifyEmailCode } from '../hooks/useAuthMutations'
@@ -37,6 +38,9 @@ function EmailVerificationField({
   const [step, setStep] = useState<Step>('input')
   const [cooldown, setCooldown] = useState(0)
   const [localError, setLocalError] = useState<string | null>(null)
+  // 입력칸을 한 번 벗어난 뒤부터 형식 오류를 실시간으로 보여준다.
+  const [emailTouched, setEmailTouched] = useState(false)
+  const [codeTouched, setCodeTouched] = useState(false)
   const sendCode = useSendEmailCode()
   const verifyCode = useVerifyEmailCode()
 
@@ -105,76 +109,114 @@ function EmailVerificationField({
   }
 
   const shownError = localError ?? error ?? null
+  const liveEmailError =
+    emailTouched && email.trim() ? validateEmail(email) : null
+  const liveCodeError =
+    codeTouched && code && !/^\d{6}$/.test(code)
+      ? '6자리 숫자 인증 코드를 입력해 주세요.'
+      : null
+  const emailValid = email.trim() !== '' && !validateEmail(email)
+
+  // 이메일 칸 안 오른쪽: 아이디 중복 확인과 같은 방식으로 상태에 따라 버튼 → 로딩 → 체크로 바뀐다.
+  const loading = (message: string) => (
+    <>
+      <StatusIcon kind="loading" />
+      <span role="status" className="sr-only">
+        {message}
+      </span>
+    </>
+  )
+  // 형식 오류는 칸 안 느낌표 툴팁으로 보여준다. (형식이 틀리면 발송·확인 버튼이 없어 자리가 겹치지 않는다)
+  const emailFormatTip = step !== 'sent' && !shownError && !!liveEmailError
+  const codeFormatTip = !shownError && !!liveCodeError
+  const codeComplete = /^\d{6}$/.test(code)
+  const emailTrailing = emailFormatTip ? (
+    <FieldStatus label="이메일" error={liveEmailError} valid={false} />
+  ) : step === 'verified' ? (
+    <div className="flex items-center gap-1">
+      <StatusIcon kind="success" />
+      <span role="status" className="sr-only">
+        이메일 인증이 완료되었습니다.
+      </span>
+      <FieldAction aria-label="다른 이메일로 변경" onClick={handleChangeEmail}>
+        변경
+      </FieldAction>
+    </div>
+  ) : sendCode.isPending ? (
+    loading('인증 코드를 보내는 중입니다.')
+  ) : step === 'sent' ? (
+    <FieldAction onClick={handleSend} disabled={cooldown > 0}>
+      {cooldown > 0 ? `재발송 (${cooldown}초)` : '재발송'}
+    </FieldAction>
+  ) : emailValid ? (
+    <FieldAction onClick={handleSend}>인증 코드 발송</FieldAction>
+  ) : null
 
   return (
-    <fieldset className="flex flex-col gap-3">
+    <fieldset className="flex flex-col gap-4">
       <legend className="mb-3 text-sm font-medium">이메일 인증</legend>
       <TextField
         label="이메일"
+        floatingLabel
         type="email"
         autoComplete="email"
         value={email}
-        onChange={(event) => setEmail(event.target.value)}
+        placeholder="example@email.com"
+        onChange={(event) => {
+          setEmail(event.target.value)
+          setLocalError(null)
+        }}
+        onBlur={() => setEmailTouched(true)}
         disabled={step !== 'input'}
-        error={step === 'sent' ? null : shownError}
+        error={step === 'sent' ? null : (shownError ?? liveEmailError)}
         hint={
           purpose === 'password_reset' && step === 'sent'
             ? '가입된 이메일이면 인증 코드가 발송됩니다.'
             : undefined
         }
+        hideErrorMessage={emailFormatTip}
+        trailing={emailTrailing}
       />
 
-      {step === 'input' && (
-        <Button
-          variant="secondary"
-          onClick={handleSend}
-          disabled={sendCode.isPending}
-        >
-          인증 코드 발송
-        </Button>
-      )}
-
       {step === 'sent' && (
-        <>
+        <div className="flex flex-col gap-2">
           <TextField
             label="인증 코드"
+            floatingLabel
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={6}
             value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
-            error={shownError}
+            placeholder="6자리 숫자"
+            onChange={(event) => {
+              setCode(event.target.value.replace(/\D/g, ''))
+              setLocalError(null)
+            }}
+            onBlur={() => setCodeTouched(true)}
+            error={shownError ?? liveCodeError}
+            hideErrorMessage={codeFormatTip}
             hint="메일로 받은 6자리 숫자를 입력해 주세요. (10분 안에 입력)"
+            trailing={
+              verifyCode.isPending ? (
+                loading('인증 코드를 확인하는 중입니다.')
+              ) : codeFormatTip ? (
+                <FieldStatus
+                  label="인증 코드"
+                  error={liveCodeError}
+                  valid={false}
+                />
+              ) : codeComplete ? (
+                <FieldAction onClick={handleVerify}>인증 확인</FieldAction>
+              ) : null
+            }
           />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              onClick={handleVerify}
-              disabled={verifyCode.isPending}
-            >
-              인증 확인
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleSend}
-              disabled={sendCode.isPending || cooldown > 0}
-            >
-              {cooldown > 0 ? `재발송 (${cooldown}초)` : '재발송'}
-            </Button>
-            <Button variant="secondary" size="sm" onClick={handleChangeEmail}>
-              이메일 변경
-            </Button>
-          </div>
-        </>
-      )}
-
-      {step === 'verified' && (
-        <div className="flex flex-wrap items-center gap-3">
-          <Notice kind="success">이메일 인증이 완료되었습니다.</Notice>
-          <Button variant="secondary" size="sm" onClick={handleChangeEmail}>
-            다른 이메일로 변경
-          </Button>
+          <button
+            type="button"
+            onClick={handleChangeEmail}
+            className="self-start text-sm text-link hover:underline"
+          >
+            이메일 변경
+          </button>
         </div>
       )}
     </fieldset>

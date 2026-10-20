@@ -70,12 +70,17 @@ export function clearSession() {
   useAuthStore.getState().clear()
 }
 
-export async function logout(): Promise<void> {
+// beforeClear: 인증 상태를 지우기 직전에 실행한다. (보호 화면의 가드가 지워진 상태를 보고
+// 로그인 화면으로 보내기 전에, 공개 화면으로 먼저 이동하는 데 쓴다)
+export async function logout(
+  beforeClear?: () => void | Promise<void>,
+): Promise<void> {
   try {
     await requestLogout()
   } catch {
     // 서버 요청이 실패해도 이 기기의 세션은 지운다.
   } finally {
+    await beforeClear?.()
     useAuthStore.getState().clear()
   }
 }

@@ -216,4 +216,16 @@ describe('logout', () => {
 
     expect(useAuthStore.getState().status).toBe('unauthenticated')
   })
+
+  it('상태를 비우기 직전에 beforeClear를 실행한다', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(204))
+    let statusInHook: string | null = null
+
+    await logout(() => {
+      statusInHook = useAuthStore.getState().status
+    })
+
+    expect(statusInHook).toBe('authenticated')
+    expect(useAuthStore.getState().status).toBe('unauthenticated')
+  })
 })

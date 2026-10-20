@@ -3,6 +3,7 @@ import type {
   EmailPurpose,
   EmailVerificationResult,
   ExerciseLevel,
+  OnboardingInput,
   ProfilePatch,
   SignupInput,
   TokenResponse,
@@ -151,4 +152,22 @@ export async function requestUpdateProfile(patch: ProfilePatch): Promise<User> {
 
 export function requestDeleteAccount(): Promise<void> {
   return apiRequest('/users/me', { method: 'DELETE' })
+}
+
+// 카카오로 처음 가입한 사용자가 동의와 초기 프로필을 제출한다.
+export async function requestOnboarding(input: OnboardingInput): Promise<User> {
+  return toUser(
+    await apiRequest<UserResponse>('/users/me/onboarding', {
+      method: 'POST',
+      body: {
+        nickname: input.nickname,
+        due_date: input.dueDate,
+        exercise_level: input.exerciseLevel,
+        consents: {
+          terms: input.consents.terms,
+          health_data: input.consents.healthData,
+        },
+      },
+    }),
+  )
 }
