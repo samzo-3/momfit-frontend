@@ -36,12 +36,14 @@
 | POST | `/auth/password/reset` | 이메일 인증 후 비밀번호 재설정 | - |
 | GET | `/auth/kakao/login` | 카카오 인가 페이지로 302 (state 쿠키 설정) | - |
 | GET | `/auth/kakao/callback` | 코드 교환, 사용자 upsert, refresh 쿠키 설정, 프론트로 302 | - |
+| GET | `/auth/restore` | 탈퇴 유예 계정의 삭제 예정 일정 조회 | 복구 쿠키 |
+| POST | `/auth/restore` | 탈퇴 유예 계정 복구, 로그인 처리 | 복구 쿠키 |
 | POST | `/auth/refresh` | access 발급, refresh 교체 | 쿠키 |
 | POST | `/auth/logout` | refresh 폐기, 쿠키 삭제 | 쿠키 |
 | GET | `/users/me` | 내 프로필과 온보딩 상태 | Bearer |
 | PATCH | `/users/me` | 프로필 수정 | Bearer |
 | POST | `/users/me/onboarding` | 카카오 가입자의 동의·초기 프로필 제출 | Bearer |
-| DELETE | `/users/me` | 회원 탈퇴 (카카오 계정은 연결 해제 포함) | Bearer |
+| DELETE | `/users/me` | 회원 탈퇴 처리(유예 기간 후 삭제). 카카오 계정은 연결 해제 포함 | Bearer |
 
 보호 API는 `Authorization: Bearer <access_token>` 헤더를 쓴다. 온보딩이 끝나지 않은 사용자가 `/users/me`, `/users/me/onboarding`, `/auth/*` 이외의 API를 호출하면 `403 ONBOARDING_REQUIRED`를 반환한다.
 
@@ -59,12 +61,35 @@
 
 ### `DELETE /users/me`
 
-- 본문 없이 `204`를 반환한다. 되돌릴 수 없다.
-- 사용자 프로필과 건강정보(`due_date`, `exercise_level`), 로그인 수단, refresh 토큰, 해당 이메일의 인증 코드 기록을 모두 삭제한다.
-- 삭제와 함께 이 기기의 refresh 쿠키도 삭제한다. 이미 발급된 access 토큰은 사용자가 없으므로 `401 UNAUTHORIZED`가 된다.
-- 같은 아이디·이메일로 다시 가입할 수 있다.
-- 카카오 계정은 DB 삭제를 마친 뒤 서비스 앱 어드민 키로 연결 해제(unlink)를 호출한다. 호출이 실패해도 탈퇴는 유지되고 서버 로그에만 남긴다. 사용자가 카카오 계정 설정에서 직접 연결을 끊을 수 있다.
-- 프론트는 실수를 막기 위해 확인 모달을 거친 뒤에 요청한다. 로그아웃도 같은 방식으로 확인을 받는다.
+- 본문 없이 `204`를 반환한다.
+- **계정을 바로 지우지 않는다.** `users.status`를 `withdrawn`으로, `withdrawn_at`을 현재 시각으로 바꾸고 데이터(프로필, 건강정보 `due_date`·`exercise_level`, 로그인 수단)는 **그대로 둔다.** 이 기간을 *탈퇴 유예*라고 한다.
+- 유예 기간은 서버 설정 `ACCOUNT_GRACE_DAYS`(기본 **30일**)이다. 기간이 지나면 서버가 프로필, 건강정보, 로그인 수단, refresh 토큰, 이메일 인증 기록을 **모두 삭제한다.** 삭제는 서버의 주기 작업(`ACCOUNT_PURGE_INTERVAL_HOURS`, 기본 6시간)과 수동 스크립트(`python -m scripts.purge_withdrawn`)가 같은 로직으로 한다.
+- 탈퇴 처리와 함께 모든 refresh 토큰을 폐기하고 이 기기의 refresh 쿠키를 삭제한다. 이미 발급된 access 토큰도 사용자 상태를 확인하므로 `401 UNAUTHORIZED`가 된다.
+- 유예 기간에는 같은 아이디·이메일·카카오 계정이 계정에 묶여 있으므로 **다시 가입할 수 없다.**(`LOGIN_ID_EXISTS`, `EMAIL_EXISTS`, 아이디 중복 확인은 사용 불가) 삭제된 뒤에는 다시 가입할 수 있다.
+- 카카오 계정은 탈퇴 처리를 마친 뒤 서비스 앱 어드민 키로 연결 해제(unlink)를 호출한다. 호출이 실패해도 탈퇴는 유지되고 서버 로그에만 남긴다. 복구한 뒤 카카오로 다시 로그인하면 동의 화면이 나올 수 있다.
+- 프론트는 실수를 막기 위해 확인 모달을 거친 뒤에 요청하며, 모달과 화면에 "30일 안에 다시 로그인하면 복구할 수 있다"는 점을 알린다. 로그아웃도 같은 방식으로 확인을 받는다.
+
+## 탈퇴 유예 계정의 복구
+
+유예 기간에 탈퇴한 계정으로 로그인하면 로그인 토큰을 내주지 않고 복구 화면(`/account/restore`)으로 보낸다. 비밀번호(또는 카카오 인증)를 확인한 뒤에만 알려 주므로, 비밀번호 없이 계정 존재나 탈퇴 여부가 드러나지 않는다.
+
+1. **아이디 로그인**: 비밀번호가 맞고 계정이 탈퇴 유예 중이면 `403 ACCOUNT_WITHDRAWN`을 반환하고 **복구용 쿠키**(`restore_token`, httpOnly, `Path=/api/auth`, 10분)를 내려준다. 비밀번호가 틀리면 평소처럼 `401 INVALID_CREDENTIALS`다.
+2. **카카오 로그인**: 콜백에서 같은 쿠키를 내려주고 로그인 대신 프론트 `/account/restore`로 302 한다.
+3. 프론트는 `/account/restore`에서 `GET /auth/restore`로 일정을 보여주고, 사용자가 선택하면 `POST /auth/restore`로 복구한다.
+
+### `GET /auth/restore`
+
+복구용 쿠키로 탈퇴 일정을 조회한다. 시각은 UTC(Z)다.
+
+```jsonc
+{ "withdrawn_at": "2026-10-20T03:00:00Z", "purge_at": "2026-11-19T03:00:00Z" }
+```
+
+### `POST /auth/restore`
+
+계정을 되살리고(`status=active`, `withdrawn_at=null`) 로그인 처리한다. 응답은 로그인과 같다. (`200`, access 토큰 본문, refresh 쿠키 설정, 복구용 쿠키 삭제)
+
+두 API 모두 복구용 쿠키가 없거나 만료됐거나, 계정이 이미 활성이거나, 유예 기간이 지났거나, 삭제된 계정이면 `401 RESTORE_INVALID`다. 복구 토큰은 이 두 API에서만 쓸 수 있고 다른 API의 Bearer로는 쓸 수 없다.
 
 ## 로컬 가입 흐름
 
@@ -232,6 +257,8 @@ pregnancy_week = 임신 일수 ÷ 7 (내림)        # "28주 3일"이면 28
 | 401 | `REFRESH_INVALID` | 인증 상태를 초기화하고 `/login`으로 이동 |
 | 401 | `UNAUTHORIZED` | Bearer 토큰이 없거나 유효하지 않음 (만료는 `TOKEN_EXPIRED`). 인증 상태를 초기화하고 `/login`으로 이동 |
 | 401 | `INVALID_CREDENTIALS` | 폼에 에러 표시. 아이디가 없는 경우와 비밀번호가 틀린 경우에 같은 메시지를 쓴다 |
+| 403 | `ACCOUNT_WITHDRAWN` | 탈퇴 유예 중인 계정의 로그인. 오류 문구 없이 `/account/restore`로 이동 |
+| 401 | `RESTORE_INVALID` | 복구 요청이 만료됐거나 복구할 수 없는 계정. 안내와 로그인 링크 표시 |
 | 400 | `CODE_INVALID` | 인증 코드 입력 에러 표시 |
 | 400 | `CODE_EXPIRED` | 코드 재발송 안내 |
 | 400 | `EMAIL_TOKEN_INVALID` | 이메일 인증을 처음부터 다시 진행 |
@@ -255,7 +282,7 @@ pregnancy_week = 임신 일수 ÷ 7 (내림)        # "28주 3일"이면 28
 - 이메일 발송은 교체 가능한 인터페이스로 만든다. 개발과 테스트는 콘솔 출력 메일러, 운영은 SES 등 발송 서비스를 쓴다.
 - 인증 코드는 MySQL 테이블(해시, 만료 시각, 시도 횟수)에 저장한다.
 - refresh token은 서버에 해시로 저장해 rotation과 재사용 탐지, 비밀번호 재설정·탈퇴 시 일괄 폐기를 지원한다.
-- 회원 탈퇴 시 건강정보를 포함한 사용자 데이터를 삭제하고, 카카오 계정은 연결 해제(unlink)를 호출한다.
+- 회원 탈퇴는 유예 기간(30일) 동안 데이터를 그대로 두었다가 기간이 지나면 건강정보를 포함한 모든 사용자 데이터를 삭제한다. 카카오 계정은 탈퇴 시 연결 해제(unlink)를 호출한다.
 
 ## 미정 / 이후 범위
 
