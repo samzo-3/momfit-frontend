@@ -9,7 +9,7 @@ function LoginPage() {
   return (
     <PageShell
       title="로그인"
-      description="MomFit 계정으로 로그인하세요."
+      description="momfit 계정으로 로그인하세요."
       tone="warm"
     >
       <LoginForm

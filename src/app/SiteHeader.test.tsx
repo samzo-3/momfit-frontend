@@ -54,7 +54,7 @@ describe('SiteHeader', () => {
     signOut()
     renderApp('/login')
 
-    expect(screen.getByRole('link', { name: 'MomFit' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'momfit' })).toHaveAttribute(
       'href',
       '/',
     )

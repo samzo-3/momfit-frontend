@@ -31,7 +31,7 @@ function SiteHeader() {
           to="/"
           className="text-[17px] font-semibold tracking-tight text-cocoa"
         >
-          MomFit
+          momfit
         </Link>
         {isAuthenticated && (
           <div className="flex items-center gap-4 text-sm">

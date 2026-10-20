@@ -4,7 +4,7 @@ function FinalCta({ actions }: { actions: ReactNode }) {
   return (
     <section
       aria-labelledby="landing-cta-title"
-      className="bg-primary px-4 py-16 text-center sm:py-24"
+      className="bg-primary-soft px-4 py-16 text-center sm:py-24"
     >
       <h2
         id="landing-cta-title"

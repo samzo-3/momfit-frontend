@@ -19,7 +19,7 @@ function LandingHero({ actions }: { actions: ReactNode }) {
         집에서 가볍게.
       </h1>
       <p className="mx-auto mt-6 max-w-xl text-xl text-balance text-cocoa-secondary">
-        웹캠으로 자세를 살피고 한 단계씩 알려주는 홈트레이닝, MomFit.
+        웹캠으로 자세를 살피고 한 단계씩 알려주는 홈트레이닝, momfit.
       </p>
       {/* 로그인 상태가 정해지기 전에도 높이를 비워 두어 화면이 흔들리지 않게 한다. */}
       <div className="mt-10 flex min-h-14 flex-wrap items-center justify-center gap-4">

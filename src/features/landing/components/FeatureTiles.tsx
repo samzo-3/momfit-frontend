@@ -28,7 +28,7 @@ function FeatureTiles() {
           id="landing-features-title"
           className="text-center text-4xl font-semibold text-cocoa sm:text-5xl"
         >
-          MomFit이 함께해요
+          momfit이 함께해요
         </h2>
         <ul className="mt-12 grid gap-4 sm:grid-cols-2">
           {FEATURES.map((feature) => (
