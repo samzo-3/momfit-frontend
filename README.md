@@ -37,7 +37,8 @@ API_PROXY_TARGET=http://localhost:8000
 ```text
 momfit-frontend/
 ├── public/
-│   └── favicon.svg
+│   └── audio/
+│   │   └── audio.mp3
 ├── docs/
 │   ├── architecture.md
 │   ├── auth-api.md
