@@ -29,6 +29,13 @@ export interface ProfilePatch {
   exerciseLevel?: ExerciseLevel
 }
 
+export interface OnboardingInput {
+  nickname: string
+  dueDate: string
+  exerciseLevel: ExerciseLevel
+  consents: { terms: boolean; healthData: boolean }
+}
+
 export type EmailPurpose = 'signup' | 'password_reset'
 
 export interface SignupInput {

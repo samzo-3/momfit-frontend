@@ -44,7 +44,7 @@ describe('보호 라우트 (/home)', () => {
   it('온보딩을 마치지 않았으면 보호 경로 대신 /onboarding으로 보낸다', () => {
     signIn({ onboardingCompleted: false })
     const router = renderApp('/home')
-    expect(heading('온보딩')).toBeInTheDocument()
+    expect(heading('추가 정보 입력')).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/onboarding')
   })
 })
@@ -123,7 +123,7 @@ describe('/onboarding', () => {
   it('온보딩 전 사용자는 볼 수 있다', () => {
     signIn({ onboardingCompleted: false })
     renderApp('/onboarding')
-    expect(heading('온보딩')).toBeInTheDocument()
+    expect(heading('추가 정보 입력')).toBeInTheDocument()
   })
 
   it('비로그인 사용자는 /login으로 보낸다', () => {

@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom'
 import { OnboardingRoute, PublicOnlyRoute, RequireAuth } from '../features/auth'
 import AppLayout from './AppLayout'
+import AuthCallbackPage from '../pages/AuthCallbackPage'
 import HomePage from '../pages/HomePage'
 import LandingPage from '../pages/LandingPage'
 import LoginPage from '../pages/LoginPage'
@@ -16,6 +17,8 @@ export const routes: RouteObject[] = [
     children: [
       // 누구나 볼 수 있는 첫 화면
       { path: '/', element: <LandingPage /> },
+      // 카카오 로그인 후 백엔드가 보내는 곳. 아직 로그인 상태가 아니므로 가드 밖에 둔다.
+      { path: '/auth/callback', element: <AuthCallbackPage /> },
       {
         // 로그인하지 않은 사용자용. 로그인한 사용자는 /home으로 보낸다.
         element: <PublicOnlyRoute />,

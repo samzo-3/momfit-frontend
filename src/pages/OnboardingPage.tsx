@@ -1,10 +1,18 @@
+import { OnboardingForm, useAuth } from '../features/auth'
 import PageShell from '../shared/components/PageShell'
 
-// 화면 구현 전까지 라우팅 대상으로만 쓰는 자리 표시 화면이다.
 function OnboardingPage() {
+  const { user } = useAuth()
+
+  // OnboardingRoute가 로그인 상태를 보장하지만, 타입상 user는 null일 수 있다.
+  if (!user) return null
+
   return (
-    <PageShell title="온보딩">
-      <p className="text-ink-secondary">준비 중입니다.</p>
+    <PageShell
+      title="추가 정보 입력"
+      description="카카오 계정으로 가입을 마무리하려면 몇 가지 정보가 필요해요."
+    >
+      <OnboardingForm user={user} />
     </PageShell>
   )
 }

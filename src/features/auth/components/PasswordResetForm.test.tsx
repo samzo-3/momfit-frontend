@@ -89,8 +89,11 @@ describe('비밀번호 재설정 화면', () => {
     await user.click(button('비밀번호 변경'))
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
-    expect(screen.getByRole('status')).toHaveTextContent(
-      '비밀번호가 변경되었습니다.',
+    // 라우터 상태가 바뀐 시점과 화면이 갱신되는 시점 사이에 틈이 있으므로 화면 기준으로 기다린다.
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        '비밀번호가 변경되었습니다.',
+      ),
     )
     expect(
       JSON.parse(
@@ -114,11 +117,10 @@ describe('비밀번호 재설정 화면', () => {
     await user.type(screen.getByLabelText('새 비밀번호 확인'), 'short1')
     await user.click(button('비밀번호 변경'))
 
-    expect(
-      screen.getByText('8자 이상, 영문과 숫자를 포함해 주세요.', {
-        selector: '[role=alert]',
-      }),
-    ).toBeInTheDocument()
+    // 안내는 아이콘과 함께 role=alert 요소 안에 있다. (힌트에도 비슷한 문구가 있어 alert로 구분한다)
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      '8자 이상, 영문과 숫자를 포함해 주세요.',
+    )
     expect(requestsTo(fetchMock, 'POST /api/auth/password/reset')).toHaveLength(
       0,
     )
@@ -159,7 +161,9 @@ describe('비밀번호 재설정 화면', () => {
     expect(
       await screen.findByText('EMAIL_TOKEN_INVALID 메시지'),
     ).toBeInTheDocument()
-    expect(button('인증 코드 발송')).toBeInTheDocument()
+    // 이메일 인증을 처음부터 다시 시작하고, 새 비밀번호 입력은 사라진다.
+    expect(screen.getByLabelText('이메일')).toBeEnabled()
+    expect(screen.getByLabelText('이메일')).toHaveValue('')
     expect(screen.queryByLabelText('새 비밀번호')).not.toBeInTheDocument()
   })
 })

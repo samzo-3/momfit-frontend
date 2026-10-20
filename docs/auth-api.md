@@ -63,7 +63,7 @@
 - 사용자 프로필과 건강정보(`due_date`, `exercise_level`), 로그인 수단, refresh 토큰, 해당 이메일의 인증 코드 기록을 모두 삭제한다.
 - 삭제와 함께 이 기기의 refresh 쿠키도 삭제한다. 이미 발급된 access 토큰은 사용자가 없으므로 `401 UNAUTHORIZED`가 된다.
 - 같은 아이디·이메일로 다시 가입할 수 있다.
-- 카카오 계정의 연결 해제(unlink)는 카카오 로그인(auth-05) 구현 때 추가한다.
+- 카카오 계정은 DB 삭제를 마친 뒤 서비스 앱 어드민 키로 연결 해제(unlink)를 호출한다. 호출이 실패해도 탈퇴는 유지되고 서버 로그에만 남긴다. 사용자가 카카오 계정 설정에서 직접 연결을 끊을 수 있다.
 - 프론트는 실수를 막기 위해 확인 모달을 거친 뒤에 요청한다. 로그아웃도 같은 방식으로 확인을 받는다.
 
 ## 로컬 가입 흐름
@@ -113,6 +113,19 @@
 - 첫 로그인이면 계정을 만들고 `onboarding_completed=false`로 둔다. 수집하는 값은 `provider_user_id`와 닉네임뿐이다.
 - 실패하면 백엔드가 `/login?error=<code>`로 보낸다. 코드는 `access_denied`(사용자 취소), `state_mismatch`, `provider_error`다.
 - 카카오 콘솔의 Redirect URI는 `localhost`와 운영 도메인만 등록한다. Vercel 프리뷰 URL에서는 카카오 로그인을 테스트할 수 없다.
+- Redirect URI는 프록시를 거치는 **프론트 주소 기준**이다. 로컬은 `http://localhost:5174/api/auth/kakao/callback`처럼 등록하고, 백엔드의 `KAKAO_REDIRECT_URI`와 정확히 같아야 한다.
+- 인가 요청에는 `scope=profile_nickname`만 보낸다. 콘솔의 동의 항목에서 닉네임을 켜야 한다. 닉네임이 없거나 비어 있으면 "카카오 사용자", 20자를 넘으면 앞 20자로 줄인다.
+- `state`는 서버가 만든 값을 쿠키(`kakao_state`, `Path=/api/auth/kakao`, 10분, httpOnly)와 요청에 함께 담고 콜백에서 둘을 비교한다. 취소 응답에도 `state`가 오므로 **state 검증을 먼저** 하고, 한 번 쓰면 쿠키를 지운다.
+- 카카오 access 토큰은 사용자 정보를 한 번 조회하는 데만 쓰고 저장하지 않는다. 이미 가입한 사용자의 닉네임은 로그인할 때 덮어쓰지 않는다.
+- 프론트의 `/auth/callback`은 앱 시작 시의 세션 복구(refresh → `GET /users/me`) 결과를 기다렸다가, 온보딩을 마쳤으면 `/home`, 아니면 `/onboarding`으로 보낸다. 세션을 만들지 못했으면 `/login?error=provider_error`로 보낸다.
+- `/login?error=` 안내 문구: `access_denied`는 "카카오 로그인을 취소하셨어요.", `state_mismatch`와 `provider_error`는 각각 다시 시도를 안내한다. 알 수 없는 코드는 일반 안내를 보여준다.
+
+### 온보딩 (`POST /users/me/onboarding`)
+
+- 카카오로 처음 가입한 사용자가 닉네임, `due_date`, `exercise_level`, `consents`를 제출한다. 규칙은 로컬 가입과 같다(두 동의 모두 `true`, 예정일은 오늘부터 280일 이내).
+- 성공하면 `onboarding_completed=true`가 되고 `GET /users/me`와 같은 형식의 사용자 정보를 반환한다.
+- 이미 온보딩을 마친 계정(로컬 가입자 포함)이 제출하면 `409 ONBOARDING_ALREADY_COMPLETED`다. 프론트는 이때 최신 사용자 정보를 불러와 홈으로 보낸다.
+- 정해진 항목 외의 값을 보내면 `422`다.
 
 ## 스키마
 
@@ -224,6 +237,7 @@ pregnancy_week = 임신 일수 ÷ 7 (내림)        # "28주 3일"이면 28
 | 400 | `EMAIL_TOKEN_INVALID` | 이메일 인증을 처음부터 다시 진행 |
 | 403 | `ONBOARDING_REQUIRED` | `/onboarding`으로 이동 |
 | 409 | `LOGIN_ID_EXISTS` | 가입 폼 에러 |
+| 409 | `ONBOARDING_ALREADY_COMPLETED` | 최신 사용자 정보를 불러와 홈으로 이동 |
 | 409 | `EMAIL_EXISTS` | 가입 폼 에러 |
 | 422 | `VALIDATION_ERROR` | 필드별 에러 표시 |
 | 429 | `RATE_LIMITED` | 잠시 후 다시 시도하라는 안내. 현재는 이메일 코드 발송 제한에만 쓴다 |
