@@ -105,12 +105,17 @@ function PasswordResetForm() {
             }}
           />
           {formError && <Notice kind="error">{formError}</Notice>}
-          <Button type="submit" fullWidth disabled={resetPassword.isPending}>
+          <Button
+            type="submit"
+            variant="brand"
+            fullWidth
+            disabled={resetPassword.isPending}
+          >
             {resetPassword.isPending ? '변경 중...' : '비밀번호 변경'}
           </Button>
         </>
       )}
-      <TextLink to="/login" className="text-center text-sm">
+      <TextLink to="/login" tone="brand" className="text-center text-sm">
         로그인으로 돌아가기
       </TextLink>
     </form>

@@ -316,7 +316,7 @@ function SignupForm() {
         }
       />
 
-      <hr className="border-line" />
+      <hr className="border-primary-strong" />
 
       <EmailVerificationField
         key={verificationKey}
@@ -372,12 +372,20 @@ function SignupForm() {
       />
 
       {formError && <Notice kind="error">{formError}</Notice>}
-      <Button type="submit" fullWidth disabled={signup.isPending}>
+      <Button
+        type="submit"
+        variant="brand"
+        fullWidth
+        disabled={signup.isPending}
+      >
         {signup.isPending ? '가입 중...' : '가입하기'}
       </Button>
       <SocialLoginSection />
-      <p className="text-center text-sm text-ink-secondary">
-        이미 계정이 있나요? <TextLink to="/login">로그인</TextLink>
+      <p className="text-center text-sm text-cocoa-secondary">
+        이미 계정이 있나요?{' '}
+        <TextLink to="/login" tone="brand">
+          로그인
+        </TextLink>
       </p>
     </form>
   )

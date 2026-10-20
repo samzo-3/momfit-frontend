@@ -4,6 +4,7 @@ import Button from '../../../shared/components/Button'
 import ConfirmDialog from '../../../shared/components/ConfirmDialog'
 import { clearSession } from '../auth-session'
 import { errorMessage } from '../form-errors'
+import { WITHDRAWAL_GRACE_DAYS } from '../withdrawal'
 import { useDeleteAccount } from '../hooks/useAuthMutations'
 
 // 되돌릴 수 없는 동작이므로, 모달로 한 번 더 확인을 받은 뒤에만 요청을 보낸다.
@@ -35,12 +36,16 @@ function DeleteAccountSection() {
       className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6"
     >
       <div className="flex flex-col gap-3 lg:gap-1">
-        <h2 id="delete-account-title" className="text-lg font-semibold">
+        <h2
+          id="delete-account-title"
+          className="text-lg font-semibold text-cocoa"
+        >
           회원 탈퇴
         </h2>
-        <p className="text-[15px] text-ink-secondary">
-          탈퇴하면 계정과 건강정보(출산 예정일, 운동 경험 등)가 삭제되며 되돌릴
-          수 없어요.
+        <p className="text-[15px] text-cocoa-secondary">
+          탈퇴하면 {WITHDRAWAL_GRACE_DAYS}일 동안은 다시 로그인해 복구할 수
+          있고, 그 이후에는 계정과 건강정보(출산 예정일, 운동 경험 등)가 완전히
+          삭제돼요.
         </p>
       </div>
       <Button
@@ -54,7 +59,7 @@ function DeleteAccountSection() {
       <ConfirmDialog
         open={confirming}
         title="정말 탈퇴하시겠어요?"
-        description="계정과 건강정보가 삭제되며 되돌릴 수 없어요."
+        description={`${WITHDRAWAL_GRACE_DAYS}일 안에 다시 로그인하면 복구할 수 있어요. 그 이후에는 계정과 건강정보가 삭제되며 되돌릴 수 없어요.`}
         confirmLabel={deleteAccount.isPending ? '탈퇴 중...' : '탈퇴하기'}
         tone="danger"
         pending={deleteAccount.isPending}

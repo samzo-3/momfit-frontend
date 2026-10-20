@@ -24,7 +24,7 @@ function ConsentFields({
           type="checkbox"
           checked={terms}
           onChange={(event) => onTermsChange(event.target.checked)}
-          className="mt-0.5 size-5 accent-accent"
+          className="mt-0.5 size-5 shrink-0 accent-brand"
         />
         이용약관에 동의합니다. (필수)
       </label>
@@ -33,7 +33,7 @@ function ConsentFields({
           type="checkbox"
           checked={healthData}
           onChange={(event) => onHealthDataChange(event.target.checked)}
-          className="mt-0.5 size-5 accent-accent"
+          className="mt-0.5 size-5 shrink-0 accent-brand"
         />
         건강정보(출산 예정일, 운동 경험) 수집·이용에 동의합니다. (필수)
       </label>

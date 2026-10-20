@@ -989,7 +989,7 @@ describe('회원가입 - 사용 중인 아이디 툴팁', () => {
     expect(screen.getByRole('tooltip')).toHaveClass(
       'left-full',
       'bg-white',
-      'text-ink',
+      'text-cocoa',
     )
   })
 

@@ -18,13 +18,40 @@ describe('routes', () => {
       screen.getByRole('link', { name: '홈으로 돌아가기' }),
     ).toHaveAttribute('href', '/')
   })
+
+  it('404 화면은 살구색 바탕에 대표 색 버튼이다', () => {
+    renderApp('/no-such-page')
+
+    expect(screen.getByRole('main')).toHaveClass('bg-primary-soft', 'flex-1')
+    expect(screen.getByRole('link', { name: '홈으로 돌아가기' })).toHaveClass(
+      'bg-brand',
+    )
+  })
+
+  it.each([
+    ['/login', '로그인'],
+    ['/signup', '회원가입'],
+    ['/password/reset', '비밀번호 재설정'],
+  ])('%s 화면은 살구색 바탕이다', (path, title) => {
+    signOut()
+    renderApp(path)
+
+    expect(heading(title)).toHaveClass('text-cocoa')
+    expect(screen.getByRole('main')).toHaveClass('bg-primary-soft')
+  })
+
+  it('가입 마무리와 운동 고르기 화면도 살구색 바탕이다', () => {
+    signIn({ onboardingCompleted: false })
+    renderApp('/onboarding')
+    expect(screen.getByRole('main')).toHaveClass('bg-primary-soft')
+  })
 })
 
 describe('보호 라우트 (/home)', () => {
   it('로그인한 사용자는 /home에서 홈 화면을 본다', () => {
     signIn()
     renderApp('/home')
-    expect(heading('맘핏')).toBeInTheDocument()
+    expect(heading('홈')).toBeInTheDocument()
   })
 
   it('세션을 복구하는 동안에는 로딩 화면을 보여준다', () => {
@@ -108,7 +135,7 @@ describe('로그인 상태에 따른 공개 경로', () => {
       signIn()
       const router = renderApp(path)
       expect(router.state.location.pathname).toBe('/home')
-      expect(heading('맘핏')).toBeInTheDocument()
+      expect(heading('홈')).toBeInTheDocument()
     },
   )
 

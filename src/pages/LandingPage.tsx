@@ -13,7 +13,7 @@ function LandingPage() {
   const { status, user } = useAuth()
 
   const startButton = (
-    <ButtonLink to="/signup" size="lg">
+    <ButtonLink to="/signup" variant="brand" size="lg">
       시작하기
     </ButtonLink>
   )
@@ -21,7 +21,7 @@ function LandingPage() {
   const visitorActions = (
     <>
       {startButton}
-      <ButtonLink to="/login" variant="secondary" size="lg">
+      <ButtonLink to="/login" variant="brand-outline" size="lg">
         로그인
       </ButtonLink>
     </>
@@ -29,6 +29,7 @@ function LandingPage() {
   const memberActions = user && (
     <ButtonLink
       to={user.onboardingCompleted ? '/home' : '/onboarding'}
+      variant="brand"
       size="lg"
     >
       {user.onboardingCompleted ? '내 홈으로 가기' : '가입 마무리하기'}

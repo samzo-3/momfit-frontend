@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ApiError } from '../../../shared/api'
 import Button from '../../../shared/components/Button'
 import Notice from '../../../shared/components/Notice'
 import TextLink from '../../../shared/components/TextLink'
@@ -13,11 +15,16 @@ interface LoginFormProps {
   providerError?: string | null
 }
 
+function isWithdrawn(error: unknown): boolean {
+  return error instanceof ApiError && error.code === 'ACCOUNT_WITHDRAWN'
+}
+
 function LoginForm({ notice, providerError }: LoginFormProps) {
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
   const login = useLogin()
+  const navigate = useNavigate()
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -27,12 +34,24 @@ function LoginForm({ notice, providerError }: LoginFormProps) {
     }
     setValidationError(null)
     // 성공하면 세션이 시작되어 라우트 가드가 화면을 이동시킨다.
-    login.mutate({ loginId: loginId.trim(), password })
+    login.mutate(
+      { loginId: loginId.trim(), password },
+      {
+        onError: (error) => {
+          // 탈퇴 유예 중인 계정이면 오류 대신 복구 화면으로 이어 준다.
+          if (error instanceof ApiError && error.code === 'ACCOUNT_WITHDRAWN') {
+            void navigate('/account/restore')
+          }
+        },
+      },
+    )
   }
 
   const formError =
     validationError ??
-    (login.isError ? errorMessage(login.error) : null) ??
+    (login.isError && !isWithdrawn(login.error)
+      ? errorMessage(login.error)
+      : null) ??
     providerError ??
     null
 
@@ -56,13 +75,22 @@ function LoginForm({ notice, providerError }: LoginFormProps) {
         onChange={(event) => setPassword(event.target.value)}
       />
       {formError && <Notice kind="error">{formError}</Notice>}
-      <Button type="submit" fullWidth disabled={login.isPending}>
+      <Button
+        type="submit"
+        variant="brand"
+        fullWidth
+        disabled={login.isPending}
+      >
         {login.isPending ? '로그인 중...' : '로그인'}
       </Button>
       <SocialLoginSection />
       <div className="flex justify-between text-sm">
-        <TextLink to="/signup">회원가입</TextLink>
-        <TextLink to="/password/reset">비밀번호 찾기</TextLink>
+        <TextLink to="/signup" tone="brand">
+          회원가입
+        </TextLink>
+        <TextLink to="/password/reset" tone="brand">
+          비밀번호 찾기
+        </TextLink>
       </div>
     </form>
   )

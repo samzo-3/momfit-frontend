@@ -10,7 +10,7 @@ function FieldAction({
     <button
       type={type}
       {...props}
-      className={`rounded-md px-1.5 py-1 text-sm font-medium whitespace-nowrap text-accent hover:bg-accent/5 disabled:cursor-not-allowed disabled:text-ink-secondary/60 disabled:hover:bg-transparent ${className ?? ''}`}
+      className={`rounded-md px-1.5 py-1 text-sm font-medium whitespace-nowrap text-brand-text hover:bg-brand/10 disabled:cursor-not-allowed disabled:text-cocoa-secondary/60 disabled:hover:bg-transparent ${className ?? ''}`}
     />
   )
 }

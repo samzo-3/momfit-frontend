@@ -92,7 +92,7 @@ function ProfileForm({ user, onSaved, onCancel }: ProfileFormProps) {
       className="grid gap-5 lg:grid-cols-2 lg:gap-x-6"
       noValidate
     >
-      <h2 className="hidden text-xl font-semibold lg:col-span-2 lg:block">
+      <h2 className="hidden text-xl font-semibold text-cocoa lg:col-span-2 lg:block">
         정보 수정
       </h2>
       <TextField
@@ -139,13 +139,14 @@ function ProfileForm({ user, onSaved, onCancel }: ProfileFormProps) {
       <div className="flex gap-2 lg:col-span-2 lg:justify-end">
         <Button
           type="submit"
+          variant="brand"
           className="flex-1 lg:flex-none lg:px-10"
           disabled={!hasChanges || updateProfile.isPending}
         >
           {updateProfile.isPending ? '저장 중...' : '저장'}
         </Button>
         <Button
-          variant="secondary"
+          variant="brand-outline"
           className="flex-1 lg:flex-none lg:px-10"
           onClick={onCancel}
           disabled={updateProfile.isPending}

@@ -22,7 +22,7 @@ function HowItWorks() {
       <div className="mx-auto max-w-5xl">
         <h2
           id="landing-steps-title"
-          className="text-center text-4xl font-semibold sm:text-5xl"
+          className="text-center text-4xl font-semibold text-cocoa sm:text-5xl"
         >
           이렇게 시작해요
         </h2>
@@ -34,12 +34,14 @@ function HowItWorks() {
             >
               <span
                 aria-hidden="true"
-                className="text-6xl font-semibold text-accent"
+                className="text-6xl font-semibold text-brand-text"
               >
                 {index + 1}
               </span>
-              <h3 className="mt-3 text-2xl font-semibold">{step.title}</h3>
-              <p className="mt-2 text-[17px] text-ink-secondary">
+              <h3 className="mt-3 text-2xl font-semibold text-cocoa">
+                {step.title}
+              </h3>
+              <p className="mt-2 text-[17px] text-cocoa-secondary">
                 {step.description}
               </p>
             </li>

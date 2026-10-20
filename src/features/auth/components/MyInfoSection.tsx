@@ -14,7 +14,8 @@ function MyInfoSection({ user }: { user: User }) {
 
   // 넓은 화면(lg)에서는 왼쪽 요약 카드 + 오른쪽 정보·탈퇴 카드로 나눈다.
   // 좁은 화면에서는 하나의 카드 안에 위아래로 쌓는다. (카드 모양은 lg에서만 입힌다.)
-  const card = 'lg:rounded-3xl lg:bg-white lg:p-8 lg:shadow-sm'
+  const card =
+    'lg:rounded-3xl lg:bg-white lg:p-8 lg:ring-1 lg:ring-primary-strong'
 
   return (
     <div className="lg:grid lg:grid-cols-[18rem_1fr] lg:items-start lg:gap-6">
@@ -49,7 +50,7 @@ function MyInfoSection({ user }: { user: User }) {
         </div>
         {!editing && (
           <>
-            <hr className="border-line lg:hidden" />
+            <hr className="border-primary-strong lg:hidden" />
             <div className={card}>
               <DeleteAccountSection />
             </div>

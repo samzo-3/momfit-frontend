@@ -39,6 +39,29 @@ afterEach(() => {
 })
 
 describe('로그인 화면', () => {
+  it('탈퇴 유예 중인 계정이면 오류 문구 없이 복구 화면으로 이동한다', async () => {
+    mockApi(fetchMock, {
+      'POST /api/auth/login': () => errorResponse(403, 'ACCOUNT_WITHDRAWN'),
+      'GET /api/auth/restore': () =>
+        jsonResponse(200, {
+          withdrawn_at: '2026-10-20T12:00:00Z',
+          purge_at: '2026-11-19T12:00:00Z',
+        }),
+    })
+    const router = renderApp('/login')
+
+    await fillAndSubmit()
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/account/restore'),
+    )
+    expect(
+      await screen.findByText(/까지 계정을 복구할 수 있어요/),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/ACCOUNT_WITHDRAWN/)).not.toBeInTheDocument()
+    expect(useAuthStore.getState().status).toBe('unauthenticated')
+  })
+
   it('로그인에 성공하면 세션을 시작하고 /home으로 이동한다', async () => {
     mockApi(fetchMock, {
       'POST /api/auth/login': () => jsonResponse(200, tokenBody),
