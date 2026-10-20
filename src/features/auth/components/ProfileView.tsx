@@ -40,22 +40,22 @@ function ProfileView({
           <Notice kind="success">{notice}</Notice>
         </div>
       )}
-      <h2 className="hidden text-xl font-semibold lg:col-start-1 lg:row-start-2 lg:block">
+      <h2 className="hidden text-xl font-semibold text-cocoa lg:col-start-1 lg:row-start-2 lg:block">
         기본 정보
       </h2>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-[15px] lg:col-span-2 lg:row-start-3 lg:block lg:divide-y lg:divide-line lg:text-[17px]">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-[15px] lg:col-span-2 lg:row-start-3 lg:block lg:divide-y lg:divide-primary-strong lg:text-[17px]">
         {rows.map((row) => (
           <div
             key={row.label}
             className="contents lg:grid lg:grid-cols-[10rem_1fr] lg:gap-6 lg:py-4"
           >
-            <dt className="text-ink-secondary">{row.label}</dt>
-            <dd className="break-all">{row.value}</dd>
+            <dt className="text-cocoa-secondary">{row.label}</dt>
+            <dd className="break-all text-cocoa">{row.value}</dd>
           </div>
         ))}
       </dl>
       <Button
-        variant="secondary"
+        variant="brand-outline"
         fullWidth
         onClick={onEdit}
         autoFocus={focusEditButton}

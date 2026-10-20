@@ -7,19 +7,21 @@ function ProfileSummary({ user }: { user: User }) {
   return (
     <aside
       aria-label="프로필 요약"
-      className="hidden flex-col items-center gap-3 rounded-3xl bg-white p-8 text-center shadow-sm lg:flex"
+      className="hidden flex-col items-center gap-3 rounded-3xl bg-white p-8 text-center ring-1 ring-primary-strong lg:flex"
     >
       <div
         aria-hidden="true"
-        className="grid size-20 place-items-center rounded-full bg-accent text-3xl font-semibold text-white"
+        className="grid size-20 place-items-center rounded-full bg-brand text-3xl font-semibold text-white"
       >
         {initial}
       </div>
-      <p className="text-2xl font-semibold">{user.nickname}</p>
+      <p className="text-2xl font-semibold text-cocoa">{user.nickname}</p>
       {user.pregnancyWeek !== null && (
-        <p className="text-[17px] text-accent">임신 {user.pregnancyWeek}주차</p>
+        <p className="text-[17px] text-brand-text">
+          임신 {user.pregnancyWeek}주차
+        </p>
       )}
-      <p className="text-sm break-all text-ink-secondary">
+      <p className="text-sm break-all text-cocoa-secondary">
         {user.email ?? '카카오 계정'}
       </p>
     </aside>

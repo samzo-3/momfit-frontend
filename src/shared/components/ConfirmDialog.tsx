@@ -128,7 +128,7 @@ function ConfirmDialog({
         <div className="mt-6 flex justify-end gap-2">
           <Button
             ref={cancelRef}
-            variant="secondary"
+            variant="brand-outline"
             size="sm"
             onClick={onCancel}
             disabled={pending}
@@ -136,7 +136,7 @@ function ConfirmDialog({
             {cancelLabel}
           </Button>
           <Button
-            variant={tone === 'danger' ? 'danger' : 'primary'}
+            variant={tone === 'danger' ? 'danger' : 'brand'}
             size="sm"
             onClick={onConfirm}
             disabled={pending}

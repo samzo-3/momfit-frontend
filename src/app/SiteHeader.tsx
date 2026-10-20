@@ -22,19 +22,24 @@ function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-10 border-b border-line/60 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-10 border-b border-primary-strong/70 bg-primary-soft/85 backdrop-blur-md">
       <nav
         aria-label="주요"
         className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4"
       >
-        <Link to="/" className="text-[17px] font-semibold tracking-tight">
+        <Link
+          to="/"
+          className="text-[17px] font-semibold tracking-tight text-cocoa"
+        >
           MomFit
         </Link>
         {isAuthenticated && (
           <div className="flex items-center gap-4 text-sm">
-            <TextLink to="/me">내 정보</TextLink>
+            <TextLink to="/me" tone="brand">
+              내 정보
+            </TextLink>
             <Button
-              variant="secondary"
+              variant="brand-outline"
               size="sm"
               onClick={() => setConfirmingLogout(true)}
             >
@@ -44,8 +49,10 @@ function SiteHeader() {
         )}
         {status === 'unauthenticated' && (
           <div className="flex items-center gap-4 text-sm">
-            <TextLink to="/login">로그인</TextLink>
-            <ButtonLink to="/signup" size="sm">
+            <TextLink to="/login" tone="brand">
+              로그인
+            </TextLink>
+            <ButtonLink to="/signup" variant="brand" size="sm">
               시작하기
             </ButtonLink>
           </div>
