@@ -11,6 +11,24 @@ function main() {
 }
 
 describe('랜딩 페이지', () => {
+  it('히어로 배경 사진은 장식이라 스크린리더가 읽지 않고 글자 아래에 깔린다', () => {
+    signOut()
+    renderApp('/')
+
+    const hero = main().getByRole('heading', { level: 1 }).closest('section')!
+    const photo = hero.querySelector('img')!
+    expect(photo).toHaveAttribute('alt', '')
+    expect(photo).toHaveAttribute('aria-hidden', 'true')
+    expect(photo).toHaveClass('-z-20')
+    // 사진 위에는 글자 대비를 지키는 살구색 막이 덮여 있고, 글자가 놓이는 가운데는 더 짙은 타원형 막이 따로 있다.
+    expect(hero.querySelector('.bg-primary-soft\\/25')).not.toBeNull()
+    expect(within(hero).getByTestId('hero-text-scrim')).toHaveStyle({
+      backgroundImage: expect.stringContaining('radial-gradient'),
+    })
+    // 사진이 있어도 접근성 트리에는 이미지가 나타나지 않는다.
+    expect(main().queryByRole('img')).not.toBeInTheDocument()
+  })
+
   it('섹션 바탕색이 연한 살구 → 대표 색 → 흰색 → 연한 살구(푸터와 이어짐)로 나온다', () => {
     signOut()
     renderApp('/')
