@@ -49,6 +49,12 @@ export interface SignupInput {
   consents: { terms: boolean; healthData: boolean }
 }
 
+// 탈퇴 유예 중인 계정의 복구 화면에 보여줄 일정. 서버가 UTC(ISO 8601)로 내려준다.
+export interface RestoreInfo {
+  withdrawnAt: string
+  purgeAt: string
+}
+
 export interface EmailVerificationResult {
   emailVerificationToken: string
   expiresIn: number

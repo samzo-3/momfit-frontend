@@ -5,6 +5,7 @@ import type {
   ExerciseLevel,
   OnboardingInput,
   ProfilePatch,
+  RestoreInfo,
   SignupInput,
   TokenResponse,
   User,
@@ -61,6 +62,22 @@ export function requestLogin(input: {
     method: 'POST',
     auth: false,
     body: { login_id: input.loginId, password: input.password },
+  })
+}
+
+// 탈퇴 유예 중인 계정이 로그인하면 서버가 복구용 쿠키를 내려준다. 그 쿠키로 일정을 조회하고 복구한다.
+export async function requestRestoreInfo(): Promise<RestoreInfo> {
+  const response = await apiRequest<{ withdrawn_at: string; purge_at: string }>(
+    '/auth/restore',
+    { auth: false },
+  )
+  return { withdrawnAt: response.withdrawn_at, purgeAt: response.purge_at }
+}
+
+export function requestRestoreAccount(): Promise<TokenResponse> {
+  return apiRequest<TokenResponse>('/auth/restore', {
+    method: 'POST',
+    auth: false,
   })
 }
 
