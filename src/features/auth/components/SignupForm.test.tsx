@@ -422,7 +422,7 @@ describe('회원가입 - 플레이스홀더', () => {
 
     expect(screen.getByLabelText('아이디')).toHaveAttribute(
       'placeholder',
-      '영문 소문자·숫자 4~20자 (예: momfit01)',
+      '영문 소문자·숫자 4~20자',
     )
     expect(screen.getByLabelText('비밀번호')).toHaveAttribute(
       'placeholder',

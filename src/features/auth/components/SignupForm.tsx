@@ -242,7 +242,7 @@ function SignupForm() {
         autoComplete="username"
         autoCapitalize="none"
         value={loginId}
-        placeholder="영문 소문자·숫자 4~20자 (예: momfit01)"
+        placeholder="영문 소문자·숫자 4~20자"
         onChange={(event) => handleLoginIdChange(event.target.value)}
         onBlur={() => touch('loginId')}
         error={shown('loginId')}
