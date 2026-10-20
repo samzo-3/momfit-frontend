@@ -1,20 +1,31 @@
-import { useAuth } from '../features/auth'
+import { formatDate, useAuth } from '../features/auth'
+import { HomeHero, HomeSummary } from '../features/home'
 
+// 운동을 고르는 화면. 아직 목록이 없어 안내 화면으로 이어진다.
+const WORKOUTS_PATH = '/workouts'
+
+// 로그인 후 첫 화면. 상단 슬라이드 히어로와 그 아래 내 요약 카드.
+// features끼리는 서로 import하지 않으므로, 사용자 정보는 여기서 읽어 home에 넘긴다.
 function HomePage() {
   const { user } = useAuth()
+  if (!user) return null
 
   return (
-    <main className="px-4 py-20 text-center sm:py-28">
-      <h1 className="text-5xl font-semibold sm:text-6xl">맘핏</h1>
-      <p className="mt-3 text-2xl text-ink-secondary">
-        임산부를 위한 홈트레이닝
-      </p>
-      {user && (
-        <p className="mt-8 text-[17px]">
-          {user.nickname}님
-          {user.pregnancyWeek !== null && `, 임신 ${user.pregnancyWeek}주차`}
-        </p>
-      )}
+    <main className="bg-primary-soft px-4 py-8 sm:py-12">
+      <h1 className="sr-only">홈</h1>
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <HomeHero
+          nickname={user.nickname}
+          pregnancyWeek={user.pregnancyWeek}
+          workoutsPath={WORKOUTS_PATH}
+        />
+        <HomeSummary
+          pregnancyWeek={user.pregnancyWeek}
+          dueDate={user.dueDate}
+          dueDateLabel={formatDate(user.dueDate)}
+          workoutsPath={WORKOUTS_PATH}
+        />
+      </div>
     </main>
   )
 }

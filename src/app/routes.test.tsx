@@ -24,7 +24,7 @@ describe('보호 라우트 (/home)', () => {
   it('로그인한 사용자는 /home에서 홈 화면을 본다', () => {
     signIn()
     renderApp('/home')
-    expect(heading('맘핏')).toBeInTheDocument()
+    expect(heading('홈')).toBeInTheDocument()
   })
 
   it('세션을 복구하는 동안에는 로딩 화면을 보여준다', () => {
@@ -108,7 +108,7 @@ describe('로그인 상태에 따른 공개 경로', () => {
       signIn()
       const router = renderApp(path)
       expect(router.state.location.pathname).toBe('/home')
-      expect(heading('맘핏')).toBeInTheDocument()
+      expect(heading('홈')).toBeInTheDocument()
     },
   )
 

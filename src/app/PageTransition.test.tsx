@@ -57,7 +57,7 @@ describe('화면 전환 애니메이션', () => {
     expect(screen.getByRole('status')).toHaveTextContent('불러오는 중')
 
     signIn()
-    await screen.findByRole('heading', { name: '맘핏' })
+    await screen.findByRole('heading', { name: '홈' })
 
     expect(router.state.location.pathname).toBe('/home')
     expect(wrapper()).toBe(before)

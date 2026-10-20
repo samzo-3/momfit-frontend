@@ -118,7 +118,7 @@ function OnboardingForm({ user }: { user: User }) {
         error={errors.consents}
       />
       <p className="text-xs text-ink-secondary">
-        맘핏은 의학적 진단이나 치료를 대신하지 않습니다. 운동을 시작하기 전에
+        MomFit은 의학적 진단이나 치료를 대신하지 않습니다. 운동을 시작하기 전에
         담당 전문의와 상담하세요.
       </p>
 
