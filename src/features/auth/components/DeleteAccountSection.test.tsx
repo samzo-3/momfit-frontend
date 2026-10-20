@@ -38,7 +38,7 @@ describe('회원 탈퇴', () => {
     renderApp('/me')
 
     expect(
-      screen.getByText(/계정과 건강정보.*삭제되며 되돌릴 수 없어요/),
+      screen.getByText(/30일 동안은 다시 로그인해 복구할 수 있고/),
     ).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(requestsTo(fetchMock, DELETE)).toHaveLength(0)
@@ -49,7 +49,11 @@ describe('회원 탈퇴', () => {
     await openConfirm()
 
     const dialog = screen.getByRole('dialog', { name: '정말 탈퇴하시겠어요?' })
-    expect(dialog).toHaveTextContent('되돌릴 수 없어요')
+    // 바로 지워지지 않고 유예 기간에는 복구할 수 있다는 점을 알린다.
+    expect(dialog).toHaveTextContent(
+      '30일 안에 다시 로그인하면 복구할 수 있어요',
+    )
+    expect(dialog).toHaveTextContent('그 이후에는 계정과 건강정보가 삭제되며')
     expect(within(dialog).getByRole('button', { name: '취소' })).toHaveFocus()
     expect(requestsTo(fetchMock, DELETE)).toHaveLength(0)
   })

@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom'
 import { OnboardingRoute, PublicOnlyRoute, RequireAuth } from '../features/auth'
 import AppLayout from './AppLayout'
+import AccountRestorePage from '../pages/AccountRestorePage'
 import AuthCallbackPage from '../pages/AuthCallbackPage'
 import HomePage from '../pages/HomePage'
 import LandingPage from '../pages/LandingPage'
@@ -27,6 +28,8 @@ export const routes: RouteObject[] = [
           { path: '/login', element: <LoginPage /> },
           { path: '/signup', element: <SignupPage /> },
           { path: '/password/reset', element: <PasswordResetPage /> },
+          // 탈퇴 유예 중인 계정이 로그인하면 오는 복구 화면 (카카오 로그인도 여기로 보낸다)
+          { path: '/account/restore', element: <AccountRestorePage /> },
         ],
       },
       {
