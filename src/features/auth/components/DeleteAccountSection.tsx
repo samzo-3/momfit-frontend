@@ -35,10 +35,13 @@ function DeleteAccountSection() {
       className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6"
     >
       <div className="flex flex-col gap-3 lg:gap-1">
-        <h2 id="delete-account-title" className="text-lg font-semibold">
+        <h2
+          id="delete-account-title"
+          className="text-lg font-semibold text-cocoa"
+        >
           회원 탈퇴
         </h2>
-        <p className="text-[15px] text-ink-secondary">
+        <p className="text-[15px] text-cocoa-secondary">
           탈퇴하면 계정과 건강정보(출산 예정일, 운동 경험 등)가 삭제되며 되돌릴
           수 없어요.
         </p>

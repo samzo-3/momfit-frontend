@@ -11,6 +11,21 @@ function main() {
 }
 
 describe('랜딩 페이지', () => {
+  it('섹션 바탕색이 연한 살구 → 대표 색 → 흰색 → 대표 색으로 번갈아 나온다', () => {
+    signOut()
+    renderApp('/')
+
+    const section = (name: string) =>
+      main().getByRole('heading', { name }).closest('section')
+    // 히어로는 넓은 면이라 대표 색을 연하게 쓰고, 바로 아래 섹션과 바탕이 겹치지 않게 한다.
+    expect(
+      main().getByRole('heading', { level: 1 }).closest('section'),
+    ).toHaveClass('bg-primary-soft')
+    expect(section('MomFit이 함께해요')).toHaveClass('bg-primary')
+    expect(section('이렇게 시작해요')).toHaveClass('bg-white')
+    expect(section('지금 시작해 보세요')).toHaveClass('bg-primary')
+  })
+
   it('서비스를 소개하는 제목과 섹션을 보여준다', () => {
     signOut()
     renderApp('/')
@@ -19,7 +34,7 @@ describe('랜딩 페이지', () => {
       main().getByRole('heading', { level: 1, name: /임신 중에도/ }),
     ).toBeInTheDocument()
     for (const name of [
-      '맘핏이 함께해요',
+      'MomFit이 함께해요',
       '이렇게 시작해요',
       '지금 시작해 보세요',
     ]) {
@@ -34,7 +49,7 @@ describe('랜딩 페이지', () => {
     renderApp('/')
 
     const features = within(
-      main().getByRole('region', { name: '맘핏이 함께해요' }),
+      main().getByRole('region', { name: 'MomFit이 함께해요' }),
     ).getAllByRole('listitem')
     expect(
       features.map((item) => within(item).getByRole('heading').textContent),

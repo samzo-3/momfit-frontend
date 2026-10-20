@@ -34,7 +34,7 @@ describe('FieldAction', () => {
 
     expect(onClick).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: '재발송' })).toHaveClass(
-      'disabled:text-ink-secondary/60',
+      'disabled:text-cocoa-secondary/60',
     )
   })
 

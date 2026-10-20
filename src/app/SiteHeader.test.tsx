@@ -25,6 +25,31 @@ afterEach(() => {
 })
 
 describe('SiteHeader', () => {
+  it('헤더는 살구색이고 버튼은 대표 색 변형을 쓴다', () => {
+    signOut()
+    renderApp('/login')
+
+    expect(
+      screen.getByRole('navigation', { name: '주요' }).closest('header'),
+    ).toHaveClass('bg-primary-soft/85')
+    expect(screen.getByRole('link', { name: '시작하기' })).toHaveClass(
+      'bg-brand',
+    )
+    expect(screen.getByRole('link', { name: '로그인' })).toHaveClass(
+      'text-brand-text',
+    )
+  })
+
+  it('로그인했을 때 로그아웃 버튼은 테두리 변형이다', () => {
+    signIn()
+    renderApp('/home')
+
+    const nav = screen.getByRole('navigation', { name: '주요' })
+    expect(within(nav).getByRole('button', { name: '로그아웃' })).toHaveClass(
+      'border-brand-text',
+    )
+  })
+
   it('로그인하지 않았으면 로그아웃 대신 로그인과 시작하기를 보여준다', () => {
     signOut()
     renderApp('/login')

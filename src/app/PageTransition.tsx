@@ -11,7 +11,8 @@ function PageTransition({ children }: { children: ReactNode }) {
     <div
       key={pathname}
       data-page-transition=""
-      className="animate-page-in motion-reduce:animate-none"
+      // 화면이 짧아도 푸터까지 채워, 배경색이 있는 화면 아래에 회색 띠가 생기지 않게 한다.
+      className="flex flex-1 flex-col animate-page-in motion-reduce:animate-none"
     >
       {children}
     </div>

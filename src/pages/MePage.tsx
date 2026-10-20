@@ -11,6 +11,7 @@ function MePage() {
     <PageShell
       title="내 정보"
       wide
+      tone="warm"
       description="프로필을 확인하고, 필요하면 수정하거나 탈퇴할 수 있어요."
     >
       <MyInfoSection user={user} />

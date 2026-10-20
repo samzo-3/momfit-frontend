@@ -213,7 +213,7 @@ function EmailVerificationField({
           <button
             type="button"
             onClick={handleChangeEmail}
-            className="self-start text-sm text-link hover:underline"
+            className="self-start text-sm text-brand-text hover:underline"
           >
             이메일 변경
           </button>

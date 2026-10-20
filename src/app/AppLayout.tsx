@@ -7,7 +7,7 @@ function AppLayout() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <div className="flex-1 bg-surface">
+      <div className="flex flex-1 flex-col bg-surface">
         <PageTransition>
           <Outlet />
         </PageTransition>

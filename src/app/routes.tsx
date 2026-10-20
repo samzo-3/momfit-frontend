@@ -10,6 +10,7 @@ import NotFoundPage from '../pages/NotFoundPage'
 import OnboardingPage from '../pages/OnboardingPage'
 import PasswordResetPage from '../pages/PasswordResetPage'
 import SignupPage from '../pages/SignupPage'
+import WorkoutsPage from '../pages/WorkoutsPage'
 
 export const routes: RouteObject[] = [
   {
@@ -38,6 +39,7 @@ export const routes: RouteObject[] = [
         element: <RequireAuth />,
         children: [
           { path: '/home', element: <HomePage /> },
+          { path: '/workouts', element: <WorkoutsPage /> },
           { path: '/me', element: <MePage /> },
         ],
       },

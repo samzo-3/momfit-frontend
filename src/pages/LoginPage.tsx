@@ -7,7 +7,11 @@ function LoginPage() {
   const [searchParams] = useSearchParams()
 
   return (
-    <PageShell title="로그인" description="맘핏 계정으로 로그인하세요.">
+    <PageShell
+      title="로그인"
+      description="MomFit 계정으로 로그인하세요."
+      tone="warm"
+    >
       <LoginForm
         notice={state?.notice}
         providerError={kakaoErrorMessage(searchParams.get('error'))}
