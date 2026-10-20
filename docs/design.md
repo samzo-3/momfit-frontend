@@ -21,11 +21,11 @@
 | `accent` / `accent-hover` | `#0071e3` / `#0077ed` | 주 버튼, 선택 상태, 포커스 |
 | `link` | `#0066cc` | 텍스트 링크 |
 | `danger` / `success` | `#d70015` / `#248a3d` | 오류 / 성공 메시지 |
-| `primary` / `primary-soft` / `primary-strong` | `#f4e3da` / `#fbf4ef` / `#e6cfc2` | 서비스 대표 색(살구). 히어로·강조 면, 연한 배경, 구분선·눌림 상태. 너무 밝아(흰색 대비 1.25:1) 글자·버튼에는 쓰지 않는다. 현재는 `/home`, 랜딩(`/`), 푸터에서 쓴다 |
-| `brand-text` | `#97492f` | 살구 면 위의 강조 글자·밑줄 링크(대비 5.09:1). `brand`는 4.05:1이라 글자에는 모자라다. `/home` 히어로 링크가 쓴다 |
-| `brand` / `brand-hover` | `#a9583f` / `#97492f` | 살구 면 위의 주 버튼(`Button variant="brand"`). 흰 글자 대비 5.05:1 |
-| `cocoa` / `cocoa-secondary` | `#3b2a24` / `#7a5f54` | 살구 면 위의 제목·본문 / 보조 문구(대비 10.9:1 / 4.7:1) |
-| `sage` / `sage-soft` | `#4f6f54` / `#e3ebdf` | 보조 색(진행·성공 표시 등, 살구의 보색 계열) |
+| `primary` / `primary-soft` / `primary-strong` | `#f6e7de` / `#fcf8f4` / `#e8d8cf` | 서비스 대표 색(살구). 카드·강조 면, 연한 배경, 구분선·눌림 상태. 너무 밝아 글자·버튼에는 쓰지 않는다. 모든 화면에서 쓴다 |
+| `brand` / `brand-hover` / `on-brand` | `#dba187` / `#cc8b6d` / `#2f2a28` | 주 버튼(`Button variant="brand"`)의 바탕·호버와 그 위의 글자. 밝은 바탕이라 글자는 어두운 코코아(대비 6.38:1, 호버 5.05:1) |
+| `brand-text` / `focus` | `#96563d` | 살구 면 위의 강조 글자·밑줄 링크·진행 막대 같은 의미 있는 그래픽(대비 4.71:1) / 포커스 링 |
+| `cocoa` / `cocoa-secondary` | `#2f2a28` / `#665952` | 살구 면 위의 제목·본문 / 보조 문구(대비 11.7:1 / 5.6:1) |
+| `sage` / `sage-soft` | `#556052` / `#e4e9e1` | 보조 색(진행·성공 표시 등, 살구의 보색 계열) |
 
 한글은 어절 단위로 줄바꿈한다(`word-break: keep-all`). 글꼴은 시스템 글꼴(`-apple-system`, `SF Pro KR`, `Apple SD Gothic Neo`, `Noto Sans KR`, `Malgun Gothic`) 순이다. 별도 웹폰트는 쓰지 않는다.
 
@@ -121,7 +121,7 @@
 
 ## 랜딩(`/`)과 푸터
 
-- 랜딩은 살구색 계열로 구간을 번갈아 칠한다: 히어로(`primary-soft`, 넓은 면에 대표 색을 크게 칠하면 무거워 보여 연하게 둔다) → 기능 소개(`primary`, 흰 카드 + `primary-strong` 테두리) → 시작 방법(흰 바탕) → 마지막 안내(`primary`). 제목·본문은 `cocoa`, 강조 글자와 숫자는 `brand-text`다.
+- 랜딩은 살구색 계열로 구간을 번갈아 칠한다: 히어로(`primary-soft`, 넓은 면에 대표 색을 크게 칠하면 무거워 보여 연하게 둔다) → 기능 소개(`primary`, 흰 카드 + `primary-strong` 테두리) → 시작 방법(흰 바탕) → 마지막 안내(`primary-soft`, 아래 푸터와 이어진다). 제목·본문은 `cocoa`, 강조 글자와 숫자는 `brand-text`다.
 - 랜딩 버튼은 `brand`(채움)와 `brand-outline`(테두리) 변형을 쓴다. 푸터는 `primary` 바탕에 `cocoa-secondary` 글자다.
 
 ## 화면 색 적용 현황
@@ -130,3 +130,9 @@
 - 주 버튼은 `brand`, 보조 버튼은 `brand-outline`, 링크는 `TextLink tone="brand"`(`brand-text`)를 쓴다. 위험한 동작(탈퇴)은 의미 색인 빨강을 유지한다.
 - 포커스 링은 모든 화면에서 `brand`다. 입력칸 테두리(`field`)와 오류 표시(분홍 배경·빨간 테두리)는 기존 그대로다.
 - 파랑 `accent`와 `Button`의 `primary`/`secondary` 변형은 더 이상 화면에서 쓰지 않는다. 쓰는 곳이 생기기 전까지 정의만 남겨 둔다.
+
+## 서비스 색
+
+서비스 색(살구·코코아·세이지)은 디자인 시안에서 추출한 값으로 확정했고, 바꾸는 기능은 없다. 값은 `src/index.css`의 `@theme`에 있다.
+
+- **글자·그래픽 대비**: 브랜드 색(`brand`)이 밝아 버튼 글자(`on-brand`)는 어두운 코코아를 쓴다. 강조 글자·포커스 링·진행 막대 같은 의미 있는 그래픽은 `brand`가 아니라 `brand-text`·`focus`를 써서 대비를 지킨다.
