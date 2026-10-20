@@ -26,6 +26,14 @@ describe('화면 전환 애니메이션', () => {
     expect(wrapper()).toHaveClass('motion-reduce:animate-none')
   })
 
+  it('남는 높이를 채워 배경색이 있는 화면이 푸터까지 이어지게 한다', () => {
+    signIn()
+    renderApp('/home')
+
+    expect(wrapper()).toHaveClass('flex-1')
+    expect(screen.getByRole('main')).toHaveClass('flex-1')
+  })
+
   it('경로가 바뀌면 래퍼를 새로 만들어 애니메이션을 다시 재생한다', async () => {
     signOut()
     renderApp('/login')

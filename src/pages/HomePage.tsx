@@ -11,7 +11,7 @@ function HomePage() {
   if (!user) return null
 
   return (
-    <main className="bg-primary-soft px-4 py-8 sm:py-12">
+    <main className="flex-1 bg-primary-soft px-4 py-8 sm:py-12">
       <h1 className="sr-only">홈</h1>
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <HomeHero
