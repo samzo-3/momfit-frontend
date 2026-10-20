@@ -1,0 +1,40 @@
+import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { resetAuthStore, signIn, signOut } from '../test/auth-test-utils'
+import { renderApp } from '../test/render-app'
+
+beforeEach(() => {
+  resetAuthStore()
+})
+
+describe('WorkoutsPage', () => {
+  it('로그인하지 않았으면 로그인 화면으로 보낸다', () => {
+    signOut()
+    const router = renderApp('/workouts')
+
+    expect(router.state.location.pathname).toBe('/login')
+  })
+
+  it('준비 중 안내를 보여주고 홈으로 돌아갈 수 있다', async () => {
+    signIn()
+    const router = renderApp('/workouts')
+
+    expect(
+      screen.getByRole('heading', { name: '운동 고르기' }),
+    ).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('link', { name: '홈으로' }))
+
+    expect(router.state.location.pathname).toBe('/home')
+  })
+
+  it('홈의 버튼으로 들어올 수 있다', async () => {
+    signIn()
+    const router = renderApp('/home')
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole('link', { name: /나에게 맞는 운동 살펴보기/ }))
+
+    expect(router.state.location.pathname).toBe('/workouts')
+  })
+})
