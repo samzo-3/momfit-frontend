@@ -50,12 +50,17 @@ describe('Side Kick 정면 반복 감지', () => {
     expect(result.rightReps).toBe(1)
     expect(result.leftReps).toBe(0)
     expect(result.events).toEqual([
-      {
+      expect.objectContaining({
         type: 'REP_COMPLETED',
         side: 'RIGHT',
         peakMovement: 1.2,
+        peakTimestampMs: 90,
+        peakMetrics: expect.objectContaining({
+          right_knee_angle_deg: 177,
+          right_ankle_relative_x_ratio: 1.2,
+        }),
         timestampMs: 250,
-      },
+      }),
     ])
   })
 
@@ -182,5 +187,51 @@ describe('Side Kick 정면 반복 감지', () => {
     const result = frame(tracker, 90, 0, 0.04)
 
     expect(result.completedReps).toBe(0)
+  })
+})
+
+describe('Side Kick 최고점 관절값 기록', () => {
+  it('반복 완료 시 최고점의 관절값과 시각을 반환한다', () => {
+    const tracker = new SideKickMotionTracker()
+
+    const makeFrame = (
+      timestampMs: number,
+      ankleRatio: number,
+      kneeAngle: number,
+    ) => {
+      const result = features(0.02, ankleRatio)
+
+      if (result.valid) {
+        result.metrics.right_knee_angle_deg = kneeAngle
+      }
+
+      return tracker.update({
+        timestampMs,
+        frontStatus: 'FRONT_OK',
+        features: result,
+      })
+    }
+
+    makeFrame(0, 0.02, 180)
+    makeFrame(30, 0.4, 175)
+    makeFrame(60, 0.9, 170)
+    makeFrame(90, 1.2, 165)
+    makeFrame(120, 0.8, 150)
+    makeFrame(150, 0.1, 140)
+
+    const result = makeFrame(220, 0.05, 130)
+
+    expect(result.completedReps).toBe(1)
+
+    const event = result.events[0]
+
+    expect(event.type).toBe('REP_COMPLETED')
+
+    if (event.type === 'REP_COMPLETED') {
+      expect(event.peakMovement).toBe(1.2)
+      expect(event.peakTimestampMs).toBe(90)
+      expect(event.peakMetrics.right_knee_angle_deg).toBe(165)
+      expect(event.peakMetrics.right_ankle_relative_x_ratio).toBe(1.2)
+    }
   })
 })

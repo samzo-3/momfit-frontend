@@ -1,0 +1,104 @@
+[
+  {
+    "category": "STUDY",
+    "event_code": "READY_POSITION_ADJUST",
+    "audio_url": "/audio/pose/sidekick/READY_POSITION_ADJUST.mp3",
+    "message": "정면을 보고 준비 자세를 잡아주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "RIGHT_LEG_HEIGHT_ADJUST",
+    "audio_url": "/audio/pose/sidekick/RIGHT_LEG_HEIGHT_ADJUST.mp3",
+    "message": "오른쪽 다리를 더 들어주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "RIGHT_LEG_POSITION_ADJUST",
+    "audio_url": "/audio/pose/sidekick/RIGHT_LEG_POSITION_ADJUST.mp3",
+    "message": "오른쪽 다리 위치를 조정해 주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "RIGHT_KNEE_POSITION_ADJUST",
+    "audio_url": "/audio/pose/sidekick/RIGHT_KNEE_POSITION_ADJUST.mp3",
+    "message": "오른쪽 무릎을 편안하게 펴주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "LEFT_LEG_HEIGHT_ADJUST",
+    "audio_url": "/audio/pose/sidekick/LEFT_LEG_HEIGHT_ADJUST.mp3",
+    "message": "왼쪽 다리를 더 들어주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "LEFT_LEG_POSITION_ADJUST",
+    "audio_url": "/audio/pose/sidekick/LEFT_LEG_POSITION_ADJUST.mp3",
+    "message": "왼쪽 다리 위치를 조정해 주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "LEFT_KNEE_POSITION_ADJUST",
+    "audio_url": "/audio/pose/sidekick/LEFT_KNEE_POSITION_ADJUST.mp3",
+    "message": "왼쪽 무릎을 편안하게 펴주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "POSTURE_ADJUST",
+    "audio_url": "/audio/pose/sidekick/POSTURE_ADJUST.mp3",
+    "message": "자세를 천천히 조정해 주세요."
+  },
+  {
+    "category": "TRACKING",
+    "event_code": "TRACKING_LOST",
+    "audio_url": "/audio/pose/sidekick/TRACKING_LOST.mp3",
+    "message": "자세가 잘 보이지 않아요. 머리부터 발끝까지 화면에 나오도록 이동해 주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "READY_POSITION_ADJUST_ALT",
+    "audio_url": "/audio/pose/sidekick/READY_POSITION_ADJUST_ALT.mp3",
+    "message": "정면을 바라보고 기본 자세를 편안하게 잡아주세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "LEFT_LEG_HEIGHT_ADJUST_ALT",
+    "audio_url": "/audio/pose/sidekick/LEFT_LEG_HEIGHT_ADJUST_ALT.mp3",
+    "message": "왼쪽 다리를 무리하지 않는 범위에서 천천히 올려보세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "RIGHT_LEG_HEIGHT_ADJUST_ALT",
+    "audio_url": "/audio/pose/sidekick/RIGHT_LEG_HEIGHT_ADJUST_ALT.mp3",
+    "message": "오른쪽 다리를 무리하지 않는 범위에서 천천히 올려보세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "LEFT_LEG_POSITION_ADJUST_ALT",
+    "audio_url": "/audio/pose/sidekick/LEFT_LEG_POSITION_ADJUST_ALT.mp3",
+    "message": "왼쪽 발끝을 옆으로 천천히 이동해 보세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "RIGHT_LEG_POSITION_ADJUST_ALT",
+    "audio_url": "/audio/pose/sidekick/RIGHT_LEG_POSITION_ADJUST_ALT.mp3",
+    "message": "오른쪽 발끝을 옆으로 천천히 이동해 보세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "LEFT_KNEE_POSITION_ADJUST_ALT",
+    "audio_url": "/audio/pose/sidekick/LEFT_KNEE_POSITION_ADJUST_ALT.mp3",
+    "message": "왼쪽 무릎을 과하게 굽히지 않도록 해보세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "RIGHT_KNEE_POSITION_ADJUST_ALT",
+    "audio_url": "/audio/pose/sidekick/RIGHT_KNEE_POSITION_ADJUST_ALT.mp3",
+    "message": "오른쪽 무릎을 과하게 굽히지 않도록 해보세요."
+  },
+  {
+    "category": "STUDY",
+    "event_code": "POSTURE_ADJUST_ALT",
+    "audio_url": "/audio/pose/sidekick/POSTURE_ADJUST_ALT.mp3",
+    "message": "균형을 유지하면서 편안하게 움직여 주세요."
+  }
+]

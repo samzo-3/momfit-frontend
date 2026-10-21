@@ -1,4 +1,7 @@
-import type { SideKickFeatureResult } from './side-kick-features'
+import type {
+  SideKickFeatureResult,
+  SideKickMetrics,
+} from './side-kick-features'
 import type { SideKickSide } from './side-kick-reference'
 
 export type FrontStatus = 'FRONT_OK' | 'FRONT_UNCERTAIN' | 'NOT_FRONT'
@@ -10,6 +13,8 @@ export type SideKickMotionEvent =
       type: 'REP_COMPLETED'
       side: SideKickSide
       peakMovement: number
+      peakTimestampMs: number
+      peakMetrics: SideKickMetrics
       timestampMs: number
     }
   | {
@@ -58,6 +63,8 @@ export class SideKickMotionTracker {
   private phase: SideKickMotionPhase = 'READY'
   private activeSide: SideKickSide | null = null
   private peakMovement = 0
+  private peakTimestampMs: number | null = null
+  private peakMetrics: SideKickMetrics | null = null
   private lastMovement = 0
   private returnStartedAt: number | null = null
   private lastTimestamp: number | null = null
@@ -109,6 +116,8 @@ export class SideKickMotionTracker {
     this.phase = 'READY'
     this.activeSide = null
     this.peakMovement = 0
+    this.peakTimestampMs = null
+    this.peakMetrics = null
     this.lastMovement = 0
     this.returnStartedAt = null
     this.readyObserved = false
@@ -203,6 +212,8 @@ export class SideKickMotionTracker {
       this.activeSide = leftStarted ? 'LEFT' : 'RIGHT'
       this.phase = 'RAISING'
       this.peakMovement = movement[this.activeSide]
+      this.peakTimestampMs = timestampMs
+      this.peakMetrics = { ...metrics }
       this.lastMovement = this.peakMovement
       return this.snapshot()
     }
@@ -213,7 +224,11 @@ export class SideKickMotionTracker {
     }
 
     const currentMovement = movement[this.activeSide]
-    this.peakMovement = Math.max(this.peakMovement, currentMovement)
+    if (currentMovement > this.peakMovement) {
+      this.peakMovement = currentMovement
+      this.peakTimestampMs = timestampMs
+      this.peakMetrics = { ...metrics }
+    }
 
     if (this.phase === 'RAISING') {
       // 최고점이 충분히 관측된 뒤 하강하면 RETURNING 진입.
@@ -238,6 +253,16 @@ export class SideKickMotionTracker {
         if (timestampMs - this.returnStartedAt >= this.config.minReturnMs) {
           const completedSide = this.activeSide
           const completedPeak = this.peakMovement
+          const completedPeakTimestamp = this.peakTimestampMs
+          const completedPeakMetrics = this.peakMetrics
+
+          if (
+            completedPeakTimestamp === null ||
+            completedPeakMetrics === null
+          ) {
+            this.clearMotion()
+            return this.snapshot()
+          }
 
           this.completedReps += 1
 
@@ -255,6 +280,8 @@ export class SideKickMotionTracker {
               type: 'REP_COMPLETED',
               side: completedSide,
               peakMovement: completedPeak,
+              peakTimestampMs: completedPeakTimestamp,
+              peakMetrics: completedPeakMetrics,
               timestampMs,
             },
           ])
