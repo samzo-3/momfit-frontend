@@ -58,6 +58,12 @@ function CalendarIcon() {
   )
 }
 
+// 일요일부터 시작하는 7열에서 index번째 칸이 일요일(0)이나 토요일(6)인지
+function isWeekend(index: number): boolean {
+  const column = index % 7
+  return column === 0 || column === 6
+}
+
 function dayLabel(dateKey: string, completed: boolean, isToday: boolean) {
   const date = parseDateKey(dateKey)
   const base = `${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEKDAY_LABELS[date.getDay()]}요일`
@@ -149,7 +155,9 @@ function RecordsCalendar({
           {WEEKDAY_LABELS.map((label, index) => (
             <li
               key={label}
-              className={index === 0 ? 'text-danger' : 'text-cocoa-secondary'}
+              className={
+                isWeekend(index) ? 'text-danger' : 'text-cocoa-secondary'
+              }
             >
               {label}
             </li>
@@ -163,12 +171,12 @@ function RecordsCalendar({
             const completed = completedDates?.has(dateKey) ?? false
             const selected = dateKey === selectedDate
             const isToday = dateKey === todayKey
-            const isSunday = index % 7 === 0
+            const weekend = isWeekend(index)
             const tone = selected
               ? 'bg-brand font-semibold text-on-brand'
               : completed
                 ? 'bg-primary text-cocoa hover:bg-primary-strong'
-                : `${isSunday ? 'text-danger' : 'text-cocoa'} hover:bg-primary-soft`
+                : `${weekend ? 'text-danger' : 'text-cocoa'} hover:bg-primary-soft`
 
             return (
               <button

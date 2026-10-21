@@ -61,6 +61,22 @@ describe('RecordsPage', () => {
     await screen.findByRole('group', { name: '2026년 10월' })
   })
 
+  it('토요일과 일요일은 요일과 날짜를 같은 색으로 표시한다', () => {
+    renderApp('/records')
+
+    // 요일 줄
+    for (const label of ['토', '일']) {
+      expect(screen.getByText(label)).toHaveClass('text-danger')
+    }
+    for (const label of ['월', '화', '수', '목', '금']) {
+      expect(screen.getByText(label)).not.toHaveClass('text-danger')
+    }
+    // 2026-10-03은 토요일, 10-04는 일요일, 10-05는 월요일
+    expect(day(/^10월 3일 토요일/)).toHaveClass('text-danger')
+    expect(day(/^10월 4일 일요일/)).toHaveClass('text-danger')
+    expect(day(/^10월 5일 월요일/)).not.toHaveClass('text-danger')
+  })
+
   it('이번 달 전체 범위로 기록을 조회한다', async () => {
     renderApp('/records')
 
