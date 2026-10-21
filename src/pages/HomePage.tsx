@@ -32,6 +32,7 @@ function HomePage() {
           pregnancyWeek={user.pregnancyWeek}
           dueDate={user.dueDate}
           dueDateLabel={formatDate(user.dueDate)}
+          workoutsPath={WORKOUTS_PATH}
           recordsPath={RECORDS_PATH}
           completedDates={completedDates}
         />

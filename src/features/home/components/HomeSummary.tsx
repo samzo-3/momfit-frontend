@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import ButtonLink from '../../../shared/components/ButtonLink'
 import { daysUntil, formatDday } from '../due-date'
 import { toDateKey, weekDates } from '../../../shared/lib/date'
 import { STAGES, stageFill, stageOf, TOTAL_WEEKS } from '../pregnancy'
@@ -9,6 +10,8 @@ interface HomeSummaryProps {
   dueDate: string | null
   // "2027년 1월 11일"
   dueDateLabel: string
+  // 운동을 고르는 화면 경로
+  workoutsPath: string
   // 운동 기록 캘린더 화면 경로
   recordsPath: string
   // 이번 주에 운동을 마친 날짜("2026-10-19"). 아직 불러오는 중이거나 실패했으면 null
@@ -24,7 +27,7 @@ function JourneyCard({
   pregnancyWeek,
   dueDate,
   dueDateLabel,
-}: Omit<HomeSummaryProps, 'recordsPath' | 'completedDates'>) {
+}: Omit<HomeSummaryProps, 'workoutsPath' | 'recordsPath' | 'completedDates'>) {
   const stage = stageOf(pregnancyWeek)
 
   return (
@@ -103,26 +106,70 @@ function JourneyCard({
   )
 }
 
-// 이번 주(월~일) 요일별 운동 표시. 운동을 마친 날은 색을 채운다.
+function CheckIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="size-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4.5 10.5l3.5 3.5 7.5-8" />
+    </svg>
+  )
+}
+
+// 이번 주 운동 상태에 맞는 한마디. 목표나 평가가 아니라 응원하는 말투로 둔다.
+function encouragement(doneToday: boolean, doneCount: number): string {
+  if (doneToday) return '오늘도 수고했어요'
+  if (doneCount > 0) return '쉬어가는 날도 괜찮아요'
+  return '오늘도 천천히, 내 속도로'
+}
+
+// 이번 주(월~일) 운동 현황. 운동을 마친 날은 체크로 채우고, 오늘 할 일(시작 버튼)을 이어서 보여준다.
 function WeeklyCard({
+  workoutsPath,
   recordsPath,
   completedDates,
-}: Pick<HomeSummaryProps, 'recordsPath' | 'completedDates'>) {
+}: Pick<HomeSummaryProps, 'workoutsPath' | 'recordsPath' | 'completedDates'>) {
   const todayKey = toDateKey(new Date())
   const days = weekDates(new Date())
   const doneCount = completedDates
     ? days.filter((day) => completedDates.has(toDateKey(day))).length
     : 0
+  const doneToday = completedDates?.has(todayKey) ?? false
 
   return (
     <section aria-labelledby="weekly-title" className={`${CARD} flex flex-col`}>
-      <h2
-        id="weekly-title"
-        className="text-sm font-medium text-cocoa-secondary"
-      >
-        이번 주 운동
-      </h2>
-      <ul className="mt-4 flex gap-1.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2
+          id="weekly-title"
+          className="text-sm font-medium text-cocoa-secondary"
+        >
+          이번 주 운동
+        </h2>
+        <Link
+          to={recordsPath}
+          className="text-sm font-medium whitespace-nowrap text-brand-text hover:underline"
+        >
+          운동 기록 보기
+          <span aria-hidden="true"> →</span>
+        </Link>
+      </div>
+      {/* 불러오는 동안에도 높이를 지켜 카드가 출렁이지 않게 한다. */}
+      <p className="mt-1 min-h-8 text-2xl font-semibold text-cocoa">
+        {completedDates === null
+          ? ''
+          : doneCount > 0
+            ? `이번 주 ${doneCount}일 운동했어요`
+            : '이번 주 첫 운동을 시작해 볼까요?'}
+      </p>
+
+      <ul className="mt-5 grid grid-cols-7 gap-1.5">
         {days.map((day) => {
           const key = toDateKey(day)
           const isToday = key === todayKey
@@ -132,28 +179,43 @@ function WeeklyCard({
               key={key}
               aria-label={`${WEEKDAYS[day.getDay()]}요일${isToday ? ' (오늘)' : ''}${done ? ', 운동 완료' : ''}`}
               aria-current={isToday ? 'date' : undefined}
-              className={`grid size-7 place-items-center rounded-full text-xs ${done ? 'bg-brand font-semibold text-on-brand' : 'bg-primary text-cocoa-secondary'} ${isToday ? 'ring-2 ring-brand-text' : ''}`}
+              className="flex flex-col items-center gap-1.5"
             >
-              {WEEKDAYS[day.getDay()]}
+              <span
+                aria-hidden="true"
+                className={`text-xs ${isToday ? 'font-semibold text-brand-text' : 'text-cocoa-secondary'}`}
+              >
+                {WEEKDAYS[day.getDay()]}
+              </span>
+              <span
+                aria-hidden="true"
+                className={`grid size-9 place-items-center rounded-full text-sm ${done ? 'bg-brand text-on-brand' : 'bg-primary text-cocoa-secondary'} ${isToday ? 'font-semibold ring-2 ring-brand-text ring-offset-2' : ''}`}
+              >
+                {done ? <CheckIcon /> : day.getDate()}
+              </span>
             </li>
           )
         })}
       </ul>
-      {/* 안내와 링크를 한 줄에 둔다. 좁아지면 줄바꿈된다. */}
-      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[15px]">
-        <p className="text-cocoa-secondary">
-          {completedDates === null
-            ? ''
-            : doneCount > 0
-              ? `이번 주 ${doneCount}일 운동했어요`
-              : '아직 기록이 없어요'}
-        </p>
-        <Link
-          to={recordsPath}
-          className="font-medium whitespace-nowrap text-brand-text hover:underline"
-        >
-          운동 기록 보기
-        </Link>
+
+      {/* 오늘 아직 안 했으면 시작 버튼, 했으면 완료 표시. 불러오는 중에는 비워 둔다. */}
+      <div className="mt-auto flex flex-col items-center gap-3 pt-6">
+        {completedDates !== null &&
+          (doneToday ? (
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-sage-soft px-4 py-2 text-[15px] font-medium text-sage">
+              <CheckIcon />
+              오늘 운동 완료
+            </p>
+          ) : (
+            <ButtonLink to={workoutsPath} variant="brand" className="w-full">
+              오늘 운동 시작하기
+            </ButtonLink>
+          ))}
+        {completedDates !== null && (
+          <p className="text-sm text-cocoa-secondary">
+            {encouragement(doneToday, doneCount)}
+          </p>
+        )}
       </div>
     </section>
   )
@@ -164,6 +226,7 @@ function HomeSummary({
   pregnancyWeek,
   dueDate,
   dueDateLabel,
+  workoutsPath,
   recordsPath,
   completedDates,
 }: HomeSummaryProps) {
@@ -174,7 +237,11 @@ function HomeSummary({
         dueDate={dueDate}
         dueDateLabel={dueDateLabel}
       />
-      <WeeklyCard recordsPath={recordsPath} completedDates={completedDates} />
+      <WeeklyCard
+        workoutsPath={workoutsPath}
+        recordsPath={recordsPath}
+        completedDates={completedDates}
+      />
     </div>
   )
 }
