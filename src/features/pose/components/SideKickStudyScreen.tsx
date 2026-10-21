@@ -50,10 +50,11 @@ export function SideKickStudyScreen() {
   const stepFeedbackCodesRef = useRef<Map<number, string[]>>(new Map())
   const saveGenerationRef = useRef(0)
   const isDevStudy = window.location.pathname.startsWith('/dev/')
-  const lastTrackingOkAtRef = useRef(Date.now())
+  const lastTrackingOkAtRef = useRef<number>(0)
   const lastTrackingVoiceAtRef = useRef<number | null>(null)
 
   const voice = useSideKickVoice()
+  const { playCue, stopVoice, enabled: voiceEnabled } = voice
 
   useEffect(() => {
     if (isDevStudy) return
@@ -153,7 +154,7 @@ export function SideKickStudyScreen() {
         // 추적 실패 안내가 재생 중이었다면 즉시 정지.
         if (lastTrackingVoiceAtRef.current !== null) {
           lastTrackingVoiceAtRef.current = null
-          voice.stopVoice()
+          stopVoice()
         }
       }
 
@@ -189,12 +190,12 @@ export function SideKickStudyScreen() {
           )
 
           if (!stepFinished) {
-            void voice.playCue(event.eventCode)
+            void playCue(event.eventCode)
           }
         }
 
         if (event.type === 'STEP_COMPLETED') {
-          voice.stopVoice()
+          stopVoice()
 
           if (!isDevStudy && !savingStepsRef.current.has(event.record.stepNo)) {
             const config = dbConfigRef.current
@@ -248,7 +249,7 @@ export function SideKickStudyScreen() {
         }
       }
     },
-    [voice.playCue, voice.stopVoice, isDevStudy],
+    [playCue, stopVoice, isDevStudy],
   )
 
   const pose = usePoseLandmarker(
@@ -259,7 +260,7 @@ export function SideKickStudyScreen() {
   )
 
   useEffect(() => {
-    if (!cameraReady || !voice.enabled) return
+    if (!cameraReady || !voiceEnabled) return
 
     const timer = window.setInterval(() => {
       if (latestStepRef.current > 5) return
@@ -275,11 +276,11 @@ export function SideKickStudyScreen() {
       if (lastVoice !== null && now - lastVoice < 8000) return
 
       lastTrackingVoiceAtRef.current = now
-      void voice.playCue('TRACKING_LOST')
+      void playCue('TRACKING_LOST')
     }, 500)
 
     return () => window.clearInterval(timer)
-  }, [cameraReady, voice.enabled, voice.playCue])
+  }, [cameraReady, voiceEnabled, playCue])
 
   function restartTrainerVideo() {
     const video = trainerRef.current
@@ -297,7 +298,7 @@ export function SideKickStudyScreen() {
     saveGenerationRef.current += 1
     savingStepsRef.current.clear()
     stepFeedbackCodesRef.current.clear()
-    voice.stopVoice()
+    stopVoice()
     lastTrackingOkAtRef.current = Date.now()
     lastTrackingVoiceAtRef.current = null
     trackerRef.current.reset()
@@ -412,11 +413,11 @@ export function SideKickStudyScreen() {
 
           <button
             type="button"
-            disabled={!voice.ready || voice.enabled}
+            disabled={!voice.ready || voiceEnabled}
             onClick={() => void voice.enableVoice()}
             className="rounded-lg border px-4 py-2 disabled:opacity-40"
           >
-            {voice.enabled ? '음성 켜짐' : '음성 켜기'}
+            {voiceEnabled ? '음성 켜짐' : '음성 켜기'}
           </button>
 
           {voice.message && <p role="status">{voice.message}</p>}

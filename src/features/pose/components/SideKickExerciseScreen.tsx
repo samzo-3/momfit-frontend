@@ -51,11 +51,12 @@ export default function SideKickExerciseScreen() {
   const [cameraReady, setCameraReady] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [completedSets, setCompletedSets] = useState(0)
-  const [trackingMessage, setTrackingMessage] = useState('자세를 준비해 주세요.')
+  const [trackingMessage, setTrackingMessage] =
+    useState('자세를 준비해 주세요.')
   const [startVisible, setStartVisible] = useState(false)
   const [freezeImage, setFreezeImage] = useState<string | null>(null)
 
-  const lastValidAtRef = useRef<number>(performance.now())
+  const lastValidAtRef = useRef<number>(0)
   const recoveredSinceRef = useRef<number | null>(null)
   const samplesRef = useRef<Sample[]>([])
   const baselineRef = useRef<{ left: number; right: number } | null>(null)
@@ -63,10 +64,10 @@ export default function SideKickExerciseScreen() {
   const recordIdRef = useRef<number | null>(null)
   const serverBusyRef = useRef(false)
   const pauseSavedRef = useRef(false)
+  const [pauseSaved, setPauseSaved] = useState(false)
   const [serverBusy, setServerBusy] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [savedScore, setSavedScore] = useState<string | null>(null)
-
 
   const setPause = useCallback((reason: PauseReason) => {
     pauseRef.current = reason
@@ -78,26 +79,27 @@ export default function SideKickExerciseScreen() {
     setStage(next)
   }, [])
 
-  const runServerAction = useCallback(async <T,>(
-    action: () => Promise<T>,
-  ): Promise<T | null> => {
-    if (serverBusyRef.current) return null
+  const runServerAction = useCallback(
+    async <T,>(action: () => Promise<T>): Promise<T | null> => {
+      if (serverBusyRef.current) return null
 
-    serverBusyRef.current = true
-    setServerBusy(true)
-    setServerError(null)
+      serverBusyRef.current = true
+      setServerBusy(true)
+      setServerError(null)
 
-    try {
-      return await action()
-    } catch (error) {
-      console.error('Side Kick record API failed:', error)
-      setServerError('운동 기록을 서버에 저장하거나 불러오지 못했습니다.')
-      return null
-    } finally {
-      serverBusyRef.current = false
-      setServerBusy(false)
-    }
-  }, [])
+      try {
+        return await action()
+      } catch (error) {
+        console.error('Side Kick record API failed:', error)
+        setServerError('운동 기록을 서버에 저장하거나 불러오지 못했습니다.')
+        return null
+      } finally {
+        serverBusyRef.current = false
+        setServerBusy(false)
+      }
+    },
+    [],
+  )
 
   const cancelPartialMotion = useCallback(() => {
     motionRef.current.reset()
@@ -152,12 +154,11 @@ export default function SideKickExerciseScreen() {
 
     const sets = exerciseRef.current.getResult().completedSets
 
-    const result = await runServerAction(
-      () => pauseSideKickExercise(id, sets),
-    )
+    const result = await runServerAction(() => pauseSideKickExercise(id, sets))
 
     if (result) {
       pauseSavedRef.current = true
+      setPauseSaved(true)
       setSavedScore(result.total_score)
     }
   }, [runServerAction])
@@ -167,12 +168,11 @@ export default function SideKickExerciseScreen() {
     if (id === null || !pauseSavedRef.current) return
     if (serverBusyRef.current) return
 
-    const result = await runServerAction(
-      () => resumeSideKickExercise(id),
-    )
+    const result = await runServerAction(() => resumeSideKickExercise(id))
     if (!result) return
 
     pauseSavedRef.current = false
+    setPauseSaved(false)
     cancelPartialMotion()
     lastValidAtRef.current = performance.now()
     recoveredSinceRef.current = null
@@ -189,127 +189,133 @@ export default function SideKickExerciseScreen() {
     }
   }, [runServerAction, cancelPartialMotion, setPause])
 
-  const handleFrame = useCallback((frame: PoseFrame) => {
-    if (stageRef.current === 'FINISHING' || stageRef.current === 'DONE') return
+  const handleFrame = useCallback(
+    (frame: PoseFrame) => {
+      if (stageRef.current === 'FINISHING' || stageRef.current === 'DONE')
+        return
 
-    const points = frame.landmarks
+      const points = frame.landmarks
 
-    // STEP 모드와 동일한 신체 기준의 좌우 인덱스를 사용한다.
-    const landmarks = {
-      LEFT_SHOULDER: points[11],
-      RIGHT_SHOULDER: points[12],
-      LEFT_HIP: points[23],
-      RIGHT_HIP: points[24],
-      LEFT_KNEE: points[25],
-      RIGHT_KNEE: points[26],
-      LEFT_ANKLE: points[27],
-      RIGHT_ANKLE: points[28],
-    }
-
-    const width = webcamRef.current?.videoWidth ?? 0
-    const height = webcamRef.current?.videoHeight ?? 0
-
-    const hipWidth = Math.abs((points[23]?.x ?? 0) - (points[24]?.x ?? 0))
-    const shoulderWidth = Math.abs((points[11]?.x ?? 0) - (points[12]?.x ?? 0))
-
-    const frontOK =
-      hipWidth >= 0.025 &&
-      shoulderWidth >= 0.04 &&
-      shoulderWidth / hipWidth >= 0.5
-
-    const features = extractSideKickFeatures({
-      width,
-      height,
-      trackingStatus: 'TRACKING',
-      poseStatus: 'POSE_VALID',
-      landmarks,
-    })
-
-    if (!frontOK || !features.valid) {
-      recoveredSinceRef.current = null
-      setTrackingMessage('몸 전체가 보이도록 카메라 정면에 서 주세요.')
-      return
-    }
-
-    const now = performance.now()
-    lastValidAtRef.current = now
-    setTrackingMessage('자세 인식 중')
-
-    // 자동 정지는 안정적으로 인식이 회복되면 자동 재개한다.
-    if (pauseRef.current === 'AUTO') {
-      if (recoveredSinceRef.current === null) {
-        recoveredSinceRef.current = now
+      // STEP 모드와 동일한 신체 기준의 좌우 인덱스를 사용한다.
+      const landmarks = {
+        LEFT_SHOULDER: points[11],
+        RIGHT_SHOULDER: points[12],
+        LEFT_HIP: points[23],
+        RIGHT_HIP: points[24],
+        LEFT_KNEE: points[25],
+        RIGHT_KNEE: points[26],
+        LEFT_ANKLE: points[27],
+        RIGHT_ANKLE: points[28],
       }
 
-      if (
-        now - recoveredSinceRef.current >= RECOVERY_MS &&
-        pauseSavedRef.current &&
-        !serverBusyRef.current
-      ) {
-        void resumeFromPause()
+      const width = webcamRef.current?.videoWidth ?? 0
+      const height = webcamRef.current?.videoHeight ?? 0
+
+      const hipWidth = Math.abs((points[23]?.x ?? 0) - (points[24]?.x ?? 0))
+      const shoulderWidth = Math.abs(
+        (points[11]?.x ?? 0) - (points[12]?.x ?? 0),
+      )
+
+      const frontOK =
+        hipWidth >= 0.025 &&
+        shoulderWidth >= 0.04 &&
+        shoulderWidth / hipWidth >= 0.5
+
+      const features = extractSideKickFeatures({
+        width,
+        height,
+        trackingStatus: 'TRACKING',
+        poseStatus: 'POSE_VALID',
+        landmarks,
+      })
+
+      if (!frontOK || !features.valid) {
+        recoveredSinceRef.current = null
+        setTrackingMessage('몸 전체가 보이도록 카메라 정면에 서 주세요.')
+        return
       }
-      return
-    }
 
-    if (pauseRef.current === 'MANUAL') return
+      const now = performance.now()
+      lastValidAtRef.current = now
+      setTrackingMessage('자세 인식 중')
 
-    const metrics = features.metrics
-    const left = metrics.left_ankle_relative_x_ratio
-    const right = metrics.right_ankle_relative_x_ratio
+      // 자동 정지는 안정적으로 인식이 회복되면 자동 재개한다.
+      if (pauseRef.current === 'AUTO') {
+        if (recoveredSinceRef.current === null) {
+          recoveredSinceRef.current = now
+        }
 
-    if (stageRef.current === 'GUIDE' || baselineRef.current === null) {
-      const samples = samplesRef.current
-      samples.push({ time: now, left, right })
-
-      // 최근 1.5초 표본만 사용.
-      while (samples.length && now - samples[0].time > 1500) {
-        samples.shift()
+        if (
+          now - recoveredSinceRef.current >= RECOVERY_MS &&
+          pauseSavedRef.current &&
+          !serverBusyRef.current
+        ) {
+          void resumeFromPause()
+        }
+        return
       }
 
-      if (samples.length >= 5 &&
-          now - samples[0].time >= CALIBRATION_MS) {
-        const leftValues = samples.map((s) => s.left)
-        const rightValues = samples.map((s) => s.right)
+      if (pauseRef.current === 'MANUAL') return
 
-        const leftRange = Math.max(...leftValues) - Math.min(...leftValues)
-        const rightRange = Math.max(...rightValues) - Math.min(...rightValues)
+      const metrics = features.metrics
+      const left = metrics.left_ankle_relative_x_ratio
+      const right = metrics.right_ankle_relative_x_ratio
 
-        // 큰 움직임이 없는 구간에서만 준비 자세를 잡는다.
-        if (leftRange <= 0.15 && rightRange <= 0.15) {
-          baselineRef.current = {
-            left: leftValues.reduce((a, b) => a + b, 0) / leftValues.length,
-            right: rightValues.reduce((a, b) => a + b, 0) / rightValues.length,
+      if (stageRef.current === 'GUIDE' || baselineRef.current === null) {
+        const samples = samplesRef.current
+        samples.push({ time: now, left, right })
+
+        // 최근 1.5초 표본만 사용.
+        while (samples.length && now - samples[0].time > 1500) {
+          samples.shift()
+        }
+
+        if (samples.length >= 5 && now - samples[0].time >= CALIBRATION_MS) {
+          const leftValues = samples.map((s) => s.left)
+          const rightValues = samples.map((s) => s.right)
+
+          const leftRange = Math.max(...leftValues) - Math.min(...leftValues)
+          const rightRange = Math.max(...rightValues) - Math.min(...rightValues)
+
+          // 큰 움직임이 없는 구간에서만 준비 자세를 잡는다.
+          if (leftRange <= 0.15 && rightRange <= 0.15) {
+            baselineRef.current = {
+              left: leftValues.reduce((a, b) => a + b, 0) / leftValues.length,
+              right:
+                rightValues.reduce((a, b) => a + b, 0) / rightValues.length,
+            }
+
+            samplesRef.current = []
+            setTrackingMessage('준비 자세 인식 완료')
           }
-
-          samplesRef.current = []
-          setTrackingMessage('준비 자세 인식 완료')
         }
       }
-    }
 
-    if (stageRef.current !== 'EXERCISE' || !baselineRef.current) return
+      if (stageRef.current !== 'EXERCISE' || !baselineRef.current) return
 
-    const adjusted: SideKickMetrics = {
-      ...metrics,
-      left_ankle_relative_x_ratio: left - baselineRef.current.left,
-      right_ankle_relative_x_ratio: right - baselineRef.current.right,
-    }
+      const adjusted: SideKickMetrics = {
+        ...metrics,
+        left_ankle_relative_x_ratio: left - baselineRef.current.left,
+        right_ankle_relative_x_ratio: right - baselineRef.current.right,
+      }
 
-    const adjustedFeatures: SideKickFeatureResult = {
-      valid: true,
-      reason: null,
-      metrics: adjusted,
-    }
+      const adjustedFeatures: SideKickFeatureResult = {
+        valid: true,
+        reason: null,
+        metrics: adjusted,
+      }
 
-    const motion = motionRef.current.update({
-      timestampMs: frame.timestampMs,
-      frontStatus: 'FRONT_OK',
-      features: adjustedFeatures,
-    })
+      const motion = motionRef.current.update({
+        timestampMs: frame.timestampMs,
+        frontStatus: 'FRONT_OK',
+        features: adjustedFeatures,
+      })
 
-    const exercise = exerciseRef.current.update(motion.events)
-    setCompletedSets(exercise.completedSets)
-  }, [resumeFromPause])
+      const exercise = exerciseRef.current.update(motion.events)
+      setCompletedSets(exercise.completedSets)
+    },
+    [resumeFromPause],
+  )
 
   const pose = usePoseLandmarker(
     webcamRef,
@@ -384,11 +390,11 @@ export default function SideKickExerciseScreen() {
     const recordId = recordIdRef.current
     if (recordId !== null) {
       const sets = exerciseRef.current.getResult().completedSets
-      void runServerAction(
-        () => completeSideKickExercise(recordId, sets),
-      ).then((saved) => {
-        if (saved) setSavedScore(saved.total_score)
-      })
+      void runServerAction(() => completeSideKickExercise(recordId, sets)).then(
+        (saved) => {
+          if (saved) setSavedScore(saved.total_score)
+        },
+      )
     }
 
     // 종료 시점의 웹캠 마지막 프레임을 고정한다.
@@ -449,10 +455,15 @@ export default function SideKickExerciseScreen() {
             onEnded={handleTrainerEnded}
           />
           <p className="text-sm">
-            {stage === 'GUIDE' ? '운동 가이드 · 자세를 준비하세요' :
-              stage === 'FINISHING' ? '운동 종료 · 결과 준비 중' :
-              stage === 'DONE' ? '운동 완료' :
-              paused ? '일시 정지' : '본 운동 진행 중'}
+            {stage === 'GUIDE'
+              ? '운동 가이드 · 자세를 준비하세요'
+              : stage === 'FINISHING'
+                ? '운동 종료 · 결과 준비 중'
+                : stage === 'DONE'
+                  ? '운동 완료'
+                  : paused
+                    ? '일시 정지'
+                    : '본 운동 진행 중'}
           </p>
         </section>
 
@@ -490,18 +501,18 @@ export default function SideKickExerciseScreen() {
               </div>
             )}
           </div>
-          <p className="text-sm">{cameraError ?? pose.error ?? trackingMessage}</p>
+          <p className="text-sm">
+            {cameraError ?? pose.error ?? trackingMessage}
+          </p>
           <p className="text-xs text-gray-500">MediaPipe: {pose.status}</p>
         </section>
       </div>
 
       <div className="flex flex-wrap items-center gap-4 rounded-xl border p-4">
-        <div className="text-xl font-bold">
-          {completedSets} / 10세트
-        </div>
+        <div className="text-xl font-bold">{completedSets} / 10세트</div>
         <div className="text-lg">
-          {stage === 'DONE' ? '감지 점수' : '점수 미리보기'}:
-          {' '}{completedSets * 10}점
+          {stage === 'DONE' ? '감지 점수' : '점수 미리보기'}:{' '}
+          {completedSets * 10}점
         </div>
         <div className="text-sm">
           서버 저장 점수: {savedScore === null ? '미저장' : `${savedScore}점`}
@@ -520,7 +531,7 @@ export default function SideKickExerciseScreen() {
           <button
             type="button"
             onClick={manualResume}
-            disabled={serverBusy || !pauseSavedRef.current}
+            disabled={serverBusy || !pauseSaved}
             className="rounded-lg border px-4 py-2 disabled:opacity-50"
           >
             이어하기
@@ -529,22 +540,32 @@ export default function SideKickExerciseScreen() {
       </div>
 
       {stage === 'STARTING' && serverError && (
-        <button type="button" onClick={() => void startExercise()}
-          className="rounded-lg border px-4 py-2">
+        <button
+          type="button"
+          onClick={() => void startExercise()}
+          className="rounded-lg border px-4 py-2"
+        >
           기록 생성 다시 시도
         </button>
       )}
 
-      {paused && serverError && !pauseSavedRef.current && (
-        <button type="button" onClick={retrySave}
+      {paused && serverError && !pauseSaved && (
+        <button
+          type="button"
+          onClick={retrySave}
           disabled={serverBusy}
-          className="rounded-lg border px-4 py-2">
+          className="rounded-lg border px-4 py-2"
+        >
           일시 정지 기록 재저장
         </button>
       )}
 
       {serverBusy && <p role="status">서버 처리 중...</p>}
-      {serverError && <p role="alert" className="text-red-600">{serverError}</p>}
+      {serverError && (
+        <p role="alert" className="text-red-600">
+          {serverError}
+        </p>
+      )}
 
       {stage === 'DONE' && (
         <p className="font-semibold">

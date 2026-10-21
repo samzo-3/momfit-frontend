@@ -1,9 +1,6 @@
 import { apiRequest } from '../../../shared/api/api-client'
 
-export type ExerciseRecordStatus =
-  | 'IN_PROGRESS'
-  | 'PAUSED'
-  | 'COMPLETED'
+export type ExerciseRecordStatus = 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED'
 
 export type ExerciseRecordResponse = {
   id: number
@@ -46,10 +43,7 @@ export function startSideKickExercise() {
 }
 
 // 자동 또는 수동 일시 정지: 기존 기록 업데이트
-export function pauseSideKickExercise(
-  recordId: number,
-  completedSets: number,
-) {
+export function pauseSideKickExercise(recordId: number, completedSets: number) {
   validateRecordId(recordId)
   validateCompletedSets(completedSets)
 
@@ -99,10 +93,7 @@ export function completeSideKickExercise(
 export function getSideKickExerciseRecord(recordId: number) {
   validateRecordId(recordId)
 
-  return apiRequest<ExerciseRecordResponse>(
-    `/exercise-records/${recordId}`,
-    {
-      method: 'GET',
-    },
-  )
+  return apiRequest<ExerciseRecordResponse>(`/exercise-records/${recordId}`, {
+    method: 'GET',
+  })
 }

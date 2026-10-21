@@ -12,10 +12,7 @@ const metrics = {
   right_ankle_relative_x_ratio: 0,
 }
 
-function rep(
-  side: 'LEFT' | 'RIGHT',
-  timestampMs: number,
-): SideKickMotionEvent {
+function rep(side: 'LEFT' | 'RIGHT', timestampMs: number): SideKickMotionEvent {
   return {
     type: 'REP_COMPLETED',
     side,
@@ -89,10 +86,7 @@ describe('Side Kick 일반 운동 세트 집계', () => {
     const tracker = new SideKickExerciseTracker()
 
     for (let i = 0; i < 12; i++) {
-      tracker.update([
-        rep('LEFT', i * 200 + 100),
-        rep('RIGHT', i * 200 + 200),
-      ])
+      tracker.update([rep('LEFT', i * 200 + 100), rep('RIGHT', i * 200 + 200)])
     }
 
     const result = tracker.getResult()
@@ -115,17 +109,12 @@ describe('Side Kick 일반 운동 세트 집계', () => {
   it('동일 입력 배열의 좌우 순서를 유지하여 처리한다', () => {
     const tracker = new SideKickExerciseTracker()
 
-    const result = tracker.update([
-      rep('LEFT', 100),
-      rep('RIGHT', 200),
-    ])
+    const result = tracker.update([rep('LEFT', 100), rep('RIGHT', 200)])
 
     expect(result.completedSets).toBe(1)
   })
 
   it('유효하지 않은 목표 세트 수를 거부한다', () => {
-    expect(() => new SideKickExerciseTracker(0)).toThrow(
-      'INVALID_TARGET_SETS',
-    )
+    expect(() => new SideKickExerciseTracker(0)).toThrow('INVALID_TARGET_SETS')
   })
 })

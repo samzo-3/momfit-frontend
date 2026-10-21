@@ -27,10 +27,7 @@ export class SideKickExerciseTracker {
   private readonly targetSets: number
 
   constructor(targetSets = 10) {
-    if (
-      !Number.isInteger(targetSets) ||
-      targetSets < 1
-    ) {
+    if (!Number.isInteger(targetSets) || targetSets < 1) {
       throw new Error('INVALID_TARGET_SETS')
     }
 
@@ -48,18 +45,13 @@ export class SideKickExerciseTracker {
     return {
       phase: this.phase,
       completedSets: this.completedSets,
-      currentSet: Math.min(
-        this.completedSets + 1,
-        this.targetSets,
-      ),
+      currentSet: Math.min(this.completedSets + 1, this.targetSets),
       targetSets: this.targetSets,
       events,
     }
   }
 
-  update(
-    motionEvents: SideKickMotionEvent[],
-  ): SideKickExerciseResult {
+  update(motionEvents: SideKickMotionEvent[]): SideKickExerciseResult {
     const events: SideKickExerciseEvent[] = []
 
     if (this.phase === 'COMPLETED') {
@@ -107,9 +99,7 @@ export class SideKickExerciseTracker {
           })
 
           this.phase =
-            this.completedSets >= this.targetSets
-              ? 'COMPLETED'
-              : 'WAIT_LEFT'
+            this.completedSets >= this.targetSets ? 'COMPLETED' : 'WAIT_LEFT'
         }
         // LEFT 반복은 기존 왼쪽 완료 상태를 유지한다.
       }

@@ -3,3 +3,8 @@ coverage
 package-lock.json
 *.md
 .github
+
+# MediaPipe upstream WASM loader files
+public/mediapipe/wasm/vision_wasm_internal.js
+public/mediapipe/wasm/vision_wasm_module_internal.js
+public/mediapipe/wasm/vision_wasm_nosimd_internal.js
