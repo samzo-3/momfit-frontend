@@ -11,7 +11,25 @@ function main() {
 }
 
 describe('랜딩 페이지', () => {
-  it('섹션 바탕색이 연한 살구 → 대표 색 → 흰색 → 대표 색으로 번갈아 나온다', () => {
+  it('히어로 배경 사진은 장식이라 스크린리더가 읽지 않고 글자 아래에 깔린다', () => {
+    signOut()
+    renderApp('/')
+
+    const hero = main().getByRole('heading', { level: 1 }).closest('section')!
+    const photo = hero.querySelector('img')!
+    expect(photo).toHaveAttribute('alt', '')
+    expect(photo).toHaveAttribute('aria-hidden', 'true')
+    expect(photo).toHaveClass('-z-20')
+    // 사진 위에는 글자 대비를 지키는 살구색 막이 덮여 있고, 글자가 놓이는 가운데는 더 짙은 타원형 막이 따로 있다.
+    expect(hero.querySelector('.bg-primary-soft\\/25')).not.toBeNull()
+    expect(within(hero).getByTestId('hero-text-scrim')).toHaveStyle({
+      backgroundImage: expect.stringContaining('radial-gradient'),
+    })
+    // 사진이 있어도 접근성 트리에는 이미지가 나타나지 않는다.
+    expect(main().queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('섹션 바탕색이 연한 살구 → 대표 색 → 흰색 → 연한 살구(푸터와 이어짐)로 나온다', () => {
     signOut()
     renderApp('/')
 
@@ -21,9 +39,10 @@ describe('랜딩 페이지', () => {
     expect(
       main().getByRole('heading', { level: 1 }).closest('section'),
     ).toHaveClass('bg-primary-soft')
-    expect(section('MomFit이 함께해요')).toHaveClass('bg-primary')
+    expect(section('momfit이 함께해요')).toHaveClass('bg-primary')
     expect(section('이렇게 시작해요')).toHaveClass('bg-white')
-    expect(section('지금 시작해 보세요')).toHaveClass('bg-primary')
+    // 마지막 안내는 푸터와 같은 연한 살구라, 진한 덩어리 바로 아래에 푸터가 붙는 어색함이 없다.
+    expect(section('지금 시작해 보세요')).toHaveClass('bg-primary-soft')
   })
 
   it('서비스를 소개하는 제목과 섹션을 보여준다', () => {
@@ -34,7 +53,7 @@ describe('랜딩 페이지', () => {
       main().getByRole('heading', { level: 1, name: /임신 중에도/ }),
     ).toBeInTheDocument()
     for (const name of [
-      'MomFit이 함께해요',
+      'momfit이 함께해요',
       '이렇게 시작해요',
       '지금 시작해 보세요',
     ]) {
@@ -49,7 +68,7 @@ describe('랜딩 페이지', () => {
     renderApp('/')
 
     const features = within(
-      main().getByRole('region', { name: 'MomFit이 함께해요' }),
+      main().getByRole('region', { name: 'momfit이 함께해요' }),
     ).getAllByRole('listitem')
     expect(
       features.map((item) => within(item).getByRole('heading').textContent),

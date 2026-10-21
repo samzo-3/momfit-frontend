@@ -18,23 +18,29 @@
   --color-link: #0066cc;
   --color-danger: #d70015;
   --color-success: #248a3d;
-  /* 서비스 대표 색(살구). 면·배경에 쓰고, 글자와 버튼은 아래 어두운 짝(brand, cocoa)을 쓴다. 현재는 /home에서 쓴다 */
-  --color-primary: #f4e3da;
-  --color-primary-soft: #fbf4ef;
-  --color-primary-strong: #e6cfc2;
-  /* 주 버튼·강조 (흰 글자 대비 5.05:1) */
-  --color-brand: #a9583f;
-  --color-brand-hover: #97492f;
-  /* 살구 면 위의 강조 글자·링크 (대비 5.09:1. brand는 4.05:1이라 글자에는 모자라다) */
-  --color-brand-text: #97492f;
-  /* 살구 면 위의 글자 (대비 10.9:1 / 4.7:1) */
-  --color-cocoa: #3b2a24;
-  --color-cocoa-secondary: #7a5f54;
-  /* 보조 색 */
-  --color-sage: #4f6f54;
-  --color-sage-soft: #e3ebdf;
   /* 카카오 로그인 버튼 배경 (카카오 디자인 가이드의 노란색) */
   --color-kakao: #fee500;
+
+  /* 서비스 색: 디자인 시안에서 추출한 살구 + 코코아 + 세이지. 확정값이다 */
+  /* 살구 면: 배경·카드·구분선. 너무 밝아 글자·버튼에는 쓰지 않는다 */
+  --color-primary: #f6e7de;
+  --color-primary-soft: #fcf8f4;
+  --color-primary-strong: #e8d8cf;
+  /* 주 버튼·강조 면과 그 위의 글자. 브랜드 색이 밝아 흰 글자 대비가 모자라므로
+     버튼 글자(on-brand)는 어두운 코코아를 쓴다 (대비 6.38:1, 호버 5.05:1) */
+  --color-brand: #dba187;
+  --color-brand-hover: #cc8b6d;
+  --color-on-brand: #2f2a28;
+  /* 살구 면 위의 강조 글자·링크·의미 있는 그래픽 (대비 4.71:1) */
+  --color-brand-text: #96563d;
+  /* 포커스 링. 밝은 브랜드 색 대신 진한 갈색을 쓴다 */
+  --color-focus: #96563d;
+  /* 살구 면 위의 글자 (대비 11.7:1 / 5.6:1) */
+  --color-cocoa: #2f2a28;
+  --color-cocoa-secondary: #665952;
+  /* 보조 색 */
+  --color-sage: #556052;
+  --color-sage-soft: #e4e9e1;
 
   /* 화면이 바뀔 때 새 화면이 살짝 올라오며 나타난다. 과하지 않게 6px, 220ms */
   --animate-page-in: page-in 220ms ease-out;
@@ -70,6 +76,6 @@
   }
 
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-brand;
+    @apply outline-2 outline-offset-2 outline-focus;
   }
 }

@@ -28,7 +28,7 @@ describe('ConsentFields', () => {
     renderFields()
 
     for (const box of screen.getAllByRole('checkbox')) {
-      expect(box).toHaveClass('accent-brand')
+      expect(box).toHaveClass('accent-brand-text')
     }
   })
 })
