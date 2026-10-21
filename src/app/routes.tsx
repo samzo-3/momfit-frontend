@@ -12,11 +12,26 @@ import OnboardingPage from '../pages/OnboardingPage'
 import PasswordResetPage from '../pages/PasswordResetPage'
 import SignupPage from '../pages/SignupPage'
 import WorkoutsPage from '../pages/WorkoutsPage'
+import { SideKickStudyScreen } from '../features/pose/components/SideKickStudyScreen'
+import SideKickExerciseScreen from '../features/pose/components/SideKickExerciseScreen'
 
 export const routes: RouteObject[] = [
   {
     element: <AppLayout />,
     children: [
+      // 개발 환경 전용: 로그인 없이 STUDY 웹캠 검증
+      ...(import.meta.env.DEV
+        ? [
+            {
+              path: '/dev/sidekick/study',
+              element: <SideKickStudyScreen />,
+            },
+            {
+              path: '/dev/sidekick/exercise',
+              element: <SideKickExerciseScreen />,
+            },
+          ]
+        : []),
       // 누구나 볼 수 있는 첫 화면
       { path: '/', element: <LandingPage /> },
       // 카카오 로그인 후 백엔드가 보내는 곳. 아직 로그인 상태가 아니므로 가드 밖에 둔다.
@@ -43,6 +58,14 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/home', element: <HomePage /> },
           { path: '/workouts', element: <WorkoutsPage /> },
+          {
+            path: '/workouts/sidekick/study',
+            element: <SideKickStudyScreen />,
+          },
+          {
+            path: '/workouts/sidekick/exercise',
+            element: <SideKickExerciseScreen />,
+          },
           { path: '/me', element: <MePage /> },
         ],
       },
