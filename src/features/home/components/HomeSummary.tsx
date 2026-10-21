@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { daysUntil, formatDday } from '../due-date'
+import { toDateKey, weekDates } from '../../../shared/lib/date'
 import { STAGES, stageFill, stageOf, TOTAL_WEEKS } from '../pregnancy'
 
 interface HomeSummaryProps {
@@ -8,14 +9,15 @@ interface HomeSummaryProps {
   dueDate: string | null
   // "2027년 1월 11일"
   dueDateLabel: string
-  workoutsPath: string
+  // 운동 기록 캘린더 화면 경로
+  recordsPath: string
+  // 이번 주에 운동을 마친 날짜("2026-10-19"). 아직 불러오는 중이거나 실패했으면 null
+  completedDates: ReadonlySet<string> | null
+  // 기록 조회에 실패했는지. 실패해도 오류를 띄우지 않고, 기록과 무관한 시작 버튼만 보여준다.
+  loadFailed: boolean
 }
 
-// 운동 기록 API가 생기기 전까지는 목표만 두고 완료 횟수는 0으로 둔다.
-const WEEKLY_GOAL = 3
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-// 월요일부터 시작하는 한 주
-const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]
 
 const CARD = 'rounded-3xl bg-white p-6 ring-1 ring-primary-strong'
 
@@ -24,7 +26,7 @@ function JourneyCard({
   pregnancyWeek,
   dueDate,
   dueDateLabel,
-}: Omit<HomeSummaryProps, 'workoutsPath'>) {
+}: Omit<HomeSummaryProps, 'recordsPath' | 'completedDates' | 'loadFailed'>) {
   const stage = stageOf(pregnancyWeek)
 
   return (
@@ -103,42 +105,117 @@ function JourneyCard({
   )
 }
 
-// 이번 주 목표 횟수와 요일별 완료 표시. 아직 기록이 없어 모든 요일이 비어 있다.
-function WeeklyCard({ workoutsPath }: { workoutsPath: string }) {
-  const today = new Date().getDay()
+function CheckIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="size-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4.5 10.5l3.5 3.5 7.5-8" />
+    </svg>
+  )
+}
+
+// 이번 주 운동 상태에 맞는 한마디. 목표나 평가가 아니라 응원하는 말투로 둔다.
+function encouragement(doneToday: boolean, doneCount: number): string {
+  if (doneToday) return '오늘도 수고했어요'
+  if (doneCount > 0) return '쉬어가는 날도 괜찮아요'
+  return '오늘도 천천히, 내 속도로'
+}
+
+// 이번 주(월~일) 운동 현황. 운동을 마친 날은 체크로 채우고, 오늘 할 일(시작 버튼)을 이어서 보여준다.
+function WeeklyCard({
+  recordsPath,
+  completedDates,
+  loadFailed,
+}: Pick<HomeSummaryProps, 'recordsPath' | 'completedDates' | 'loadFailed'>) {
+  const todayKey = toDateKey(new Date())
+  const days = weekDates(new Date())
+  const doneCount = completedDates
+    ? days.filter((day) => completedDates.has(toDateKey(day))).length
+    : 0
+  const doneToday = completedDates?.has(todayKey) ?? false
+  // 불러오는 중에는 아래 행동 영역을 비운다. 실패했으면 기록과 무관한 내용만 보여준다.
+  const loading = completedDates === null && !loadFailed
 
   return (
     <section aria-labelledby="weekly-title" className={`${CARD} flex flex-col`}>
-      <h2
-        id="weekly-title"
-        className="text-sm font-medium text-cocoa-secondary"
-      >
-        이번 주 운동
-      </h2>
-      <p className="mt-1 text-3xl font-semibold text-cocoa">
-        0 / {WEEKLY_GOAL}회
-      </p>
-      <ul className="mt-4 flex gap-1.5">
-        {WEEK_ORDER.map((day) => (
-          <li
-            key={day}
-            aria-label={`${WEEKDAYS[day]}요일${day === today ? ' (오늘)' : ''}`}
-            aria-current={day === today ? 'date' : undefined}
-            className={`grid size-7 place-items-center rounded-full text-xs ${day === today ? 'bg-white font-semibold text-brand-text ring-2 ring-brand-text' : 'bg-primary text-cocoa-secondary'}`}
-          >
-            {WEEKDAYS[day]}
-          </li>
-        ))}
-      </ul>
-      {/* 안내와 링크를 한 줄에 둔다. 좁아지면 줄바꿈된다. */}
-      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[15px]">
-        <p className="text-cocoa-secondary">아직 기록이 없어요</p>
-        <Link
-          to={workoutsPath}
-          className="font-medium whitespace-nowrap text-brand-text hover:underline"
+      <div className="flex items-baseline justify-between gap-3">
+        <h2
+          id="weekly-title"
+          className="text-sm font-medium text-cocoa-secondary"
         >
-          운동 시작하기
+          이번 주 운동
+        </h2>
+        <Link
+          to={recordsPath}
+          className="text-sm font-medium whitespace-nowrap text-brand-text hover:underline"
+        >
+          운동 기록 보기
+          <span aria-hidden="true"> →</span>
         </Link>
+      </div>
+      {/* 좁은 카드에서도 한 줄로 보이게 문구를 짧게 두고 줄바꿈을 막는다.
+          불러오는 동안에도 높이를 지켜 카드가 출렁이지 않게 한다. */}
+      <p
+        data-testid="weekly-summary"
+        className="mt-1 min-h-7 text-xl font-semibold whitespace-nowrap text-cocoa"
+      >
+        {completedDates === null
+          ? ''
+          : doneCount > 0
+            ? `${doneCount}일 운동했어요`
+            : '첫 운동을 시작해 볼까요?'}
+      </p>
+
+      <ul className="mt-5 grid grid-cols-7 gap-1.5">
+        {days.map((day) => {
+          const key = toDateKey(day)
+          const isToday = key === todayKey
+          const done = completedDates?.has(key) ?? false
+          return (
+            <li
+              key={key}
+              aria-label={`${WEEKDAYS[day.getDay()]}요일${isToday ? ' (오늘)' : ''}${done ? ', 운동 완료' : ''}`}
+              aria-current={isToday ? 'date' : undefined}
+              className="flex flex-col items-center gap-1.5"
+            >
+              <span
+                aria-hidden="true"
+                className={`text-xs ${isToday ? 'font-semibold text-brand-text' : 'text-cocoa-secondary'}`}
+              >
+                {WEEKDAYS[day.getDay()]}
+              </span>
+              <span
+                aria-hidden="true"
+                className={`grid size-9 place-items-center rounded-full text-sm ${done ? 'bg-brand text-on-brand' : 'bg-primary text-cocoa-secondary'} ${isToday ? 'font-semibold ring-2 ring-brand-text ring-offset-2' : ''}`}
+              >
+                {done ? <CheckIcon /> : day.getDate()}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+
+      {/* 오늘 운동을 마쳤으면 완료 표시, 그리고 응원 한마디. 불러오는 중에는 비워 둔다. */}
+      <div className="mt-auto flex flex-col items-center gap-3 pt-6">
+        {!loading && doneToday && (
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-sage-soft px-4 py-2 text-[15px] font-medium text-sage">
+            <CheckIcon />
+            오늘 운동 완료
+          </p>
+        )}
+        {!loading && (
+          <p className="text-sm text-cocoa-secondary">
+            {encouragement(doneToday, doneCount)}
+          </p>
+        )}
       </div>
     </section>
   )
@@ -149,7 +226,9 @@ function HomeSummary({
   pregnancyWeek,
   dueDate,
   dueDateLabel,
-  workoutsPath,
+  recordsPath,
+  completedDates,
+  loadFailed,
 }: HomeSummaryProps) {
   return (
     <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
@@ -158,7 +237,11 @@ function HomeSummary({
         dueDate={dueDate}
         dueDateLabel={dueDateLabel}
       />
-      <WeeklyCard workoutsPath={workoutsPath} />
+      <WeeklyCard
+        recordsPath={recordsPath}
+        completedDates={completedDates}
+        loadFailed={loadFailed}
+      />
     </div>
   )
 }

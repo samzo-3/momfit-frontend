@@ -1,10 +1,17 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../features/auth'
 import Button from '../shared/components/Button'
 import ButtonLink from '../shared/components/ButtonLink'
 import ConfirmDialog from '../shared/components/ConfirmDialog'
 import TextLink from '../shared/components/TextLink'
+
+// 로그인했을 때의 메뉴. 지금 보고 있는 화면은 굵게 밑줄로 표시하고 aria-current="page"가 붙는다.
+const MEMBER_LINKS = [
+  { to: '/home', label: '홈' },
+  { to: '/records', label: '운동 기록' },
+  { to: '/me', label: '내 정보' },
+]
 
 // 반투명 상단 내비게이션. 로그인 상태에 따라 오른쪽 버튼이 바뀐다.
 function SiteHeader() {
@@ -27,17 +34,26 @@ function SiteHeader() {
         aria-label="주요"
         className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4"
       >
+        {/* 로그인한 사용자는 소개 페이지(/)가 아니라 홈으로 돌아온다. */}
         <Link
-          to="/"
+          to={isAuthenticated ? '/home' : '/'}
           className="text-[17px] font-semibold tracking-tight text-cocoa"
         >
           momfit
         </Link>
         {isAuthenticated && (
           <div className="flex items-center gap-4 text-sm">
-            <TextLink to="/me" tone="brand">
-              내 정보
-            </TextLink>
+            {MEMBER_LINKS.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) =>
+                  `text-brand-text hover:underline ${isActive ? 'font-semibold underline underline-offset-4' : ''}`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
             <Button
               variant="brand-outline"
               size="sm"

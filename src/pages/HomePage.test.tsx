@@ -1,10 +1,36 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { resetAuthStore, signIn } from '../test/auth-test-utils'
+import {
+  errorResponse,
+  jsonResponse,
+  mockApi,
+  requestsTo,
+  resetAuthStore,
+  signIn,
+} from '../test/auth-test-utils'
 import { renderApp } from '../test/render-app'
+
+const fetchMock = vi.fn<typeof fetch>()
+const RECORDS = 'GET /api/exercise-records'
+
+function recordItem(date: string, isCompleted = true) {
+  return {
+    id: 1,
+    exercise_id: 1,
+    status: isCompleted ? 'completed' : 'in_progress',
+    is_completed: isCompleted,
+    date,
+    started_at: `${date}T01:00:00`,
+    ended_at: null,
+  }
+}
 
 beforeEach(() => {
   resetAuthStore()
+  fetchMock.mockReset()
+  vi.stubGlobal('fetch', fetchMock)
+  // 이번 주 기록은 기본으로 비어 있다.
+  mockApi(fetchMock, { [RECORDS]: () => jsonResponse(200, { items: [] }) })
 })
 
 // 지금 보이는(접근 가능한) 슬라이드
@@ -149,28 +175,175 @@ describe('HomePage 요약', () => {
     ).toHaveAttribute('aria-valuetext', '주차를 알 수 없음')
   })
 
-  it('이번 주 운동은 목표 횟수와 요일 표시를 보여주고 오늘 요일을 표시한다', () => {
+  // 이번 주(2026-10-19 월 ~ 10-25 일). 오늘은 10-20(화)이다.
+  function mockWeek(...items: ReturnType<typeof recordItem>[]) {
+    mockApi(fetchMock, {
+      [RECORDS]: () => jsonResponse(200, { items }),
+    })
+  }
+
+  it('이번 주 운동은 월~일 요일과 날짜를 보여주고 오늘을 표시한다', async () => {
     signIn()
     renderApp('/home')
 
     const card = weekly()
-    expect(card).toHaveTextContent('0 / 3회')
-    expect(within(card).getAllByRole('listitem')).toHaveLength(7)
-    expect(
-      within(card).getByRole('listitem', { name: '화요일 (오늘)' }),
-    ).toHaveAttribute('aria-current', 'date')
-    expect(
-      within(card).getByRole('listitem', { name: '월요일' }),
-    ).not.toHaveAttribute('aria-current')
+    // 목표 횟수("0 / 3회") 같은 숫자는 보여주지 않는다.
+    expect(card).not.toHaveTextContent('/ 3')
+    const days = within(card).getAllByRole('listitem')
+    expect(days.map((day) => day.getAttribute('aria-label'))).toEqual([
+      '월요일',
+      '화요일 (오늘)',
+      '수요일',
+      '목요일',
+      '금요일',
+      '토요일',
+      '일요일',
+    ])
+    expect(days.map((day) => day.textContent)).toEqual([
+      '월19',
+      '화20',
+      '수21',
+      '목22',
+      '금23',
+      '토24',
+      '일25',
+    ])
+    expect(days[1]).toHaveAttribute('aria-current', 'date')
+    expect(days[0]).not.toHaveAttribute('aria-current')
+    await within(card).findByText('첫 운동을 시작해 볼까요?')
   })
 
-  it('운동 기록이 없으면 빈 상태와 운동 시작 링크를 보여준다', () => {
+  it('이번 주(월~일) 범위로 기록을 조회한다', async () => {
     signIn()
     renderApp('/home')
 
-    expect(weekly()).toHaveTextContent('아직 기록이 없어요')
+    await within(weekly()).findByText('첫 운동을 시작해 볼까요?')
+    const [url] = requestsTo(fetchMock, RECORDS)[0]
+    expect(String(url)).toBe(
+      '/api/exercise-records?from=2026-10-19&to=2026-10-25',
+    )
+  })
+
+  it('운동을 마친 요일은 완료로 표시하고 일수를 알려준다', async () => {
+    mockWeek(
+      recordItem('2026-10-19'),
+      recordItem('2026-10-19'),
+      // 오늘은 아직 끝내지 않은 기록뿐이라 운동한 날로 치지 않는다.
+      recordItem('2026-10-20', false),
+      recordItem('2026-10-22'),
+    )
+    signIn()
+    renderApp('/home')
+
+    const card = weekly()
     expect(
-      within(weekly()).getByRole('link', { name: '운동 시작하기' }),
-    ).toHaveAttribute('href', '/workouts')
+      await within(card).findByRole('listitem', { name: '월요일, 운동 완료' }),
+    ).toBeInTheDocument()
+    expect(
+      within(card).getByRole('listitem', { name: '목요일, 운동 완료' }),
+    ).toBeInTheDocument()
+    expect(
+      within(card).getByRole('listitem', { name: '화요일 (오늘)' }),
+    ).toBeInTheDocument()
+    // 완료한 날은 날짜 숫자 대신 체크를 보여준다.
+    expect(
+      within(card).getByRole('listitem', { name: '월요일, 운동 완료' }),
+    ).not.toHaveTextContent('19')
+    expect(card).toHaveTextContent('2일 운동했어요')
+  })
+
+  it('오늘 운동하지 않았으면 응원 문구만 보여주고 운동 시작 버튼은 두지 않는다', async () => {
+    mockWeek(recordItem('2026-10-19'))
+    signIn()
+    renderApp('/home')
+
+    const card = weekly()
+    expect(
+      await within(card).findByText('쉬어가는 날도 괜찮아요'),
+    ).toBeVisible()
+    expect(card).not.toHaveTextContent('오늘 운동 완료')
+    expect(
+      within(card).queryByRole('link', { name: '오늘 운동 시작하기' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('이번 주 기록이 없으면 처음 시작을 권하는 문구를 보여준다', async () => {
+    signIn()
+    renderApp('/home')
+
+    const card = weekly()
+    expect(
+      await within(card).findByText('첫 운동을 시작해 볼까요?'),
+    ).toBeInTheDocument()
+    expect(card).toHaveTextContent('오늘도 천천히, 내 속도로')
+  })
+
+  it('오늘 운동을 마쳤으면 완료 표시를 보여준다', async () => {
+    mockWeek(recordItem('2026-10-20'))
+    signIn()
+    renderApp('/home')
+
+    const card = weekly()
+    expect(await within(card).findByText('오늘 운동 완료')).toBeInTheDocument()
+    expect(card).toHaveTextContent('오늘도 수고했어요')
+    expect(
+      within(card).getByRole('listitem', { name: '화요일 (오늘), 운동 완료' }),
+    ).toBeInTheDocument()
+  })
+
+  it('불러오는 동안에는 기록이 없다고 단정하지 않는다', () => {
+    mockApi(fetchMock, { [RECORDS]: () => new Promise<Response>(() => {}) })
+    signIn()
+    renderApp('/home')
+
+    const card = weekly()
+    expect(card).not.toHaveTextContent('첫 운동')
+    expect(card).not.toHaveTextContent('운동했어요')
+    expect(card).not.toHaveTextContent('오늘도 천천히')
+    expect(card).not.toHaveTextContent('오늘 운동 완료')
+  })
+
+  it('기록을 불러오지 못해도 오류를 띄우지 않고 기본 응원 문구만 보여준다', async () => {
+    mockApi(fetchMock, {
+      [RECORDS]: () => errorResponse(500, 'INTERNAL_ERROR'),
+    })
+    signIn()
+    renderApp('/home')
+
+    const card = weekly()
+    // 기본 응원 문구는 기록 조회와 상관없이 보여준다.
+    expect(
+      await within(card).findByText('오늘도 천천히, 내 속도로'),
+    ).toBeInTheDocument()
+    // 틀릴 수 있는 기록 문구와 오류 알림은 없다.
+    expect(card).not.toHaveTextContent('운동했어요')
+    expect(card).not.toHaveTextContent('첫 운동')
+    expect(card).not.toHaveTextContent('오늘 운동 완료')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    // 요일 칸은 날짜만 보여주고 완료로 표시하지 않는다.
+    expect(
+      within(card)
+        .getAllByRole('listitem')
+        .some((day) => day.getAttribute('aria-label')?.includes('운동 완료')),
+    ).toBe(false)
+  })
+
+  it('요약 문구는 좁은 카드에서도 한 줄로 보이도록 줄바꿈하지 않는다', async () => {
+    signIn()
+    renderApp('/home')
+
+    const summary =
+      await within(weekly()).findByText('첫 운동을 시작해 볼까요?')
+    expect(summary).toHaveClass('whitespace-nowrap', 'text-xl')
+    expect(summary).toBe(screen.getByTestId('weekly-summary'))
+  })
+
+  it('운동 기록 보기 링크는 캘린더 화면으로 이어진다', async () => {
+    signIn()
+    renderApp('/home')
+
+    expect(
+      await within(weekly()).findByRole('link', { name: /운동 기록 보기/ }),
+    ).toHaveAttribute('href', '/records')
   })
 })

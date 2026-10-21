@@ -76,6 +76,31 @@ describe('보호 라우트 (/home)', () => {
   })
 })
 
+describe('운동 기록 (/records)', () => {
+  it('로그인한 사용자는 볼 수 있다', () => {
+    signIn()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ items: [] })),
+    )
+    renderApp('/records')
+    expect(heading('나의 운동 기록')).toBeInTheDocument()
+  })
+
+  it('비로그인 사용자는 /login으로 보내고 원래 경로를 기억한다', () => {
+    signOut()
+    const router = renderApp('/records')
+    expect(router.state.location.pathname).toBe('/login')
+    expect(router.state.location.state.from.pathname).toBe('/records')
+  })
+
+  it('온보딩 전 사용자는 /onboarding으로 보낸다', () => {
+    signIn({ onboardingCompleted: false })
+    const router = renderApp('/records')
+    expect(router.state.location.pathname).toBe('/onboarding')
+  })
+})
+
 describe('내 정보 (/me)', () => {
   it('로그인한 사용자는 볼 수 있다', () => {
     signIn()

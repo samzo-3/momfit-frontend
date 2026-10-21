@@ -83,17 +83,66 @@ describe('SiteHeader', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('로그인했다면 로그인·시작하기 링크 없이 로그아웃만 보여준다', () => {
+  it('로그인했다면 로그인·시작하기 링크 없이 홈·운동 기록·내 정보와 로그아웃을 보여준다', () => {
     signIn()
     renderApp('/home')
 
     const nav = within(screen.getByRole('navigation', { name: '주요' }))
     expect(nav.getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
-    expect(nav.getByRole('link', { name: '내 정보' })).toHaveAttribute(
-      'href',
-      '/me',
-    )
+    expect(
+      nav
+        .getAllByRole('link')
+        .filter((link) => link.textContent !== 'momfit')
+        .map((link) => [link.textContent, link.getAttribute('href')]),
+    ).toEqual([
+      ['홈', '/home'],
+      ['운동 기록', '/records'],
+      ['내 정보', '/me'],
+    ])
     expect(nav.queryByRole('link', { name: '로그인' })).not.toBeInTheDocument()
+  })
+
+  it('로그인했다면 로고는 소개 페이지가 아니라 홈으로 이어진다', () => {
+    signIn()
+    renderApp('/me')
+
+    expect(screen.getByRole('link', { name: 'momfit' })).toHaveAttribute(
+      'href',
+      '/home',
+    )
+  })
+
+  it.each([
+    ['/home', '홈'],
+    ['/records', '운동 기록'],
+    ['/me', '내 정보'],
+  ])('%s에서는 %s 메뉴만 현재 화면으로 표시한다', (path, current) => {
+    signIn()
+    renderApp(path)
+
+    const nav = within(screen.getByRole('navigation', { name: '주요' }))
+    expect(nav.getByRole('link', { name: current })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(nav.getAllByRole('link', { current: 'page' })).toHaveLength(1)
+  })
+
+  it('운동 기록에서 홈 메뉴를 누르면 홈으로 이동한다', async () => {
+    signIn()
+    mockApi(fetchMock, {
+      'GET /api/exercise-records': () => jsonResponse(200, { items: [] }),
+    })
+    const router = renderApp('/records')
+
+    await userEvent.click(
+      within(screen.getByRole('navigation', { name: '주요' })).getByRole(
+        'link',
+        { name: '홈' },
+      ),
+    )
+
+    expect(router.state.location.pathname).toBe('/home')
   })
 
   describe('로그아웃 확인 모달', () => {
