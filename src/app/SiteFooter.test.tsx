@@ -37,18 +37,15 @@ describe('SiteFooter', () => {
     // 구분 점은 장식이라 스크린리더가 읽지 않는다.
     expect(footer.querySelector('[aria-hidden=true]')).toHaveTextContent('•')
     expect(screen.getByText(/momfit은 의학적 진단이나/)).toHaveClass(
-      'sm:text-right',
+      'lg:text-right',
     )
   })
 
-  it('면책 문구는 "대신하지 않습니다." 뒤에서 줄이 바뀐다', () => {
+  it('면책 문구는 강제 줄바꿈 없이 넓은 화면에서 한 줄로 보인다', () => {
     renderApp('/login')
 
     const disclaimer = screen.getByText(/momfit은 의학적 진단이나/)
-    expect(disclaimer.querySelectorAll('br')).toHaveLength(1)
-    expect(disclaimer.childNodes[0].textContent).toMatch(
-      /대신하지 않습니다\. $/,
-    )
-    expect(disclaimer.lastChild?.textContent).toMatch(/^운동을 시작하기 전에/)
+    expect(disclaimer.querySelectorAll('br')).toHaveLength(0)
+    expect(disclaimer).toHaveClass('lg:whitespace-nowrap')
   })
 })
