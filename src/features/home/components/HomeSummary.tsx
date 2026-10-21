@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import ButtonLink from '../../../shared/components/ButtonLink'
 import { daysUntil, formatDday } from '../due-date'
 import { toDateKey, weekDates } from '../../../shared/lib/date'
 import { STAGES, stageFill, stageOf, TOTAL_WEEKS } from '../pregnancy'
@@ -10,12 +9,12 @@ interface HomeSummaryProps {
   dueDate: string | null
   // "2027년 1월 11일"
   dueDateLabel: string
-  // 운동을 고르는 화면 경로
-  workoutsPath: string
   // 운동 기록 캘린더 화면 경로
   recordsPath: string
   // 이번 주에 운동을 마친 날짜("2026-10-19"). 아직 불러오는 중이거나 실패했으면 null
   completedDates: ReadonlySet<string> | null
+  // 기록 조회에 실패했는지. 실패해도 오류를 띄우지 않고, 기록과 무관한 시작 버튼만 보여준다.
+  loadFailed: boolean
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -27,7 +26,7 @@ function JourneyCard({
   pregnancyWeek,
   dueDate,
   dueDateLabel,
-}: Omit<HomeSummaryProps, 'workoutsPath' | 'recordsPath' | 'completedDates'>) {
+}: Omit<HomeSummaryProps, 'recordsPath' | 'completedDates' | 'loadFailed'>) {
   const stage = stageOf(pregnancyWeek)
 
   return (
@@ -132,16 +131,18 @@ function encouragement(doneToday: boolean, doneCount: number): string {
 
 // 이번 주(월~일) 운동 현황. 운동을 마친 날은 체크로 채우고, 오늘 할 일(시작 버튼)을 이어서 보여준다.
 function WeeklyCard({
-  workoutsPath,
   recordsPath,
   completedDates,
-}: Pick<HomeSummaryProps, 'workoutsPath' | 'recordsPath' | 'completedDates'>) {
+  loadFailed,
+}: Pick<HomeSummaryProps, 'recordsPath' | 'completedDates' | 'loadFailed'>) {
   const todayKey = toDateKey(new Date())
   const days = weekDates(new Date())
   const doneCount = completedDates
     ? days.filter((day) => completedDates.has(toDateKey(day))).length
     : 0
   const doneToday = completedDates?.has(todayKey) ?? false
+  // 불러오는 중에는 아래 행동 영역을 비운다. 실패했으면 기록과 무관한 내용만 보여준다.
+  const loading = completedDates === null && !loadFailed
 
   return (
     <section aria-labelledby="weekly-title" className={`${CARD} flex flex-col`}>
@@ -160,13 +161,17 @@ function WeeklyCard({
           <span aria-hidden="true"> →</span>
         </Link>
       </div>
-      {/* 불러오는 동안에도 높이를 지켜 카드가 출렁이지 않게 한다. */}
-      <p className="mt-1 min-h-8 text-2xl font-semibold text-cocoa">
+      {/* 좁은 카드에서도 한 줄로 보이게 문구를 짧게 두고 줄바꿈을 막는다.
+          불러오는 동안에도 높이를 지켜 카드가 출렁이지 않게 한다. */}
+      <p
+        data-testid="weekly-summary"
+        className="mt-1 min-h-7 text-xl font-semibold whitespace-nowrap text-cocoa"
+      >
         {completedDates === null
           ? ''
           : doneCount > 0
-            ? `이번 주 ${doneCount}일 운동했어요`
-            : '이번 주 첫 운동을 시작해 볼까요?'}
+            ? `${doneCount}일 운동했어요`
+            : '첫 운동을 시작해 볼까요?'}
       </p>
 
       <ul className="mt-5 grid grid-cols-7 gap-1.5">
@@ -198,20 +203,15 @@ function WeeklyCard({
         })}
       </ul>
 
-      {/* 오늘 아직 안 했으면 시작 버튼, 했으면 완료 표시. 불러오는 중에는 비워 둔다. */}
+      {/* 오늘 운동을 마쳤으면 완료 표시, 그리고 응원 한마디. 불러오는 중에는 비워 둔다. */}
       <div className="mt-auto flex flex-col items-center gap-3 pt-6">
-        {completedDates !== null &&
-          (doneToday ? (
-            <p className="inline-flex items-center gap-1.5 rounded-full bg-sage-soft px-4 py-2 text-[15px] font-medium text-sage">
-              <CheckIcon />
-              오늘 운동 완료
-            </p>
-          ) : (
-            <ButtonLink to={workoutsPath} variant="brand" className="w-full">
-              오늘 운동 시작하기
-            </ButtonLink>
-          ))}
-        {completedDates !== null && (
+        {!loading && doneToday && (
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-sage-soft px-4 py-2 text-[15px] font-medium text-sage">
+            <CheckIcon />
+            오늘 운동 완료
+          </p>
+        )}
+        {!loading && (
           <p className="text-sm text-cocoa-secondary">
             {encouragement(doneToday, doneCount)}
           </p>
@@ -226,9 +226,9 @@ function HomeSummary({
   pregnancyWeek,
   dueDate,
   dueDateLabel,
-  workoutsPath,
   recordsPath,
   completedDates,
+  loadFailed,
 }: HomeSummaryProps) {
   return (
     <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
@@ -238,9 +238,9 @@ function HomeSummary({
         dueDateLabel={dueDateLabel}
       />
       <WeeklyCard
-        workoutsPath={workoutsPath}
         recordsPath={recordsPath}
         completedDates={completedDates}
+        loadFailed={loadFailed}
       />
     </div>
   )

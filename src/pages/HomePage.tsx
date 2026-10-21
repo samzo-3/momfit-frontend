@@ -13,7 +13,7 @@ function HomePage() {
   const { user } = useAuth()
   // 이번 주(월~일)에 운동을 마친 날짜. 요약 카드의 요일 표시에 쓴다.
   const week = weekDates(new Date())
-  const { dates: completedDates } = useCompletedDates(
+  const { dates: completedDates, isError } = useCompletedDates(
     toDateKey(week[0]),
     toDateKey(week[6]),
   )
@@ -32,9 +32,9 @@ function HomePage() {
           pregnancyWeek={user.pregnancyWeek}
           dueDate={user.dueDate}
           dueDateLabel={formatDate(user.dueDate)}
-          workoutsPath={WORKOUTS_PATH}
           recordsPath={RECORDS_PATH}
           completedDates={completedDates}
+          loadFailed={isError}
         />
       </div>
     </main>
