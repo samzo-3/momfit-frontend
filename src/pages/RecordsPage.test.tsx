@@ -49,7 +49,7 @@ describe('RecordsPage', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: '나의 운동 기록' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('MY MOVEMENT')).toBeInTheDocument()
+    expect(screen.getByText('오늘도 한 걸음')).toBeInTheDocument()
     const calendar = screen.getByRole('region', { name: '운동 캘린더' })
     expect(calendar).toHaveTextContent('2026년 10월')
     // 1~31일 버튼
