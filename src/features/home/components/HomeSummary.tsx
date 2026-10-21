@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { daysUntil, formatDday } from '../due-date'
+import { toDateKey, weekDates } from '../../../shared/lib/date'
 import { STAGES, stageFill, stageOf, TOTAL_WEEKS } from '../pregnancy'
 
 interface HomeSummaryProps {
@@ -8,14 +9,13 @@ interface HomeSummaryProps {
   dueDate: string | null
   // "2027년 1월 11일"
   dueDateLabel: string
-  workoutsPath: string
+  // 운동 기록 캘린더 화면 경로
+  recordsPath: string
+  // 이번 주에 운동을 마친 날짜("2026-10-19"). 아직 불러오는 중이거나 실패했으면 null
+  completedDates: ReadonlySet<string> | null
 }
 
-// 운동 기록 API가 생기기 전까지는 목표만 두고 완료 횟수는 0으로 둔다.
-const WEEKLY_GOAL = 3
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-// 월요일부터 시작하는 한 주
-const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0]
 
 const CARD = 'rounded-3xl bg-white p-6 ring-1 ring-primary-strong'
 
@@ -24,7 +24,7 @@ function JourneyCard({
   pregnancyWeek,
   dueDate,
   dueDateLabel,
-}: Omit<HomeSummaryProps, 'workoutsPath'>) {
+}: Omit<HomeSummaryProps, 'recordsPath' | 'completedDates'>) {
   const stage = stageOf(pregnancyWeek)
 
   return (
@@ -103,9 +103,16 @@ function JourneyCard({
   )
 }
 
-// 이번 주 목표 횟수와 요일별 완료 표시. 아직 기록이 없어 모든 요일이 비어 있다.
-function WeeklyCard({ workoutsPath }: { workoutsPath: string }) {
-  const today = new Date().getDay()
+// 이번 주(월~일) 요일별 운동 표시. 운동을 마친 날은 색을 채운다.
+function WeeklyCard({
+  recordsPath,
+  completedDates,
+}: Pick<HomeSummaryProps, 'recordsPath' | 'completedDates'>) {
+  const todayKey = toDateKey(new Date())
+  const days = weekDates(new Date())
+  const doneCount = completedDates
+    ? days.filter((day) => completedDates.has(toDateKey(day))).length
+    : 0
 
   return (
     <section aria-labelledby="weekly-title" className={`${CARD} flex flex-col`}>
@@ -115,29 +122,37 @@ function WeeklyCard({ workoutsPath }: { workoutsPath: string }) {
       >
         이번 주 운동
       </h2>
-      <p className="mt-1 text-3xl font-semibold text-cocoa">
-        0 / {WEEKLY_GOAL}회
-      </p>
       <ul className="mt-4 flex gap-1.5">
-        {WEEK_ORDER.map((day) => (
-          <li
-            key={day}
-            aria-label={`${WEEKDAYS[day]}요일${day === today ? ' (오늘)' : ''}`}
-            aria-current={day === today ? 'date' : undefined}
-            className={`grid size-7 place-items-center rounded-full text-xs ${day === today ? 'bg-white font-semibold text-brand-text ring-2 ring-brand-text' : 'bg-primary text-cocoa-secondary'}`}
-          >
-            {WEEKDAYS[day]}
-          </li>
-        ))}
+        {days.map((day) => {
+          const key = toDateKey(day)
+          const isToday = key === todayKey
+          const done = completedDates?.has(key) ?? false
+          return (
+            <li
+              key={key}
+              aria-label={`${WEEKDAYS[day.getDay()]}요일${isToday ? ' (오늘)' : ''}${done ? ', 운동 완료' : ''}`}
+              aria-current={isToday ? 'date' : undefined}
+              className={`grid size-7 place-items-center rounded-full text-xs ${done ? 'bg-brand font-semibold text-on-brand' : 'bg-primary text-cocoa-secondary'} ${isToday ? 'ring-2 ring-brand-text' : ''}`}
+            >
+              {WEEKDAYS[day.getDay()]}
+            </li>
+          )
+        })}
       </ul>
       {/* 안내와 링크를 한 줄에 둔다. 좁아지면 줄바꿈된다. */}
       <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[15px]">
-        <p className="text-cocoa-secondary">아직 기록이 없어요</p>
+        <p className="text-cocoa-secondary">
+          {completedDates === null
+            ? ''
+            : doneCount > 0
+              ? `이번 주 ${doneCount}일 운동했어요`
+              : '아직 기록이 없어요'}
+        </p>
         <Link
-          to={workoutsPath}
+          to={recordsPath}
           className="font-medium whitespace-nowrap text-brand-text hover:underline"
         >
-          운동 시작하기
+          운동 기록 보기
         </Link>
       </div>
     </section>
@@ -149,7 +164,8 @@ function HomeSummary({
   pregnancyWeek,
   dueDate,
   dueDateLabel,
-  workoutsPath,
+  recordsPath,
+  completedDates,
 }: HomeSummaryProps) {
   return (
     <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
@@ -158,7 +174,7 @@ function HomeSummary({
         dueDate={dueDate}
         dueDateLabel={dueDateLabel}
       />
-      <WeeklyCard workoutsPath={workoutsPath} />
+      <WeeklyCard recordsPath={recordsPath} completedDates={completedDates} />
     </div>
   )
 }

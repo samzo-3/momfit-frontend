@@ -35,6 +35,9 @@ function SiteHeader() {
         </Link>
         {isAuthenticated && (
           <div className="flex items-center gap-4 text-sm">
+            <TextLink to="/records" tone="brand">
+              운동 기록
+            </TextLink>
             <TextLink to="/me" tone="brand">
               내 정보
             </TextLink>

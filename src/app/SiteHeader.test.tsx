@@ -89,6 +89,10 @@ describe('SiteHeader', () => {
 
     const nav = within(screen.getByRole('navigation', { name: '주요' }))
     expect(nav.getByRole('button', { name: '로그아웃' })).toBeInTheDocument()
+    expect(nav.getByRole('link', { name: '운동 기록' })).toHaveAttribute(
+      'href',
+      '/records',
+    )
     expect(nav.getByRole('link', { name: '내 정보' })).toHaveAttribute(
       'href',
       '/me',
