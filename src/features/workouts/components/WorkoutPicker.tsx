@@ -1,5 +1,10 @@
 import { Link } from 'react-router-dom'
-import { WORKOUT_MODES, WORKOUTS, type WorkoutMode } from '../workout-catalog'
+import {
+  readyPath,
+  WORKOUT_MODES,
+  WORKOUTS,
+  type WorkoutMode,
+} from '../workout-catalog'
 
 interface PickerCardProps {
   title: string
@@ -111,7 +116,7 @@ export function WorkoutChoices({ mode }: { mode: WorkoutMode }) {
             title={workout.name}
             description={workout.description}
             chips={modeInfo?.chips ?? []}
-            to={workout.routes?.[mode]}
+            to={workout.routes ? readyPath(workout.id, mode) : undefined}
             cta={modeInfo?.cta ?? '시작하기'}
           />
         </li>

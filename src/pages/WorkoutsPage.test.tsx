@@ -32,7 +32,7 @@ describe('WorkoutsPage', () => {
     )
   })
 
-  it('운동 모드를 고르면 운동 목록이 나오고 Side Kick 운동 화면으로 이동한다', async () => {
+  it('운동 모드를 고르면 운동 목록이 나오고 Side Kick 준비 페이지로 이동한다', async () => {
     signIn()
     const router = renderApp('/workouts')
     const user = userEvent.setup()
@@ -43,10 +43,12 @@ describe('WorkoutsPage', () => {
     ).toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: /Side Kick/ }))
 
-    expect(router.state.location.pathname).toBe('/workouts/sidekick/exercise')
+    expect(router.state.location.pathname).toBe(
+      '/workouts/sidekick/exercise/ready',
+    )
   })
 
-  it('자세 배우기를 고르면 Side Kick 자세 배우기 화면으로 이동한다', async () => {
+  it('자세 배우기를 고르면 Side Kick 준비 페이지로 이동한다', async () => {
     signIn()
     const router = renderApp('/workouts?mode=study')
 
@@ -54,7 +56,9 @@ describe('WorkoutsPage', () => {
       .setup()
       .click(screen.getByRole('link', { name: /Side Kick/ }))
 
-    expect(router.state.location.pathname).toBe('/workouts/sidekick/study')
+    expect(router.state.location.pathname).toBe(
+      '/workouts/sidekick/study/ready',
+    )
   })
 
   it('아직 준비되지 않은 운동은 누를 수 없고 준비 중으로 보인다', () => {
