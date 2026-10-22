@@ -39,6 +39,10 @@ describe('index.html 아이콘 설정', () => {
     }
   })
 
+  it('탭 제목은 로고와 같은 표기인 MomFit이다', () => {
+    expect(/<title>([^<]*)<\/title>/.exec(indexHtml)?.[1]).toBe('MomFit')
+  })
+
   it('Vite 템플릿의 기본 파비콘(favicon.svg)을 더 이상 쓰지 않는다', () => {
     expect(indexHtml).not.toContain('favicon.svg')
     expect(publicFiles).not.toContain('/favicon.svg')
