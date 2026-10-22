@@ -1,3 +1,4 @@
+
 import type { RouteObject } from 'react-router-dom'
 import {
   OnboardingRoute,
@@ -22,6 +23,8 @@ import WorkoutReadyPage from '../pages/WorkoutReadyPage'
 import WorkoutsPage from '../pages/WorkoutsPage'
 import { SideKickStudyScreen } from '../features/pose/components/SideKickStudyScreen'
 import SideKickExerciseScreen from '../features/pose/components/SideKickExerciseScreen'
+
+// [추가] YOLO 및 Side Kick 통합 페이지
 import YoloEnvironmentCheckPage from '../pages/yolo-environment-check/YoloEnvironmentCheckPage'
 import SideKickStartPage from '../pages/SideKickStartPage'
 import SideKickEnvironmentCheckPage from '../pages/SideKickEnvironmentCheckPage'
@@ -41,24 +44,33 @@ export const routes: RouteObject[] = [
               path: '/dev/sidekick/exercise',
               element: <SideKickExerciseScreen />,
             },
+
+            // [추가] YOLO 독립 테스트 페이지
             {
               path: '/dev/yolo',
               element: <YoloEnvironmentCheckPage />,
             },
+
+            // [추가] Side Kick 통합 시작 테스트
             {
               path: '/dev/sidekick/start',
               element: <SideKickStartPage devOnly />,
             },
+
+            // [추가] Side Kick 환경 점검 테스트
             {
               path: '/dev/sidekick/check/:mode',
               element: <SideKickEnvironmentCheckPage devOnly />,
             },
           ]
         : []),
+
       // 누구나 볼 수 있는 첫 화면
       { path: '/', element: <LandingPage /> },
+
       // 카카오 로그인 후 백엔드가 보내는 곳. 아직 로그인 상태가 아니므로 가드 밖에 둔다.
       { path: '/auth/callback', element: <AuthCallbackPage /> },
+
       {
         // 로그인하지 않은 사용자용. 로그인한 사용자는 /home으로 보낸다.
         element: <PublicOnlyRoute />,
@@ -66,57 +78,65 @@ export const routes: RouteObject[] = [
           { path: '/login', element: <LoginPage /> },
           { path: '/signup', element: <SignupPage /> },
           { path: '/password/reset', element: <PasswordResetPage /> },
+
           // 탈퇴 유예 중인 계정이 로그인하면 오는 복구 화면 (카카오 로그인도 여기로 보낸다)
           { path: '/account/restore', element: <AccountRestorePage /> },
         ],
       },
+
       {
         // 로그인했지만 온보딩 전인 사용자용
         element: <OnboardingRoute />,
         children: [{ path: '/onboarding', element: <OnboardingPage /> }],
       },
+
       {
         // 로그인한 사용자만. 이후 보호 경로는 여기에 추가한다.
         element: <RequireAuth />,
         children: [
-<<<<<<< HEAD
-          { path: '/home', element: <HomePage /> },
-          { path: '/workouts', element: <WorkoutsPage /> },
-          { path: '/workouts/start', element: <SideKickStartPage /> },
-          {
-            path: '/workouts/sidekick/check/:mode',
-            element: <SideKickEnvironmentCheckPage />,
-          },
-          { path: '/records', element: <RecordsPage /> },
-          {
-            path: '/workouts/sidekick/study',
-            element: <SideKickStudyScreen runtimeMode="STEP_RUNTIME" />,
-=======
           {
             // 서비스를 이용하는 회원용. 관리자는 /admin으로 보낸다.
             element: <RequireMember />,
             children: [
               { path: '/home', element: <HomePage /> },
               { path: '/workouts', element: <WorkoutsPage /> },
+
+              // [추가] Side Kick 사용자용 통합 시작 페이지
+              { path: '/workouts/start', element: <SideKickStartPage /> },
+
+              // [추가] 사용자용 YOLO + MediaPipe 환경 점검
+              {
+                path: '/workouts/sidekick/check/:mode',
+                element: <SideKickEnvironmentCheckPage />,
+              },
+
               { path: '/records', element: <RecordsPage /> },
+
+              // 기존 develop의 운동 준비 페이지 유지
               {
                 path: '/workouts/:workoutId/:mode/ready',
                 element: <WorkoutReadyPage />,
               },
+
+              // 기존 develop의 자세 배우기 라우트 유지
               {
                 path: '/workouts/sidekick/study',
                 element: <SideKickStudyScreen />,
               },
+
+              // 기존 develop의 일반 운동 라우트 유지
               {
                 path: '/workouts/sidekick/exercise',
                 element: <SideKickExerciseScreen />,
               },
+
               { path: '/me', element: <MePage /> },
             ],
->>>>>>> develop
           },
+
           {
-            // 관리자만. 화면 코드는 관리자가 들어갈 때만 내려받는다. (실제 보안은 서버의 /api/admin/* 가드)
+            // 관리자만. 화면 코드는 관리자가 들어갈 때만 내려받는다.
+            // 실제 보안은 서버의 /api/admin/* 가드
             element: <RequireAdmin />,
             children: [
               {
@@ -143,6 +163,7 @@ export const routes: RouteObject[] = [
           },
         ],
       },
+
       { path: '*', element: <NotFoundPage /> },
     ],
   },

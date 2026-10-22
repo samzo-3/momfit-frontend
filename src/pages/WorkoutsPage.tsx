@@ -60,15 +60,6 @@ function WorkoutsPage() {
           </svg>
           {HEALTH_NOTICE}
         </p>
-<<<<<<< HEAD
-        <ButtonLink to="/workouts/start" variant="brand">
-          Side Kick 시작
-        </ButtonLink>
-        <ButtonLink to="/home" variant="brand-outline">
-          홈으로
-        </ButtonLink>
-=======
->>>>>>> develop
       </div>
     </main>
   )
