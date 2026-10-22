@@ -9,6 +9,7 @@ import type {
   SignupInput,
   TokenResponse,
   User,
+  UserRole,
 } from '../types'
 
 // 서버는 snake_case로 응답한다. 앱 안에서는 camelCase User를 쓴다.
@@ -22,6 +23,7 @@ interface UserResponse {
   pregnancy_week: number | null
   exercise_level: ExerciseLevel | null
   onboarding_completed: boolean
+  role: UserRole
 }
 
 function toUser(response: UserResponse): User {
@@ -35,6 +37,7 @@ function toUser(response: UserResponse): User {
     pregnancyWeek: response.pregnancy_week,
     exerciseLevel: response.exercise_level,
     onboardingCompleted: response.onboarding_completed,
+    role: response.role,
   }
 }
 

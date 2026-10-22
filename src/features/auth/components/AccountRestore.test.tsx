@@ -150,6 +150,7 @@ describe('탈퇴 계정 복구 화면', () => {
         pregnancyWeek: null,
         exerciseLevel: null,
         onboardingCompleted: true,
+        role: 'user',
       },
     })
     const router = renderApp('/account/restore')
