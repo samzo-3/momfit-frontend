@@ -30,6 +30,11 @@ describe('WorkoutsPage', () => {
       'href',
       '/workouts?mode=study',
     )
+    const photo = screen.getByRole('img', {
+      name: '집에서 웹캠 운동을 위해 옆으로 스트레칭하는 임산부',
+    })
+    expect(photo).toBeInTheDocument()
+    expect(photo).toHaveAttribute('loading', 'lazy')
   })
 
   it('운동 모드를 고르면 운동 목록이 나오고 Side Kick 준비 페이지로 이동한다', async () => {

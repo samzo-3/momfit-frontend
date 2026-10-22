@@ -1,3 +1,8 @@
+import comingSoonImage from './assets/coming-soon.jpg'
+import exerciseModeImage from './assets/mode-exercise.jpg'
+import studyModeImage from './assets/mode-study.jpg'
+import sideKickImage from './assets/sidekick.jpg'
+
 export type WorkoutMode = 'exercise' | 'study'
 
 export interface WorkoutModeInfo {
@@ -9,6 +14,8 @@ export interface WorkoutModeInfo {
   cta: string
   // 운동 전 준비 페이지의 체크리스트. 모두 체크해야 운동 화면으로 이동할 수 있다.
   checklist: string[]
+  image: string
+  imageAlt: string
 }
 
 export interface WorkoutInfo {
@@ -17,6 +24,8 @@ export interface WorkoutInfo {
   description: string
   // 모드별 화면 경로. 아직 구현되지 않은 운동은 비워 둔다(준비 중으로 표시).
   routes?: Record<WorkoutMode, string>
+  image: string
+  imageAlt: string
 }
 
 export const WORKOUT_MODES: WorkoutModeInfo[] = [
@@ -32,6 +41,8 @@ export const WORKOUT_MODES: WorkoutModeInfo[] = [
       '웹캠에 온몸이 보이도록 기기를 세웠어요.',
       '무리하지 않고 필요할 때 쉴게요.',
     ],
+    image: exerciseModeImage,
+    imageAlt: '집에서 웹캠 운동을 위해 옆으로 스트레칭하는 임산부',
   },
   {
     id: 'study',
@@ -45,6 +56,8 @@ export const WORKOUT_MODES: WorkoutModeInfo[] = [
       '기기 소리를 켰어요. 음성으로 코칭해 드려요.',
       '무리하지 않고 필요할 때 쉴게요.',
     ],
+    image: studyModeImage,
+    imageAlt: '태블릿으로 음성 코칭을 들으며 스트레칭하는 임산부',
   },
 ]
 
@@ -58,11 +71,15 @@ export const WORKOUTS: WorkoutInfo[] = [
       exercise: '/workouts/sidekick/exercise',
       study: '/workouts/sidekick/study',
     },
+    image: sideKickImage,
+    imageAlt: '집에서 사이드킥 동작을 하는 임산부',
   },
   {
     id: 'coming-soon',
     name: '준비 중인 운동',
     description: '곧 만나볼 수 있어요.',
+    image: comingSoonImage,
+    imageAlt: '다음 운동을 준비하는 요가 매트와 물병',
   },
 ]
 

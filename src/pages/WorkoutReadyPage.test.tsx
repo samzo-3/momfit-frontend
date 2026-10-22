@@ -26,6 +26,11 @@ describe('WorkoutReadyPage', () => {
       screen.getByRole('heading', { name: '운동 환경을 준비해 볼까요?' }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('checkbox')).toHaveLength(4)
+    const photo = screen.getByRole('img', {
+      name: '운동 공간을 준비하며 요가 매트와 물병을 챙기는 임산부',
+    })
+    expect(photo).toBeInTheDocument()
+    expect(photo).toHaveAttribute('loading', 'lazy')
     expect(screen.getByRole('status')).toHaveTextContent('체크 완료 0/4')
     expect(goButton()).toBeDisabled()
     expect(
