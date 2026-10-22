@@ -347,3 +347,21 @@ describe('HomePage 요약', () => {
     ).toHaveAttribute('href', '/records')
   })
 })
+
+describe('HomePage 챗봇', () => {
+  it('오른쪽 아래에 챗봇 캐릭터 버튼이 떠 있고 누르면 채팅창이 열린다', async () => {
+    signIn({ nickname: '테스트맘' })
+    renderApp('/home')
+
+    expect(
+      screen.queryByRole('dialog', { name: '피치' }),
+    ).not.toBeInTheDocument()
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: '피치에게 물어보기' }))
+
+    expect(screen.getByRole('dialog', { name: '피치' })).toHaveTextContent(
+      '테스트맘님, 안녕하세요!',
+    )
+  })
+})

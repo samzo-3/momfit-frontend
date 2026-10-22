@@ -1,4 +1,5 @@
 import { formatDate, useAuth } from '../features/auth'
+import { ChatWidget } from '../features/chatbot'
 import { HomeHero, HomeSummary } from '../features/home'
 import { useCompletedDates } from '../features/records'
 import { toDateKey, weekDates } from '../shared/lib/date'
@@ -37,6 +38,7 @@ function HomePage() {
           loadFailed={isError}
         />
       </div>
+      <ChatWidget nickname={user.nickname} />
     </main>
   )
 }
