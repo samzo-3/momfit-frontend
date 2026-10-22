@@ -48,6 +48,10 @@
 
 앱 공통 틀은 `src/app/AppLayout.tsx`(반투명 상단 내비게이션 `SiteHeader` + 회색 배경 + `SiteFooter`)다. `SiteFooter`는 모든 화면에 의학적 면책 문구를 보여준다.
 
+**헤더 로고**: `SiteHeader` 왼쪽 위의 서비스명은 글자가 아니라 로고 이미지(`src/assets/momfit-logo.png`, 높이 20px)다. 산호색 `Mom`과 자주색 `Fit`의 둥근 글자체이고, 반투명 헤더 위에서 흰 사각형이 보이지 않도록 **배경을 투명하게** 처리했다(원본은 흰 배경의 2172x724 이미지, 글자 영역만 잘라 457x112로 줄임). 접근성 이름은 `alt="MomFit"`이고, 로그인 상태면 `/home`, 아니면 `/`로 이어진다. 로고를 교체할 때는 투명 배경의 PNG(또는 SVG)를 같은 파일명으로 바꾸고 `width`/`height` 속성의 비율을 맞춘다. 푸터와 랜딩의 `momfit` 글자는 아직 그대로다.
+
+**파비콘과 앱 아이콘**: 브라우저 탭 아이콘은 `MF` 모노그램(산호색 `M`에 임산부 실루엣과 하트, 자주색 `F`)이다. 파일은 `public/`에 두고 `index.html`이 연결한다 — `favicon.ico`(16·32·48px), `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`(180px, iOS 홈 화면). `icon-192.png`와 `icon-512.png`는 `site.webmanifest`(이름 MomFit, 테마색 `#fcf8f4`)가 가리키는 앱 아이콘이다. 아이콘은 흰 배경의 불투명 PNG다. 파일을 바꾸거나 빼면 `src/test/head-assets.test.ts`가 `index.html`과 매니페스트가 가리키는 파일이 실제로 있는지 확인해 실패한다. 기본 Vite 번개 로고(`favicon.svg`)는 삭제했다. 탭 제목은 로고와 같은 표기인 `MomFit`이다(`index.html`의 `<title>`).
+
 ## 랜딩 페이지
 
 `/`의 랜딩은 `src/features/landing`의 섹션(`LandingHero`, `FeatureTiles`, `HowItWorks`, `FinalCta`)을 `pages/LandingPage.tsx`에서 조합한다. 흰색과 회색 섹션을 번갈아 배치하고, 로그인 상태는 페이지가 읽어 버튼(`actions`)만 넘긴다. 세션을 복구하는 동안에는 버튼 자리를 비워 두어 잘못된 버튼이 잠깐 보이지 않게 한다. 기능 소개 문구는 기획 기준이라 구현 상태에 맞춰 갱신해야 한다.
@@ -140,7 +144,7 @@
 
 - 랜딩은 살구색 계열로 구간을 번갈아 칠한다: 히어로(`primary-soft`, 넓은 면에 대표 색을 크게 칠하면 무거워 보여 연하게 둔다) → 기능 소개(`primary`, 흰 카드 + `primary-strong` 테두리) → 시작 방법(흰 바탕) → 마지막 안내(`primary-soft`, 아래 푸터와 이어진다). 제목·본문은 `cocoa`, 강조 글자와 숫자는 `brand-text`다.
 - 랜딩 히어로 뒤에는 운동하는 사진이 아주 흐릿하게 비친다(`src/features/landing/assets/hero-bg-meditation.jpg`). 사진은 **96px로 줄인 약 3KB짜리**를 크게 늘려 써서 흐림 효과가 따로 필요 없다. 그 위에 `primary-soft` 25% 막을 덮고, 글자가 놓이는 가운데에는 92%까지 짙은 타원형 막을 따로 얹어 양옆의 사진(왼쪽 창, 오른쪽 화분)이 더 잘 보이게 하며, 아래쪽은 바탕색으로 녹아들게 한다. 장식이라 `alt=""`·`aria-hidden`이다. 글자 영역에서 가장 어두운 사진 부분까지 포함해도 소제목 4.8:1, 보조 문구 5.8:1, 제목 11.9:1(모두 4.5:1 이상)을 유지하는 것이 기준이다.
-- 랜딩 버튼은 `brand`(채움)와 `brand-outline`(테두리) 변형을 쓴다. 푸터는 `primary` 바탕에 `cocoa-secondary` 글자다.
+- 랜딩 버튼은 `brand`(채움)와 `brand-outline`(테두리) 변형을 쓴다. 푸터는 `primary` 바탕에 `cocoa-secondary` 글자다. 푸터는 화면을 많이 차지하지 않도록 위아래 여백 16px(`py-4`)에 두 문구 사이 간격 6px로 작게 두었다(넓은 화면 약 56px, 좁은 화면 약 94px).
 
 ## 화면 색 적용 현황
 

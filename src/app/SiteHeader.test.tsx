@@ -54,7 +54,7 @@ describe('SiteHeader', () => {
     signOut()
     renderApp('/login')
 
-    expect(screen.getByRole('link', { name: 'momfit' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'MomFit' })).toHaveAttribute(
       'href',
       '/',
     )
@@ -92,7 +92,7 @@ describe('SiteHeader', () => {
     expect(
       nav
         .getAllByRole('link')
-        .filter((link) => link.textContent !== 'momfit')
+        .filter((link) => link.textContent !== '') // 글자가 없는 로고 링크는 제외
         .map((link) => [link.textContent, link.getAttribute('href')]),
     ).toEqual([
       ['홈', '/home'],
@@ -102,11 +102,25 @@ describe('SiteHeader', () => {
     expect(nav.queryByRole('link', { name: '로그인' })).not.toBeInTheDocument()
   })
 
+  it('서비스명은 글자가 아니라 로고 이미지로 보여주고 대체 텍스트로 이름을 알린다', () => {
+    signIn()
+    renderApp('/home')
+
+    const logo = within(screen.getByRole('link', { name: 'MomFit' })).getByRole(
+      'img',
+      { name: 'MomFit' },
+    )
+    expect(logo).toHaveAttribute('src', expect.stringContaining('momfit-logo'))
+    // 이미지 크기를 미리 지정해 로딩 중에 레이아웃이 밀리지 않는다.
+    expect(logo).toHaveAttribute('width', '82')
+    expect(logo).toHaveAttribute('height', '20')
+  })
+
   it('로그인했다면 로고는 소개 페이지가 아니라 홈으로 이어진다', () => {
     signIn()
     renderApp('/me')
 
-    expect(screen.getByRole('link', { name: 'momfit' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'MomFit' })).toHaveAttribute(
       'href',
       '/home',
     )
