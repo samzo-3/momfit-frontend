@@ -15,6 +15,7 @@ import SignupPage from '../pages/SignupPage'
 import WorkoutsPage from '../pages/WorkoutsPage'
 import { SideKickStudyScreen } from '../features/pose/components/SideKickStudyScreen'
 import SideKickExerciseScreen from '../features/pose/components/SideKickExerciseScreen'
+import YoloEnvironmentCheckPage from '../pages/yolo-environment-check/YoloEnvironmentCheckPage'
 
 export const routes: RouteObject[] = [
   {
@@ -30,6 +31,10 @@ export const routes: RouteObject[] = [
             {
               path: '/dev/sidekick/exercise',
               element: <SideKickExerciseScreen />,
+            },
+            {
+              path: '/dev/yolo',
+              element: <YoloEnvironmentCheckPage />,
             },
           ]
         : []),
