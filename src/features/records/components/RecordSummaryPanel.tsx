@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { parseDateKey, WEEKDAY_LABELS } from '../../../shared/lib/date'
 
 interface RecordSummaryPanelProps {
@@ -5,10 +6,16 @@ interface RecordSummaryPanelProps {
   date: string | null
   // 그 날 운동을 마친 기록이 있는지. 아직 모르면 null
   completed: boolean | null
+  // 날짜 머리글 아래 영역에 그릴 AI 에이전트 리포트. 페이지가 조합해서 넘긴다.
+  report?: ReactNode
 }
 
-// 캘린더 오른쪽 카드. 선택한 날짜의 AI 요약 리포트가 들어갈 자리라, 지금은 날짜 머리글과 빈 영역만 둔다.
-function RecordSummaryPanel({ date, completed }: RecordSummaryPanelProps) {
+// 캘린더 오른쪽 카드. 날짜 머리글 아래에 선택한 날짜의 AI 요약 리포트를 둔다.
+function RecordSummaryPanel({
+  date,
+  completed,
+  report,
+}: RecordSummaryPanelProps) {
   const selected = date ? parseDateKey(date) : null
 
   return (
@@ -43,7 +50,9 @@ function RecordSummaryPanel({ date, completed }: RecordSummaryPanelProps) {
       <div
         data-testid="records-report-slot"
         className="mt-5 min-h-48 flex-1 rounded-2xl bg-white/60 ring-1 ring-primary-strong"
-      />
+      >
+        {report}
+      </div>
     </section>
   )
 }

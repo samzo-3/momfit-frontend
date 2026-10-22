@@ -1,12 +1,17 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { monthRange, toDateKey } from '../../../shared/lib/date'
 import { useCompletedDates } from '../hooks/useExerciseRecords'
 import RecordSummaryPanel from './RecordSummaryPanel'
 import RecordsCalendar from './RecordsCalendar'
 
+interface RecordsViewProps {
+  // 선택한 날짜("YYYY-MM-DD")의 리포트를 그린다. 다른 기능(agent-report)이라 페이지가 넘긴다.
+  renderReport?: (date: string) => ReactNode
+}
+
 // 운동 기록 화면의 본문. 보고 있는 달과 선택한 날짜를 들고, 캘린더와 요약 카드를 나란히 둔다.
 // 좁은 화면에서는 위아래로 쌓이고, 넓은 화면(lg 이상)에서는 좌우로 나뉜다.
-function RecordsView() {
+function RecordsView({ renderReport }: RecordsViewProps) {
   const now = new Date()
   const todayKey = toDateKey(now)
   const [visible, setVisible] = useState({
@@ -52,6 +57,7 @@ function RecordsView() {
       <RecordSummaryPanel
         date={selectedDate}
         completed={dates && selectedDate ? dates.has(selectedDate) : null}
+        report={selectedDate ? renderReport?.(selectedDate) : null}
       />
     </div>
   )

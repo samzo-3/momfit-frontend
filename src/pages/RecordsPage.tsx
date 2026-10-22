@@ -1,6 +1,7 @@
+import { DailyReport } from '../features/agent-report'
 import { RecordsView } from '../features/records'
 
-// 내 운동 기록 캘린더. 날짜를 고르면 오른쪽에 그 날의 요약 리포트가 들어올 예정이다.
+// 내 운동 기록 캘린더. 날짜를 고르면 오른쪽 카드에 그 날의 AI 에이전트 리포트가 나온다.
 function RecordsPage() {
   return (
     <main className="flex-1 bg-primary-soft px-4 py-10 sm:py-12">
@@ -18,7 +19,7 @@ function RecordsPage() {
             잘한 날도 쉬어간 날도, 나에게 맞는 속도로 쌓아가는 기록이에요.
           </p>
         </header>
-        <RecordsView />
+        <RecordsView renderReport={(date) => <DailyReport date={date} />} />
       </div>
     </main>
   )

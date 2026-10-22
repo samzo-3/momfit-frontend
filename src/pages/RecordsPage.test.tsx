@@ -7,11 +7,13 @@ import {
   requestsTo,
   resetAuthStore,
   signIn,
+  type MockRequest,
 } from '../test/auth-test-utils'
 import { renderApp } from '../test/render-app'
 
 const fetchMock = vi.fn<typeof fetch>()
 const RECORDS = 'GET /api/exercise-records'
+const REPORT = 'POST /api/agent/daily-report'
 
 function recordItem(date: string, isCompleted = true) {
   return {
@@ -25,6 +27,43 @@ function recordItem(date: string, isCompleted = true) {
   }
 }
 
+// 선택한 날짜의 리포트. 화면에서 어느 날짜의 리포트인지 알아볼 수 있게 한마디에 날짜를 넣는다.
+function reportFor({ body }: MockRequest) {
+  const date = String(body?.date)
+  return jsonResponse(200, {
+    date,
+    stats: {
+      exercise_count: 0,
+      record_count: 0,
+      completed_count: 0,
+      incomplete_count: 0,
+      total_minutes: 0,
+      exercises: [],
+      step_attempt_count: 0,
+      steps: [],
+      pregnancy_week: 28,
+    },
+    safety_notice: '안전 안내',
+    summary: `${date} 한마디`,
+    next_focus: null,
+    prompt_version: null,
+    provider: null,
+    model: null,
+    latency_ms: null,
+  })
+}
+
+// 기록 화면은 선택한 날짜의 리포트도 부르므로, 리포트 응답을 기본으로 함께 등록한다.
+function mockRoutes(handlers: Parameters<typeof mockApi>[1]) {
+  mockApi(fetchMock, { [REPORT]: reportFor, ...handlers })
+}
+
+function reportDates() {
+  return requestsTo(fetchMock, REPORT).map(
+    ([, init]) => JSON.parse(String(init?.body)).date,
+  )
+}
+
 // 2026-10-21은 수요일이다.
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
@@ -32,7 +71,7 @@ beforeEach(() => {
   resetAuthStore()
   fetchMock.mockReset()
   vi.stubGlobal('fetch', fetchMock)
-  mockApi(fetchMock, { [RECORDS]: () => jsonResponse(200, { items: [] }) })
+  mockRoutes({ [RECORDS]: () => jsonResponse(200, { items: [] }) })
   signIn()
 })
 
@@ -102,7 +141,7 @@ describe('RecordsPage', () => {
   })
 
   it('운동을 마친 날은 기록 있음으로 표시한다', async () => {
-    mockApi(fetchMock, {
+    mockRoutes({
       [RECORDS]: () =>
         jsonResponse(200, {
           items: [
@@ -127,7 +166,7 @@ describe('RecordsPage', () => {
   })
 
   it('날짜를 누르면 오른쪽 카드가 그 날짜로 바뀌고 기록 여부를 알려준다', async () => {
-    mockApi(fetchMock, {
+    mockRoutes({
       [RECORDS]: () => jsonResponse(200, { items: [recordItem('2026-10-19')] }),
     })
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -146,10 +185,54 @@ describe('RecordsPage', () => {
     expect(panel).toHaveTextContent('기록 없음')
   })
 
-  it('요약 리포트가 들어올 빈 자리를 둔다', () => {
+  it('선택한 날짜의 리포트를 카드 안에 보여준다', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderApp('/records')
 
-    expect(screen.getByTestId('records-report-slot')).toBeEmptyDOMElement()
+    const slot = screen.getByTestId('records-report-slot')
+    expect(
+      await within(slot).findByText('2026-10-21 한마디'),
+    ).toBeInTheDocument()
+
+    await user.click(day(/^10월 19일/))
+
+    expect(
+      await within(slot).findByText('2026-10-19 한마디'),
+    ).toBeInTheDocument()
+    expect(reportDates()).toEqual(['2026-10-21', '2026-10-19'])
+  })
+
+  it('지난 날짜는 다시 골라도 다시 부르지 않고, 오늘은 다시 부른다', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderApp('/records')
+    await screen.findByText('2026-10-21 한마디')
+
+    await user.click(day(/^10월 19일/))
+    await screen.findByText('2026-10-19 한마디')
+    await user.click(day(/^10월 21일/))
+    await screen.findByText('2026-10-21 한마디')
+    await user.click(day(/^10월 19일/))
+    await screen.findByText('2026-10-19 한마디')
+
+    // 지난 날짜는 서버도 다시 만들지 않는다. 오늘은 그 사이 기록이 생겼을 수 있다.
+    const dates = reportDates()
+    expect(dates.filter((date) => date === '2026-10-19')).toHaveLength(1)
+    expect(dates.filter((date) => date === '2026-10-21')).toHaveLength(2)
+  })
+
+  it('아직 오지 않은 날을 고르면 리포트를 부르지 않는다', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderApp('/records')
+    await screen.findByText('2026-10-21 한마디')
+
+    await user.click(day(/^10월 22일/))
+
+    expect(
+      within(screen.getByTestId('records-report-slot')).getByText(
+        '아직 오지 않은 날이에요.',
+      ),
+    ).toBeInTheDocument()
+    expect(reportDates()).toEqual(['2026-10-21'])
   })
 
   it('이전 달로 가면 그 달 범위로 다시 조회하고 선택을 비운다', async () => {
@@ -204,7 +287,7 @@ describe('RecordsPage', () => {
   })
 
   it('기록을 불러오지 못하면 안내하고 다시 시도할 수 있다', async () => {
-    mockApi(fetchMock, {
+    mockRoutes({
       [RECORDS]: () => errorResponse(500, 'INTERNAL_ERROR'),
     })
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
@@ -214,7 +297,7 @@ describe('RecordsPage', () => {
       '운동 기록을 불러오지 못했어요.',
     )
 
-    mockApi(fetchMock, {
+    mockRoutes({
       [RECORDS]: () => jsonResponse(200, { items: [recordItem('2026-10-19')] }),
     })
     await user.click(screen.getByRole('button', { name: '다시 시도' }))
