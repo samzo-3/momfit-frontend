@@ -5,16 +5,19 @@ import DailyReportBody from './DailyReportBody'
 interface DailyReportProps {
   // 캘린더에서 고른 날짜("YYYY-MM-DD")
   date: string
+  // 로그인한 사용자 번호. 리포트 캐시를 사용자별로 나눈다.
+  userId: number
 }
 
 const messageClass = 'p-5 text-[15px] text-cocoa-secondary'
 
 // 선택한 날짜의 AI 에이전트 리포트. 아직 오지 않은 날은 부르지 않는다.
-function DailyReport({ date }: DailyReportProps) {
+function DailyReport({ date, userId }: DailyReportProps) {
   const todayKey = toDateKey(new Date())
   const isFuture = date > todayKey
   const isPast = date < todayKey
   const { data, isFetching, isError, refetch } = useDailyReport(date, {
+    userId,
     isPast,
     enabled: !isFuture,
   })
