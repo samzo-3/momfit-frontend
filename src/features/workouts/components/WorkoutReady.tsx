@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../../../shared/components/Button'
+import readyWorkoutImage from '../assets/ready-workout.jpg'
 import {
   HEALTH_NOTICE,
   SAFETY_NOTICE,
@@ -64,25 +65,13 @@ function WorkoutReady({
         </header>
 
         <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-          {/* 사진이 정해지면 이 블록을 <img>로 바꾼다. */}
-          <div
-            aria-hidden="true"
-            className="hidden min-h-72 items-center justify-center rounded-3xl bg-primary lg:flex"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="size-14 text-brand"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="5" width="18" height="14" rx="3" />
-              <circle cx="9" cy="10" r="1.5" />
-              <path d="m4 17 5-4 4 3 3-2 4 3" />
-            </svg>
-          </div>
+          <img
+            src={readyWorkoutImage}
+            alt="운동 공간을 준비하며 요가 매트와 물병을 챙기는 임산부"
+            // 좁은 화면에서는 숨겨지므로(display:none) lazy로 두어 받지 않게 한다.
+            loading="lazy"
+            className="hidden min-h-72 h-full w-full rounded-3xl object-cover lg:block"
+          />
 
           <section
             aria-labelledby="ready-title"
