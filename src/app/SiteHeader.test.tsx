@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { setupAuth } from '../features/auth'
+import { mockAdminApi } from '../test/admin-test-utils'
 import {
   jsonResponse,
   mockApi,
@@ -38,6 +39,45 @@ describe('SiteHeader', () => {
     expect(screen.getByRole('link', { name: '로그인' })).toHaveClass(
       'text-brand-text',
     )
+  })
+
+  it('관리자는 관리자 메뉴만 보이고, 로고는 /admin으로 간다', async () => {
+    mockAdminApi(fetchMock)
+    signIn({ role: 'admin' })
+    renderApp('/admin')
+
+    const nav = await screen.findByRole('navigation', { name: '주요' })
+    expect(within(nav).getByRole('link', { name: '관리자' })).toHaveAttribute(
+      'href',
+      '/admin',
+    )
+    expect(
+      within(nav).queryByRole('link', { name: '내 정보' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(nav).queryByRole('link', { name: '홈' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(nav).queryByRole('link', { name: '운동 기록' }),
+    ).not.toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'MomFit' })).toHaveAttribute(
+      'href',
+      '/admin',
+    )
+  })
+
+  it('일반 사용자에게는 관리자 메뉴가 보이지 않고 홈·운동 기록이 보인다', () => {
+    signIn({ role: 'user' })
+    renderApp('/home')
+
+    const nav = screen.getByRole('navigation', { name: '주요' })
+    expect(
+      within(nav).queryByRole('link', { name: '관리자' }),
+    ).not.toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: '홈' })).toBeInTheDocument()
+    expect(
+      within(nav).getByRole('link', { name: '운동 기록' }),
+    ).toBeInTheDocument()
   })
 
   it('로그인했을 때 로그아웃 버튼은 테두리 변형이다', () => {

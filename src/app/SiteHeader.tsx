@@ -14,12 +14,17 @@ const MEMBER_LINKS = [
   { to: '/me', label: '내 정보' },
 ]
 
+// 관리자는 서비스 이용 화면(홈·운동 기록)과 내 정보(프로필 수정·회원 탈퇴)가 필요 없어 관리자 메뉴만 보인다.
+const ADMIN_LINKS = [{ to: '/admin', label: '관리자' }]
+
 // 반투명 상단 내비게이션. 로그인 상태에 따라 오른쪽 버튼이 바뀐다.
 function SiteHeader() {
-  const { status, isAuthenticated, logout } = useAuth()
+  const { status, user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
   const [confirmingLogout, setConfirmingLogout] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const isAdmin = user?.role === 'admin'
+  const links = isAdmin ? ADMIN_LINKS : MEMBER_LINKS
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -37,7 +42,7 @@ function SiteHeader() {
       >
         {/* 로그인한 사용자는 소개 페이지(/)가 아니라 홈으로 돌아온다. */}
         <Link
-          to={isAuthenticated ? '/home' : '/'}
+          to={isAdmin ? '/admin' : isAuthenticated ? '/home' : '/'}
           className="flex items-center"
         >
           {/* 로고 이미지(배경 투명, 457x112). 크기를 미리 알려 로딩 중 레이아웃이 밀리지 않게 한다. */}
@@ -51,7 +56,7 @@ function SiteHeader() {
         </Link>
         {isAuthenticated && (
           <div className="flex items-center gap-4 text-sm">
-            {MEMBER_LINKS.map((link) => (
+            {links.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
