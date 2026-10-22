@@ -27,15 +27,9 @@ vi.mock('./side-kick-live-input', () => ({
     const orientation = side === 'left' ? 1 : -1
     return {
       timestampMs: frame.timestampMs,
-      thighLateralDeg: sample
-        ? BASELINE[side] + sample.legDelta
-        : null,
-      shoulderPelvisRelativeTiltDeg: sample
-        ? orientation * sample.bend
-        : null,
-      torsoLengthAsymmetryRatio: sample
-        ? -orientation * sample.asym
-        : null,
+      thighLateralDeg: sample ? BASELINE[side] + sample.legDelta : null,
+      shoulderPelvisRelativeTiltDeg: sample ? orientation * sample.bend : null,
+      torsoLengthAsymmetryRatio: sample ? -orientation * sample.asym : null,
     }
   },
 }))
@@ -96,19 +90,23 @@ function back(
   side: 'left' | 'right',
   start: number,
 ) {
-  runtime.update(frame(start, {
-    side,
-    legDelta: 0,
-    bend: 0,
-    asym: 0,
-  }))
+  runtime.update(
+    frame(start, {
+      side,
+      legDelta: 0,
+      bend: 0,
+      asym: 0,
+    }),
+  )
 
-  return runtime.update(frame(start + 70, {
-    side,
-    legDelta: 0,
-    bend: 0,
-    asym: 0,
-  }))
+  return runtime.update(
+    frame(start + 70, {
+      side,
+      legDelta: 0,
+      bend: 0,
+      asym: 0,
+    }),
+  )
 }
 
 describe('SideKickStudyRuntime', () => {
@@ -132,12 +130,14 @@ describe('SideKickStudyRuntime', () => {
     ready(runtime)
 
     for (let i = 0; i < 12; i++) {
-      runtime.update(frame(600 + i * 70, {
-        side: 'left',
-        legDelta: 30,
-        bend: 34,
-        asym: 0.56,
-      }))
+      runtime.update(
+        frame(600 + i * 70, {
+          side: 'left',
+          legDelta: 30,
+          bend: 34,
+          asym: 0.56,
+        }),
+      )
     }
 
     expect(runtime.getSnapshot().flow.step).toBe(2)
@@ -172,12 +172,14 @@ describe('SideKickStudyRuntime', () => {
 
     expect(runtime.getSnapshot().flow.step).toBe(2)
 
-    runtime.update(frame(21000, {
-      side: 'left',
-      legDelta: 30,
-      bend: 5,
-      asym: 0.1,
-    }))
+    runtime.update(
+      frame(21000, {
+        side: 'left',
+        legDelta: 30,
+        bend: 5,
+        asym: 0.1,
+      }),
+    )
 
     expect(runtime.getSnapshot().flow.step).toBe(3)
     back(runtime, 'left', 21100)
@@ -196,12 +198,14 @@ describe('SideKickStudyRuntime', () => {
     lift(runtime, 'left', 600)
 
     for (let i = 0; i < 10; i++) {
-      runtime.update(frame(4200 + i * 70, {
-        side: 'left',
-        legDelta: 30,
-        bend: 34,
-        asym: 0.56,
-      }))
+      runtime.update(
+        frame(4200 + i * 70, {
+          side: 'left',
+          legDelta: 30,
+          bend: 34,
+          asym: 0.56,
+        }),
+      )
     }
 
     expect(runtime.getSnapshot().flow.step).toBe(3)

@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  SideKickReturnEvaluator,
-} from './side-kick-return-evaluator'
+import { SideKickReturnEvaluator } from './side-kick-return-evaluator'
 import type { LiftInput, SideKickSide } from './side-kick-step-evaluator'
 
 const BASELINE = {

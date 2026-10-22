@@ -116,10 +116,7 @@ export class SideKickStudyFlow {
     if (this.step === 2 || this.step === 4) {
       if (input.movement === 'YES') {
         this.movement = 'YES'
-      } else if (
-        input.movement === 'NO' &&
-        this.movement === 'UNKNOWN'
-      ) {
+      } else if (input.movement === 'NO' && this.movement === 'UNKNOWN') {
         this.movement = 'NO'
       }
 
@@ -127,10 +124,7 @@ export class SideKickStudyFlow {
         this.finish('PASS', events)
       } else {
         if (input.feedbackIssued === true) {
-          this.feedbackCount = Math.min(
-            MAX_FEEDBACK,
-            this.feedbackCount + 1,
-          )
+          this.feedbackCount = Math.min(MAX_FEEDBACK, this.feedbackCount + 1)
         }
 
         if (
@@ -147,8 +141,7 @@ export class SideKickStudyFlow {
     // STEP 3/5: 복귀 판정기는 2프레임/30ms를 이미 확인한다.
     // Flow에는 확정된 neutralConfirmed만 전달한다.
     if (input.neutralConfirmed === true) {
-      const outcome =
-        this.movement === 'NO' ? 'NOT_EVALUATED' : 'PASS'
+      const outcome = this.movement === 'NO' ? 'NOT_EVALUATED' : 'PASS'
       this.finish(outcome, events)
     }
 

@@ -1,10 +1,7 @@
 import type { LiftInput, SideKickSide } from './side-kick-step-evaluator'
 
 export type ReturnState =
-  | 'UNDETERMINED'
-  | 'RETURNING'
-  | 'NEUTRAL_CANDIDATE'
-  | 'CONFIRMED'
+  'UNDETERMINED' | 'RETURNING' | 'NEUTRAL_CANDIDATE' | 'CONFIRMED'
 
 export type ReturnSnapshot = {
   state: ReturnState
@@ -26,7 +23,7 @@ export type ReturnPolicy = {
 const DEFAULT_POLICY: ReturnPolicy = {
   maxLegDeltaDeg: 15,
   maxBendDeg: 20,
-  maxAsymmetryRatio: 0.30,
+  maxAsymmetryRatio: 0.3,
   minFrames: 2,
   minDurationMs: 30,
   maxFrameGapMs: 500,
@@ -88,7 +85,11 @@ export class SideKickReturnEvaluator {
 
     // 오래된 프레임으로 복귀를 확정하지 않는다.
     if (this.lastTimestamp !== null && t <= this.lastTimestamp) {
-      return this.snapshot(this.confirmed ? 'CONFIRMED' : 'UNDETERMINED', false, t)
+      return this.snapshot(
+        this.confirmed ? 'CONFIRMED' : 'UNDETERMINED',
+        false,
+        t,
+      )
     }
 
     if (this.confirmed) {
@@ -167,9 +168,7 @@ export class SideKickReturnEvaluator {
       valid,
       neutralFrames: this.neutralFrames,
       neutralDurationMs:
-        this.neutralSince === null
-          ? 0
-          : timestampMs - this.neutralSince,
+        this.neutralSince === null ? 0 : timestampMs - this.neutralSince,
     }
   }
 }

@@ -4,12 +4,10 @@
  * side-kick-live-input.ts. One instance per STEP; do not reuse across sides.
  */
 export type SideKickSide = 'left' | 'right'
-export type LiftState = 'UNDETERMINED' | 'MOVING' | 'CANDIDATE' | 'HOLDING' | 'PASS'
+export type LiftState =
+  'UNDETERMINED' | 'MOVING' | 'CANDIDATE' | 'HOLDING' | 'PASS'
 export type LiftEvent =
-  | 'POSE_CANDIDATE'
-  | 'POSE_HOLD_STARTED'
-  | 'POSE_HOLD_INTERRUPTED'
-  | 'STEP_PASS'
+  'POSE_CANDIDATE' | 'POSE_HOLD_STARTED' | 'POSE_HOLD_INTERRUPTED' | 'STEP_PASS'
 
 export type LiftInput = {
   timestampMs: number
@@ -58,7 +56,9 @@ class TrailingMedian {
     const m = Math.floor(valid.length / 2)
     return valid.length % 2 ? valid[m] : (valid[m - 1] + valid[m]) / 2
   }
-  reset(): void { this.values = [] }
+  reset(): void {
+    this.values = []
+  }
 }
 
 export class SideKickStepEvaluator {
@@ -83,20 +83,30 @@ export class SideKickStepEvaluator {
   ) {
     this.side = side
     this.readyThighLateralDeg = readyThighLateralDeg
-    if (!Number.isFinite(readyThighLateralDeg)) throw new Error('INVALID_READY_BASELINE')
+    if (!Number.isFinite(readyThighLateralDeg))
+      throw new Error('INVALID_READY_BASELINE')
     this.policy = { ...DEFAULT_POLICY, ...overrides }
-    if (this.policy.candidateMinFrames < 3 || this.policy.candidateMinMs < 100 ||
-        this.policy.holdMs < 100 || this.policy.maxFrameGapMs <= 0 ||
-        !Object.values(this.policy).every(Number.isFinite)) {
+    if (
+      this.policy.candidateMinFrames < 3 ||
+      this.policy.candidateMinMs < 100 ||
+      this.policy.holdMs < 100 ||
+      this.policy.maxFrameGapMs <= 0 ||
+      !Object.values(this.policy).every(Number.isFinite)
+    ) {
       throw new Error('INVALID_LIFT_POLICY')
     }
   }
 
   reset(): void {
-    this.leg.reset(); this.bend.reset(); this.asym.reset()
-    this.lastTimestamp = null; this.candidateSince = null
-    this.candidateFrames = 0; this.holdSince = null
-    this.passed = false; this.movementObserved = false
+    this.leg.reset()
+    this.bend.reset()
+    this.asym.reset()
+    this.lastTimestamp = null
+    this.candidateSince = null
+    this.candidateFrames = 0
+    this.holdSince = null
+    this.passed = false
+    this.movementObserved = false
     this.lastSnapshot = null
   }
 
@@ -108,41 +118,57 @@ export class SideKickStepEvaluator {
       if (this.lastSnapshot) return { ...this.lastSnapshot, events: [] }
     }
     if (this.passed && this.lastSnapshot) {
-      if (this.lastTimestamp === null || t > this.lastTimestamp) this.lastTimestamp = t
+      if (this.lastTimestamp === null || t > this.lastTimestamp)
+        this.lastTimestamp = t
       return { ...this.lastSnapshot, events: [] }
     }
-    const gap = this.lastTimestamp !== null && t - this.lastTimestamp > this.policy.maxFrameGapMs
+    const gap =
+      this.lastTimestamp !== null &&
+      t - this.lastTimestamp > this.policy.maxFrameGapMs
     this.lastTimestamp = t
     const events: LiftEvent[] = []
     if (gap) {
-      this.leg.reset(); this.bend.reset(); this.asym.reset()
+      this.leg.reset()
+      this.bend.reset()
+      this.asym.reset()
       this.interrupt(events)
     }
     const orient = this.side === 'left' ? 1 : -1
     const leg = this.leg.push(input.thighLateralDeg)
-    const bend = this.bend.push(finite(input.shoulderPelvisRelativeTiltDeg)
-      ? orient * input.shoulderPelvisRelativeTiltDeg : null)
-    const asym = this.asym.push(finite(input.torsoLengthAsymmetryRatio)
-      ? -orient * input.torsoLengthAsymmetryRatio : null)
+    const bend = this.bend.push(
+      finite(input.shoulderPelvisRelativeTiltDeg)
+        ? orient * input.shoulderPelvisRelativeTiltDeg
+        : null,
+    )
+    const asym = this.asym.push(
+      finite(input.torsoLengthAsymmetryRatio)
+        ? -orient * input.torsoLengthAsymmetryRatio
+        : null,
+    )
     // Missing raw observations MUST NOT be filled in by previous medians.
-    const valid = finite(input.thighLateralDeg) &&
+    const valid =
+      finite(input.thighLateralDeg) &&
       finite(input.shoulderPelvisRelativeTiltDeg) &&
       finite(input.torsoLengthAsymmetryRatio) &&
-      finite(leg) && finite(bend) && finite(asym)
+      finite(leg) &&
+      finite(bend) &&
+      finite(asym)
     let state: LiftState = 'UNDETERMINED'
     let delta: number | null = null
     if (!valid) {
       this.interrupt(events)
     } else {
       delta = leg - this.readyThighLateralDeg
-      const movement = delta >= 14 || (bend >= 22 && asym >= 0.30)
+      const movement = delta >= 14 || (bend >= 22 && asym >= 0.3)
       if (movement) this.movementObserved = true
-      const exact = delta >= 20 && bend >= 28 && asym >= 0.40
+      const exact = delta >= 20 && bend >= 28 && asym >= 0.4
       if (exact) {
         this.candidateSince ??= t
         this.candidateFrames++
-        if (this.candidateFrames >= this.policy.candidateMinFrames &&
-            t - this.candidateSince >= this.policy.candidateMinMs) {
+        if (
+          this.candidateFrames >= this.policy.candidateMinFrames &&
+          t - this.candidateSince >= this.policy.candidateMinMs
+        ) {
           if (this.holdSince === null) {
             this.holdSince = t
             events.push('POSE_CANDIDATE', 'POSE_HOLD_STARTED')
@@ -161,12 +187,17 @@ export class SideKickStepEvaluator {
       }
     }
     const snapshot: LiftSnapshot = {
-      state, events, valid,
+      state,
+      events,
+      valid,
       movementObserved: this.movementObserved,
       legDeltaDeg: delta,
       orientedBendDeg: bend,
       orientedAsymmetryRatio: asym,
-      holdProgressMs: this.holdSince === null ? 0 : Math.min(this.policy.holdMs, t - this.holdSince),
+      holdProgressMs:
+        this.holdSince === null
+          ? 0
+          : Math.min(this.policy.holdMs, t - this.holdSince),
       candidateFrames: this.candidateFrames,
     }
     this.lastSnapshot = snapshot
@@ -174,7 +205,8 @@ export class SideKickStepEvaluator {
   }
 
   private interrupt(events: LiftEvent[]): void {
-    if (this.holdSince !== null && !this.passed) events.push('POSE_HOLD_INTERRUPTED')
+    if (this.holdSince !== null && !this.passed)
+      events.push('POSE_HOLD_INTERRUPTED')
     this.holdSince = null
     this.candidateSince = null
     this.candidateFrames = 0

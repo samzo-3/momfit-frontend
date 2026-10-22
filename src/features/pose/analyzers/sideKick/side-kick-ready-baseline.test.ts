@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import type { PoseFrame, PoseLandmarkPoint } from '../../mediapipe/usePoseLandmarker'
+import type {
+  PoseFrame,
+  PoseLandmarkPoint,
+} from '../../mediapipe/usePoseLandmarker'
 import { SideKickReadyCalibrator } from './side-kick-ready-baseline'
 
 function makeFrame(timestampMs: number): PoseFrame {
-  const points: PoseLandmarkPoint[] = Array.from(
-    { length: 33 },
-    () => ({ x: 0, y: 0, z: 0, visibility: 1, presence: 1 }),
-  )
+  const points: PoseLandmarkPoint[] = Array.from({ length: 33 }, () => ({
+    x: 0,
+    y: 0,
+    z: 0,
+    visibility: 1,
+    presence: 1,
+  }))
 
   points[11] = { x: 0.4, y: 0.2, z: 0, visibility: 1, presence: 1 }
   points[12] = { x: 0.6, y: 0.2, z: 0, visibility: 1, presence: 1 }

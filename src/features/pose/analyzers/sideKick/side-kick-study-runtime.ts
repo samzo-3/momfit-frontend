@@ -69,19 +69,13 @@ export class SideKickStudyRuntime {
     if (step === 2 || step === 4) {
       const side: SideKickSide = step === 2 ? 'left' : 'right'
 
-      this.lift = new SideKickStepEvaluator(
-        side,
-        this.baseline[side],
-      )
+      this.lift = new SideKickStepEvaluator(side, this.baseline[side])
     }
 
     if (step === 3 || step === 5) {
       const side: SideKickSide = step === 3 ? 'left' : 'right'
 
-      this.returning = new SideKickReturnEvaluator(
-        side,
-        this.baseline[side],
-      )
+      this.returning = new SideKickReturnEvaluator(side, this.baseline[side])
     }
   }
 
@@ -131,9 +125,8 @@ export class SideKickStudyRuntime {
 
     if (step === 2 || step === 4) {
       const side = step === 2 ? 'left' : 'right'
-      const lift = this.lift?.update(
-        createSideKickLiftInput(frame, side),
-      ) ?? null
+      const lift =
+        this.lift?.update(createSideKickLiftInput(frame, side)) ?? null
 
       const result = this.flow.update({
         timestampMs: t,
@@ -146,9 +139,8 @@ export class SideKickStudyRuntime {
     }
 
     const side = step === 3 ? 'left' : 'right'
-    const returning = this.returning?.update(
-      createSideKickLiftInput(frame, side),
-    ) ?? null
+    const returning =
+      this.returning?.update(createSideKickLiftInput(frame, side)) ?? null
 
     const result = this.flow.update({
       timestampMs: t,

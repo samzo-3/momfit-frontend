@@ -1,15 +1,22 @@
-import type { PoseFrame, PoseLandmarkPoint } from '../../mediapipe/usePoseLandmarker'
+import type {
+  PoseFrame,
+  PoseLandmarkPoint,
+} from '../../mediapipe/usePoseLandmarker'
 import { extractPoseFeaturesV2 } from '../common/pose-feature-extractor-v2'
 import type { LiftInput, SideKickSide } from './side-kick-step-evaluator'
 
 const REQUIRED = [11, 12, 23, 24] as const
 
-function valid(point: PoseLandmarkPoint | undefined): point is PoseLandmarkPoint {
-  return !!point &&
+function valid(
+  point: PoseLandmarkPoint | undefined,
+): point is PoseLandmarkPoint {
+  return (
+    !!point &&
     Number.isFinite(point.x) &&
     Number.isFinite(point.y) &&
     (point.visibility ?? 0) >= 0.5 &&
     (point.presence ?? 0) >= 0.5
+  )
 }
 
 function distance(a: PoseLandmarkPoint, b: PoseLandmarkPoint): number {
@@ -17,11 +24,11 @@ function distance(a: PoseLandmarkPoint, b: PoseLandmarkPoint): number {
 }
 
 function angle(a: PoseLandmarkPoint, b: PoseLandmarkPoint): number {
-  return Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI
+  return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI
 }
 
 function wrap(degrees: number): number {
-  return ((degrees + 180) % 360 + 360) % 360 - 180
+  return ((((degrees + 180) % 360) + 360) % 360) - 180
 }
 
 export function createSideKickLiftInput(
@@ -47,8 +54,7 @@ export function createSideKickLiftInput(
     if (shoulderWidth >= 1e-6) {
       relativeTilt = wrap(angle(ls, rs) - angle(lh, rh))
 
-      torsoAsymmetry =
-        (distance(ls, lh) - distance(rs, rh)) / shoulderWidth
+      torsoAsymmetry = (distance(ls, lh) - distance(rs, rh)) / shoulderWidth
     }
   }
 

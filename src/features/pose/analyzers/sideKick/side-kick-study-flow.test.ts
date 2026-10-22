@@ -16,10 +16,12 @@ describe('SideKickStudyFlow', () => {
   it('READY 확인 전 STEP 2로 이동하지 않는다', () => {
     const flow = new SideKickStudyFlow()
     expect(flow.update({ timestampMs: 0 }).step).toBe(1)
-    expect(flow.update({
-      timestampMs: 70,
-      readyConfirmed: true,
-    }).step).toBe(2)
+    expect(
+      flow.update({
+        timestampMs: 70,
+        readyConfirmed: true,
+      }).step,
+    ).toBe(2)
   })
 
   it('STEP 2 PASS 후 복귀 전에는 STEP 4로 이동하지 않는다', () => {
@@ -101,14 +103,18 @@ describe('SideKickStudyFlow', () => {
   it('중복 타임스탬프에서 이벤트를 다시 발생시키지 않는다', () => {
     const flow = new SideKickStudyFlow()
     begin(flow)
-    expect(flow.update({
-      timestampMs: 100,
-      liftPassed: true,
-    }).events).toContain('STEP_2_PASS')
-    expect(flow.update({
-      timestampMs: 100,
-      liftPassed: true,
-    }).events).toEqual([])
+    expect(
+      flow.update({
+        timestampMs: 100,
+        liftPassed: true,
+      }).events,
+    ).toContain('STEP_2_PASS')
+    expect(
+      flow.update({
+        timestampMs: 100,
+        liftPassed: true,
+      }).events,
+    ).toEqual([])
   })
 
   it('재시작하면 STEP과 결과를 초기화한다', () => {

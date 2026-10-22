@@ -142,9 +142,7 @@ export function SideKickStudyScreen() {
       // 기존 점수 기반 Tracker와 DB 저장은 실행하지 않는다.
       if (isDevStudy) {
         const readyEvaluation =
-          currentStep === 1
-            ? scoreSideKickStep(1, frame.landmarks, null)
-            : null
+          currentStep === 1 ? scoreSideKickStep(1, frame.landmarks, null) : null
 
         const readyPoseValid =
           readyEvaluation?.judgment.status === 'EVALUATED' &&
@@ -451,27 +449,20 @@ export function SideKickStudyScreen() {
               ? `최종 결과: ${runtimeSnapshot.flow.finalResult}`
               : `현재 STEP: ${runtimeSnapshot?.flow.step ?? 1}`}
           </p>
+          <p>READY 샘플: {runtimeSnapshot?.readySampleCount ?? 0}개</p>
           <p>
-            READY 샘플: {runtimeSnapshot?.readySampleCount ?? 0}개
+            READY 기준선:{' '}
+            {runtimeSnapshot?.baseline
+              ? `왼쪽 ${runtimeSnapshot.baseline.left.toFixed(1)}도 / 오른쪽 ${runtimeSnapshot.baseline.right.toFixed(1)}도`
+              : '측정 중'}
           </p>
+          <p>상승 판정: {runtimeSnapshot?.lift?.state ?? '-'}</p>
           <p>
-            READY 기준선: {
-              runtimeSnapshot?.baseline
-                ? `왼쪽 ${runtimeSnapshot.baseline.left.toFixed(1)}도 / 오른쪽 ${runtimeSnapshot.baseline.right.toFixed(1)}도`
-                : '측정 중'
-            }
+            자세 유지:{' '}
+            {((runtimeSnapshot?.lift?.holdProgressMs ?? 0) / 1000).toFixed(1)} /
+            2.0초
           </p>
-          <p>
-            상승 판정: {runtimeSnapshot?.lift?.state ?? '-'}
-          </p>
-          <p>
-            자세 유지: {
-              ((runtimeSnapshot?.lift?.holdProgressMs ?? 0) / 1000).toFixed(1)
-            } / 2.0초
-          </p>
-          <p>
-            복귀 판정: {runtimeSnapshot?.returning?.state ?? '-'}
-          </p>
+          <p>복귀 판정: {runtimeSnapshot?.returning?.state ?? '-'}</p>
           <p className="text-sm text-gray-500">
             개발자 테스트 전용. 음성 및 DB 저장은 연결되지 않았습니다.
           </p>
@@ -484,97 +475,99 @@ export function SideKickStudyScreen() {
           </button>
         </section>
       ) : (
-      <section className="space-y-3 rounded-xl border p-4">
-        <h2 className="font-semibold">STEP 진행 상태</h2>
+        <section className="space-y-3 rounded-xl border p-4">
+          <h2 className="font-semibold">STEP 진행 상태</h2>
 
-        <div className="space-y-2 rounded-lg bg-gray-50 p-3">
-          <p className="font-semibold">음성 코칭</p>
+          <div className="space-y-2 rounded-lg bg-gray-50 p-3">
+            <p className="font-semibold">음성 코칭</p>
+
+            <button
+              type="button"
+              disabled={!voice.ready || voiceEnabled}
+              onClick={() => void voice.enableVoice()}
+              className="rounded-lg border px-4 py-2 disabled:opacity-40"
+            >
+              {voiceEnabled ? '음성 켜짐' : '음성 켜기'}
+            </button>
+
+            {voice.message && <p role="status">{voice.message}</p>}
+
+            {voice.error && (
+              <p role="alert" className="text-sm text-red-600">
+                {voice.error}
+              </p>
+            )}
+          </div>
+
+          {completed ? (
+            <p className="font-semibold text-green-700">5개 STEP 학습 완료</p>
+          ) : (
+            <p className="font-semibold">
+              현재 STEP {studyResult?.stepNo ?? 1}
+            </p>
+          )}
+
+          <p>
+            현재 점수: {studyResult?.currentScore?.toFixed(1) ?? '측정 대기'}
+            {' / 100점'}
+          </p>
+
+          <p>
+            최고 점수: {studyResult?.bestScore?.toFixed(1) ?? '-'}
+            {' / 100점'}
+          </p>
+
+          <p>
+            유지 시간: {((studyResult?.holdProgressMs ?? 0) / 1000).toFixed(1)}
+            {' / 2초'}
+          </p>
+
+          <div className="h-3 overflow-hidden rounded-full bg-gray-200">
+            <div
+              className="h-full bg-green-500 transition-all"
+              style={{
+                width: `${studyResult?.holdProgressPercent ?? 0}%`,
+              }}
+            />
+          </div>
+
+          <p>코칭 횟수: {studyResult?.feedbackCount ?? 0} / 5회</p>
+
+          {feedbackCode && (
+            <p role="status" className="font-semibold text-amber-700">
+              코칭 이벤트: {feedbackCode}
+            </p>
+          )}
+
+          {studyResult && studyResult.records.length > 0 && (
+            <div className="space-y-1 rounded-lg bg-gray-50 p-3">
+              <p className="font-semibold">STEP별 결과</p>
+
+              {studyResult.records.map((record) => (
+                <p key={record.stepNo}>
+                  STEP {record.stepNo}: {record.status}
+                  {' · '}
+                  {record.stepScore?.toFixed(1) ?? '-'}점{' · 코칭 '}
+                  {record.feedbackCount}회
+                </p>
+              ))}
+            </div>
+          )}
+
+          <p className="text-sm text-gray-500">
+            실험용 자세 유사도 평가: 80점 이상을 연속 2초 유지하면 PASS입니다.
+            음성 코칭 요청이 5회 발생하면 NON_PASS로 진행합니다. 의료적 안전성을
+            판정하는 점수가 아닙니다.
+          </p>
 
           <button
             type="button"
-            disabled={!voice.ready || voiceEnabled}
-            onClick={() => void voice.enableVoice()}
-            className="rounded-lg border px-4 py-2 disabled:opacity-40"
+            onClick={restartStudy}
+            className="rounded-lg border px-4 py-2"
           >
-            {voiceEnabled ? '음성 켜짐' : '음성 켜기'}
+            학습 처음부터 다시 시작
           </button>
-
-          {voice.message && <p role="status">{voice.message}</p>}
-
-          {voice.error && (
-            <p role="alert" className="text-sm text-red-600">
-              {voice.error}
-            </p>
-          )}
-        </div>
-
-        {completed ? (
-          <p className="font-semibold text-green-700">5개 STEP 학습 완료</p>
-        ) : (
-          <p className="font-semibold">현재 STEP {studyResult?.stepNo ?? 1}</p>
-        )}
-
-        <p>
-          현재 점수: {studyResult?.currentScore?.toFixed(1) ?? '측정 대기'}
-          {' / 100점'}
-        </p>
-
-        <p>
-          최고 점수: {studyResult?.bestScore?.toFixed(1) ?? '-'}
-          {' / 100점'}
-        </p>
-
-        <p>
-          유지 시간: {((studyResult?.holdProgressMs ?? 0) / 1000).toFixed(1)}
-          {' / 2초'}
-        </p>
-
-        <div className="h-3 overflow-hidden rounded-full bg-gray-200">
-          <div
-            className="h-full bg-green-500 transition-all"
-            style={{
-              width: `${studyResult?.holdProgressPercent ?? 0}%`,
-            }}
-          />
-        </div>
-
-        <p>코칭 횟수: {studyResult?.feedbackCount ?? 0} / 5회</p>
-
-        {feedbackCode && (
-          <p role="status" className="font-semibold text-amber-700">
-            코칭 이벤트: {feedbackCode}
-          </p>
-        )}
-
-        {studyResult && studyResult.records.length > 0 && (
-          <div className="space-y-1 rounded-lg bg-gray-50 p-3">
-            <p className="font-semibold">STEP별 결과</p>
-
-            {studyResult.records.map((record) => (
-              <p key={record.stepNo}>
-                STEP {record.stepNo}: {record.status}
-                {' · '}
-                {record.stepScore?.toFixed(1) ?? '-'}점{' · 코칭 '}
-                {record.feedbackCount}회
-              </p>
-            ))}
-          </div>
-        )}
-
-        <p className="text-sm text-gray-500">
-          실험용 자세 유사도 평가: 80점 이상을 연속 2초 유지하면 PASS입니다.
-          음성 코칭 요청이 5회 발생하면 NON_PASS로 진행합니다. 의료적 안전성을
-          판정하는 점수가 아닙니다.
-        </p>
-
-        <button
-          type="button"
-          onClick={restartStudy}
-          className="rounded-lg border px-4 py-2"
-        >
-          학습 처음부터 다시 시작
-        </button>
-      </section>
+        </section>
       )}
     </main>
   )
