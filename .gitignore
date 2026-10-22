@@ -5,6 +5,7 @@ node_modules/
 dist/
 build/
 coverage/
+debug-artifacts/
 *.tsbuildinfo
 
 # Environment variables (keep .env.example)
