@@ -1,5 +1,11 @@
 import type { RouteObject } from 'react-router-dom'
-import { OnboardingRoute, PublicOnlyRoute, RequireAuth } from '../features/auth'
+import {
+  OnboardingRoute,
+  PublicOnlyRoute,
+  RequireAdmin,
+  RequireAuth,
+  RequireMember,
+} from '../features/auth'
 import AppLayout from './AppLayout'
 import AccountRestorePage from '../pages/AccountRestorePage'
 import AuthCallbackPage from '../pages/AuthCallbackPage'
@@ -12,6 +18,7 @@ import OnboardingPage from '../pages/OnboardingPage'
 import PasswordResetPage from '../pages/PasswordResetPage'
 import RecordsPage from '../pages/RecordsPage'
 import SignupPage from '../pages/SignupPage'
+import WorkoutReadyPage from '../pages/WorkoutReadyPage'
 import WorkoutsPage from '../pages/WorkoutsPage'
 import { SideKickStudyScreen } from '../features/pose/components/SideKickStudyScreen'
 import SideKickExerciseScreen from '../features/pose/components/SideKickExerciseScreen'
@@ -72,6 +79,7 @@ export const routes: RouteObject[] = [
         // 로그인한 사용자만. 이후 보호 경로는 여기에 추가한다.
         element: <RequireAuth />,
         children: [
+<<<<<<< HEAD
           { path: '/home', element: <HomePage /> },
           { path: '/workouts', element: <WorkoutsPage /> },
           { path: '/workouts/start', element: <SideKickStartPage /> },
@@ -83,12 +91,56 @@ export const routes: RouteObject[] = [
           {
             path: '/workouts/sidekick/study',
             element: <SideKickStudyScreen runtimeMode="STEP_RUNTIME" />,
+=======
+          {
+            // 서비스를 이용하는 회원용. 관리자는 /admin으로 보낸다.
+            element: <RequireMember />,
+            children: [
+              { path: '/home', element: <HomePage /> },
+              { path: '/workouts', element: <WorkoutsPage /> },
+              { path: '/records', element: <RecordsPage /> },
+              {
+                path: '/workouts/:workoutId/:mode/ready',
+                element: <WorkoutReadyPage />,
+              },
+              {
+                path: '/workouts/sidekick/study',
+                element: <SideKickStudyScreen />,
+              },
+              {
+                path: '/workouts/sidekick/exercise',
+                element: <SideKickExerciseScreen />,
+              },
+              { path: '/me', element: <MePage /> },
+            ],
+>>>>>>> develop
           },
           {
-            path: '/workouts/sidekick/exercise',
-            element: <SideKickExerciseScreen />,
+            // 관리자만. 화면 코드는 관리자가 들어갈 때만 내려받는다. (실제 보안은 서버의 /api/admin/* 가드)
+            element: <RequireAdmin />,
+            children: [
+              {
+                path: '/admin',
+                lazy: async () => ({
+                  Component: (await import('../pages/AdminPage')).default,
+                }),
+              },
+              {
+                path: '/admin/members',
+                lazy: async () => ({
+                  Component: (await import('../pages/AdminMembersPage'))
+                    .default,
+                }),
+              },
+              {
+                path: '/admin/members/:id',
+                lazy: async () => ({
+                  Component: (await import('../pages/AdminMemberDetailPage'))
+                    .default,
+                }),
+              },
+            ],
           },
-          { path: '/me', element: <MePage /> },
         ],
       },
       { path: '*', element: <NotFoundPage /> },

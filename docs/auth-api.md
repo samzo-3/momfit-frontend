@@ -215,9 +215,12 @@
   "due_date": "2026-12-24",
   "pregnancy_week": 28,                   // due_date에서 계산, due_date가 없으면 null
   "exercise_level": "medium",
-  "onboarding_completed": true
+  "onboarding_completed": true,
+  "role": "user"                          // "user" | "admin". 가입·수정 API로는 바꿀 수 없고 DB에서만 지정한다
 }
 ```
+
+`role`은 화면 분기(관리자 메뉴·`/admin` 진입)에만 쓴다. 데이터 보호는 서버의 `/api/admin/*`가 `403 FORBIDDEN`으로 막는다.
 
 `/auth/email/send-code`, `/auth/password/reset`, `/auth/logout`, `DELETE /users/me`는 본문 없이 `204`를 반환한다.
 

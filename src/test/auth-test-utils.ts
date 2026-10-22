@@ -12,6 +12,7 @@ export function makeUser(overrides: Partial<User> = {}): User {
     pregnancyWeek: 28,
     exerciseLevel: 'low',
     onboardingCompleted: true,
+    role: 'user',
     ...overrides,
   }
 }
@@ -57,6 +58,7 @@ export const userBody = {
   pregnancy_week: 28,
   exercise_level: 'low',
   onboarding_completed: true,
+  role: 'user',
 }
 
 export interface MockRequest {

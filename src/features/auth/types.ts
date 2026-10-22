@@ -2,6 +2,8 @@
 
 export type ExerciseLevel = 'low' | 'medium' | 'high'
 
+export type UserRole = 'user' | 'admin'
+
 export interface User {
   id: number
   provider: 'local' | 'kakao'
@@ -12,6 +14,7 @@ export interface User {
   pregnancyWeek: number | null
   exerciseLevel: ExerciseLevel | null
   onboardingCompleted: boolean
+  role: UserRole
 }
 
 export interface TokenResponse {
