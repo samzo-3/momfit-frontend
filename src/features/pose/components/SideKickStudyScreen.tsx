@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSideKickVoice } from '../voice-coaching/useSideKickVoice'
 import {
+  SideKickStudyRuntime,
+  type SideKickRuntimeSnapshot,
+} from '../analyzers/sideKick/side-kick-study-runtime'
+import {
   getSideKickStudyConfig,
   type SideKickStudyConfig,
 } from '../api/getSideKickStudyConfig'
@@ -23,9 +27,9 @@ import {
 const STEPS = [
   { no: 1, title: '준비 자세' },
   { no: 2, title: '왼쪽 다리 들기 · 왼쪽 옆구리 굽히기' },
-  { no: 3, title: '오른쪽 다리 내리고 준비 자세로 복귀' },
+  { no: 3, title: '왼쪽 다리 내리고 준비 자세로 복귀' },
   { no: 4, title: '오른쪽 다리 들기 · 오른쪽 옆구리 굽히기' },
-  { no: 5, title: '왼쪽 다리 내리고 준비 자세로 복귀' },
+  { no: 5, title: '오른쪽 다리 내리고 준비 자세로 복귀' },
 ] as const
 
 export function SideKickStudyScreen() {
@@ -41,6 +45,9 @@ export function SideKickStudyScreen() {
   const trainerRef = useRef<HTMLVideoElement>(null)
   const poseCanvasRef = useRef<HTMLCanvasElement>(null)
 
+  const runtimeRef = useRef(new SideKickStudyRuntime())
+  const [runtimeSnapshot, setRuntimeSnapshot] =
+    useState<SideKickRuntimeSnapshot | null>(null)
   const trackerRef = useRef<SideKickStudyTracker>(new SideKickStudyTracker())
   const readyRef = useRef<ReadyPose | null>(null)
   const readySamplesRef = useRef<PoseLandmarkPoint[][]>([])
@@ -130,6 +137,35 @@ export function SideKickStudyScreen() {
       const currentStep = latestStepRef.current
 
       if (currentStep > 5) return
+
+      // 개발자 화면: 새 STEP 1~5 Runtime만 실행한다.
+      // 기존 점수 기반 Tracker와 DB 저장은 실행하지 않는다.
+      if (isDevStudy) {
+        const readyEvaluation =
+          currentStep === 1
+            ? scoreSideKickStep(1, frame.landmarks, null)
+            : null
+
+        const readyPoseValid =
+          readyEvaluation?.judgment.status === 'EVALUATED' &&
+          readyEvaluation.judgment.score >= 80
+
+        const snapshot = runtimeRef.current.update(frame, {
+          readyPoseValid,
+        })
+
+        setRuntimeSnapshot(snapshot)
+
+        const nextStep = snapshot.flow.step
+
+        if (nextStep !== null && nextStep !== currentStep) {
+          latestStepRef.current = nextStep
+          setStepIndex(nextStep - 1)
+          setVideoEnded(false)
+        }
+
+        return
+      }
 
       // 운영 화면은 실제 DB 운동/STEP ID 확보 전 학습을 시작하지 않는다.
       if (!isDevStudy && !dbConfigRef.current) return
@@ -302,6 +338,8 @@ export function SideKickStudyScreen() {
     lastTrackingOkAtRef.current = Date.now()
     lastTrackingVoiceAtRef.current = null
     trackerRef.current.reset()
+    runtimeRef.current.reset()
+    setRuntimeSnapshot(null)
     readyRef.current = null
     readySamplesRef.current = []
     latestStepRef.current = 1
@@ -405,6 +443,47 @@ export function SideKickStudyScreen() {
         </section>
       </div>
 
+      {isDevStudy ? (
+        <section className="space-y-3 rounded-xl border p-4">
+          <h2 className="font-semibold">실시간 STEP 테스트</h2>
+          <p>
+            {runtimeSnapshot?.flow.completed
+              ? `최종 결과: ${runtimeSnapshot.flow.finalResult}`
+              : `현재 STEP: ${runtimeSnapshot?.flow.step ?? 1}`}
+          </p>
+          <p>
+            READY 샘플: {runtimeSnapshot?.readySampleCount ?? 0}개
+          </p>
+          <p>
+            READY 기준선: {
+              runtimeSnapshot?.baseline
+                ? `왼쪽 ${runtimeSnapshot.baseline.left.toFixed(1)}도 / 오른쪽 ${runtimeSnapshot.baseline.right.toFixed(1)}도`
+                : '측정 중'
+            }
+          </p>
+          <p>
+            상승 판정: {runtimeSnapshot?.lift?.state ?? '-'}
+          </p>
+          <p>
+            자세 유지: {
+              ((runtimeSnapshot?.lift?.holdProgressMs ?? 0) / 1000).toFixed(1)
+            } / 2.0초
+          </p>
+          <p>
+            복귀 판정: {runtimeSnapshot?.returning?.state ?? '-'}
+          </p>
+          <p className="text-sm text-gray-500">
+            개발자 테스트 전용. 음성 및 DB 저장은 연결되지 않았습니다.
+          </p>
+          <button
+            type="button"
+            onClick={restartStudy}
+            className="rounded-lg border px-4 py-2"
+          >
+            학습 처음부터 다시 시작
+          </button>
+        </section>
+      ) : (
       <section className="space-y-3 rounded-xl border p-4">
         <h2 className="font-semibold">STEP 진행 상태</h2>
 
@@ -496,6 +575,7 @@ export function SideKickStudyScreen() {
           학습 처음부터 다시 시작
         </button>
       </section>
+      )}
     </main>
   )
 }
