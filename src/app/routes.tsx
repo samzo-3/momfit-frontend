@@ -91,6 +91,20 @@ export const routes: RouteObject[] = [
                   Component: (await import('../pages/AdminPage')).default,
                 }),
               },
+              {
+                path: '/admin/members',
+                lazy: async () => ({
+                  Component: (await import('../pages/AdminMembersPage'))
+                    .default,
+                }),
+              },
+              {
+                path: '/admin/members/:id',
+                lazy: async () => ({
+                  Component: (await import('../pages/AdminMemberDetailPage'))
+                    .default,
+                }),
+              },
             ],
           },
         ],

@@ -87,3 +87,59 @@ export function mockAdminApi(
     'GET /api/admin/stats/visits': () => jsonResponse(200, visitsBody),
   })
 }
+
+export function memberItem(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 1,
+    nickname: '맘핏',
+    email: 'mom@example.com',
+    login_id: 'momfit01',
+    provider: 'local',
+    status: 'active',
+    created_at: '2026-10-01T03:00:00Z',
+    withdrawn_at: null,
+    purge_at: null,
+    last_visit_date: '2026-10-21',
+    completed_exercises: 7,
+    ...overrides,
+  }
+}
+
+export function memberDetailBody(overrides: Record<string, unknown> = {}) {
+  return {
+    ...memberItem(),
+    onboarding_completed: true,
+    exercise_level: 'medium',
+    due_date: '2027-01-11',
+    visit_days_last_30: 12,
+    recent_records: [
+      {
+        started_at: '2026-10-21T01:30:00Z',
+        exercise_name: '사이드 킥',
+        is_completed: true,
+        total_score: 91.5,
+      },
+      {
+        started_at: '2026-10-20T01:30:00Z',
+        exercise_name: '스쿼트',
+        is_completed: false,
+        total_score: null,
+      },
+    ],
+    history: [
+      {
+        action: 'view_member',
+        admin_nickname: '운영자',
+        created_at: '2026-10-22T05:00:00Z',
+      },
+    ],
+    ...overrides,
+  }
+}
+
+export function memberListBody(
+  items: unknown[],
+  extra: Record<string, unknown> = {},
+) {
+  return { items, total: items.length, page: 1, size: 20, ...extra }
+}
