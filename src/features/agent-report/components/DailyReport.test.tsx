@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
   errorResponse,
@@ -94,7 +94,7 @@ const EMPTY_STATS = {
 function renderReport(date: string) {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <DailyReport date={date} />
+      <DailyReport date={date} userId={1} />
     </QueryClientProvider>,
   )
 }
@@ -250,6 +250,34 @@ describe('DailyReport', () => {
 
     expect(screen.getByText('아직 오지 않은 날이에요.')).toBeInTheDocument()
     expect(requestsTo(fetchMock, REPORT)).toHaveLength(0)
+  })
+
+  it('같은 탭에서 계정이 바뀌면 지난 날짜도 이전 사용자의 리포트를 보여주지 않고 새로 부른다', async () => {
+    mockApi(fetchMock, { [REPORT]: () => jsonResponse(200, reportBody()) })
+    // 로그아웃해도 앱의 QueryClient는 그대로라서, 같은 클라이언트로 사용자만 바꿔 다시 그린다.
+    const client = new QueryClient()
+    const view = (userId: number) => (
+      <QueryClientProvider client={client}>
+        <DailyReport date="2026-10-19" userId={userId} />
+      </QueryClientProvider>
+    )
+    const { rerender } = render(view(1))
+    await screen.findByText('오늘 총 36분 동안 운동을 잘 마치셨어요.')
+
+    // 같은 사용자는 지난 날짜를 다시 부르지 않는다.
+    rerender(view(1))
+    expect(requestsTo(fetchMock, REPORT)).toHaveLength(1)
+
+    mockApi(fetchMock, { [REPORT]: () => new Promise<Response>(() => {}) })
+    rerender(view(2))
+
+    expect(
+      screen.queryByText('오늘 총 36분 동안 운동을 잘 마치셨어요.'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(
+      '리포트를 불러오고 있어요.',
+    )
+    await waitFor(() => expect(requestsTo(fetchMock, REPORT)).toHaveLength(2))
   })
 
   it('불러오지 못하면 자동으로 다시 부르지 않고, 다시 시도를 누르면 다시 부른다', async () => {

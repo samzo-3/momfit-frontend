@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getDailyReport } from '../api/daily-report-api'
 
 interface DailyReportOptions {
+  // 로그인한 사용자 번호
+  userId: number
   // 오늘보다 이른 날짜인지
   isPast: boolean
   // false면 부르지 않는다. (아직 오지 않은 날)
@@ -12,12 +14,14 @@ interface DailyReportOptions {
 // - 지난 날짜는 서버도 다시 만들지 않으니 한 번 받으면 다시 부르지 않는다.
 // - 오늘은 다시 보면 다시 부른다. 새 기록이 없으면 서버가 LLM 없이 바로 돌려준다.
 // - 실패해도 자동으로 다시 시도하지 않고, 창으로 돌아올 때도 부르지 않는다. 그때마다 LLM이 불릴 수 있다.
+// - 캐시는 사용자별이다. 로그아웃해도 캐시가 남으므로, 같은 탭에서 다른 계정으로 로그인하면
+//   지난 날짜도 그 계정의 리포트를 새로 부른다. (이전 사용자의 리포트를 보여주지 않는다)
 export function useDailyReport(
   date: string,
-  { isPast, enabled }: DailyReportOptions,
+  { userId, isPast, enabled }: DailyReportOptions,
 ) {
   return useQuery({
-    queryKey: ['daily-report', date],
+    queryKey: ['daily-report', userId, date],
     queryFn: () => getDailyReport(date),
     enabled,
     staleTime: isPast ? Infinity : 0,

@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
   errorResponse,
@@ -218,6 +218,32 @@ describe('RecordsPage', () => {
     const dates = reportDates()
     expect(dates.filter((date) => date === '2026-10-19')).toHaveLength(1)
     expect(dates.filter((date) => date === '2026-10-21')).toHaveLength(2)
+  })
+
+  it('같은 탭에서 다른 계정으로 바뀌면 지난 날짜 리포트도 그 계정으로 다시 부른다', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderApp('/records')
+    await screen.findByText('2026-10-21 한마디')
+    await user.click(day(/^10월 19일/))
+    const slot = screen.getByTestId('records-report-slot')
+    await within(slot).findByText('2026-10-19 한마디')
+
+    // 로그아웃해도 리포트 캐시는 남는다. 다른 계정의 응답은 붙잡아 두고, 그 사이 이전 계정의
+    // 리포트가 보이지 않는지 본다.
+    mockRoutes({
+      [RECORDS]: () => jsonResponse(200, { items: [] }),
+      [REPORT]: () => new Promise<Response>(() => {}),
+    })
+    act(() => signIn({ id: 2, loginId: 'momfit02' }))
+
+    expect(
+      within(slot).queryByText('2026-10-19 한마디'),
+    ).not.toBeInTheDocument()
+    await waitFor(() =>
+      expect(
+        reportDates().filter((date) => date === '2026-10-19'),
+      ).toHaveLength(2),
+    )
   })
 
   it('아직 오지 않은 날을 고르면 리포트를 부르지 않는다', async () => {
