@@ -27,7 +27,10 @@ npm run dev
 
 ```env
 API_PROXY_TARGET=http://localhost:8000
+CHATBOT_PROXY_TARGET=http://localhost:8100
 ```
+
+챗봇(`/api/chat`)은 백엔드와 별도 서비스입니다. 챗봇을 쓰려면 챗봇 서비스(`momfit-chatbot`)를 함께 실행하고, 챗봇의 `BACKEND_URL`이 백엔드를 가리켜야 합니다.
 
 
 ## 프로젝트 구조
@@ -130,6 +133,7 @@ momfit-frontend/
 | `src/features/auth/store/auth-store.ts` | 메모리 기반 access token과 사용자 정보를 Zustand로 관리 | 클라이언트 상태 |
 | `src/features/auth/hooks/useAuthMutations.ts` | 로그인·가입·프로필 변경 등의 TanStack Query 훅 제공 | 서버 상태 |
 | `src/features/home/` | 로그인 후 홈의 히어로, 출산 예정일·임신 주차 요약을 제공 | 홈 |
+| `src/features/chatbot/` | `/home`에 떠 있는 챗봇 캐릭터와 채팅창, 챗봇 API 요청, 대화 상태 | 챗봇 |
 | `src/features/landing/` | 랜딩 페이지의 히어로·기능 소개·시작 안내 섹션 | 서비스 소개 |
 | `src/features/pose/` | 자세 분석 기능을 위한 빈 디렉터리 구조와 `.gitkeep` 보관 | 향후 자세 인식 |
 | `src/shared/components/` | 여러 feature와 page에서 재사용하는 버튼·입력칸·모달·캐러셀 등 | 공통 UI |
@@ -163,7 +167,7 @@ momfit-frontend/
 ## API 및 상태 관리
 
 - 모든 브라우저 요청은 `src/shared/api/api-client.ts`를 거쳐 상대 경로 `/api`로 전송됩니다.
-- 개발 환경에서는 `vite.config.ts`의 프록시가 `/api` 요청을 `API_PROXY_TARGET`으로 전달합니다.
+- 개발 환경에서는 `vite.config.ts`의 프록시가 `/api` 요청을 `API_PROXY_TARGET`으로, `/api/chat` 요청을 `CHATBOT_PROXY_TARGET`(챗봇 서비스)으로 전달합니다. 챗봇 API는 [docs/chatbot-api.md](docs/chatbot-api.md)를 참고합니다.
 - access token은 Zustand 상태에만 보관하며, 새로고침 시 refresh 요청으로 세션을 복구합니다.
 - 인증 API 요청은 `src/features/auth/api/auth-api.ts`에 모여 있습니다. UI 컴포넌트는 TanStack Query 훅을 통해 요청 상태를 사용합니다.
 - 인증 실패 또는 refresh 실패 시 세션 상태를 초기화합니다.

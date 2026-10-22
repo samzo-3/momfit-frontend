@@ -12,6 +12,11 @@ export default defineConfig(({ mode }) => {
     server: {
       // 운영(Vercel rewrites)과 같은 same-origin 구조를 개발에서도 유지한다.
       proxy: {
+        // 챗봇은 백엔드와 별도 서비스라서 /api/chat만 따로 넘긴다. 더 구체적인 경로이므로 /api보다 먼저 둔다.
+        '/api/chat': {
+          target: env.CHATBOT_PROXY_TARGET || 'http://localhost:8100',
+          changeOrigin: true,
+        },
         '/api': {
           target: env.API_PROXY_TARGET || 'http://localhost:8000',
           changeOrigin: true,
