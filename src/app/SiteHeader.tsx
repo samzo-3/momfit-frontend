@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
+import logoImage from '../assets/momfit-logo.png'
 import { useAuth } from '../features/auth'
 import Button from '../shared/components/Button'
 import ButtonLink from '../shared/components/ButtonLink'
@@ -37,9 +38,16 @@ function SiteHeader() {
         {/* 로그인한 사용자는 소개 페이지(/)가 아니라 홈으로 돌아온다. */}
         <Link
           to={isAuthenticated ? '/home' : '/'}
-          className="text-[17px] font-semibold tracking-tight text-cocoa"
+          className="flex items-center"
         >
-          momfit
+          {/* 로고 이미지(배경 투명, 457x112). 크기를 미리 알려 로딩 중 레이아웃이 밀리지 않게 한다. */}
+          <img
+            src={logoImage}
+            alt="MomFit"
+            width={82}
+            height={20}
+            className="h-5 w-auto"
+          />
         </Link>
         {isAuthenticated && (
           <div className="flex items-center gap-4 text-sm">
