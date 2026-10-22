@@ -18,6 +18,7 @@ import OnboardingPage from '../pages/OnboardingPage'
 import PasswordResetPage from '../pages/PasswordResetPage'
 import RecordsPage from '../pages/RecordsPage'
 import SignupPage from '../pages/SignupPage'
+import WorkoutReadyPage from '../pages/WorkoutReadyPage'
 import WorkoutsPage from '../pages/WorkoutsPage'
 import { SideKickStudyScreen } from '../features/pose/components/SideKickStudyScreen'
 import SideKickExerciseScreen from '../features/pose/components/SideKickExerciseScreen'
@@ -70,6 +71,10 @@ export const routes: RouteObject[] = [
               { path: '/home', element: <HomePage /> },
               { path: '/workouts', element: <WorkoutsPage /> },
               { path: '/records', element: <RecordsPage /> },
+              {
+                path: '/workouts/:workoutId/:mode/ready',
+                element: <WorkoutReadyPage />,
+              },
               {
                 path: '/workouts/sidekick/study',
                 element: <SideKickStudyScreen />,

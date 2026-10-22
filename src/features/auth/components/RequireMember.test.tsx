@@ -17,18 +17,21 @@ afterEach(() => {
 })
 
 describe('RequireMember (관리자의 회원용 화면 접근)', () => {
-  it.each(['/home', '/records', '/me', '/workouts'])(
-    '관리자가 %s에 들어가면 /admin으로 보낸다',
-    async (path) => {
-      signIn({ role: 'admin' })
-      const router = renderApp(path)
+  it.each([
+    '/home',
+    '/records',
+    '/me',
+    '/workouts',
+    '/workouts/sidekick/exercise/ready',
+  ])('관리자가 %s에 들어가면 /admin으로 보낸다', async (path) => {
+    signIn({ role: 'admin' })
+    const router = renderApp(path)
 
-      await waitFor(() => expect(router.state.location.pathname).toBe('/admin'))
-      expect(
-        await screen.findByRole('heading', { name: '관리자' }),
-      ).toBeInTheDocument()
-    },
-  )
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'))
+    expect(
+      await screen.findByRole('heading', { name: '관리자' }),
+    ).toBeInTheDocument()
+  })
 
   it('관리자가 로그인한 상태로 /login에 오면 /admin으로 간다', async () => {
     signIn({ role: 'admin' })
