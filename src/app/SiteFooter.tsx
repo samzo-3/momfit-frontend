@@ -1,12 +1,12 @@
 // 모든 화면 하단에 보이는 안내. 왼쪽에는 서비스 소개 한 줄, 오른쪽에는 의학적 면책 문구를 둔다.
 // 면책 문구는 넓은 화면(lg 이상)에서 한 줄로 보인다. 그보다 좁으면 소개 아래로 내려오고, 아주 좁으면 자연스럽게 줄이 바뀐다.
-// 운동 서비스이므로 면책 문구는 항상 함께 노출한다.
+// 운동 서비스이므로 면책 문구는 항상 함께 노출한다. 화면을 많이 차지하지 않도록 세로 여백을 작게 둔다(py-4).
 function SiteFooter() {
   return (
-    <footer className="border-t border-primary-strong bg-primary-soft px-4 py-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+    <footer className="border-t border-primary-strong bg-primary-soft px-4 py-4">
+      <div className="mx-auto flex max-w-5xl flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
         <p className="flex items-center gap-2.5 text-[15px] text-cocoa-secondary">
-          <strong className="text-lg font-semibold tracking-tight text-cocoa">
+          <strong className="text-base font-semibold tracking-tight text-cocoa">
             momfit
           </strong>
           <span aria-hidden="true" className="text-primary-strong">

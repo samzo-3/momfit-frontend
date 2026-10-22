@@ -16,6 +16,7 @@ export type PoseLandmarkPoint = {
 export type PoseFrame = {
   timestampMs: number
   landmarks: PoseLandmarkPoint[]
+  worldLandmarks?: PoseLandmarkPoint[]
 }
 
 const CONNECTIONS: [number, number][] = [
@@ -129,6 +130,7 @@ export function usePoseLandmarker(
           try {
             const result = landmarker.detectForVideo(video, timestampMs)
             const landmarks = result.landmarks[0] ?? null
+            const worldLandmarks = result.worldLandmarks[0] ?? null
 
             draw(landmarks)
 
@@ -137,6 +139,13 @@ export function usePoseLandmarker(
               onFrame?.({
                 timestampMs,
                 landmarks: landmarks.map((point) => ({
+                  x: point.x,
+                  y: point.y,
+                  z: point.z,
+                  visibility: point.visibility,
+                  presence: point.presence,
+                })),
+                worldLandmarks: worldLandmarks?.map((point) => ({
                   x: point.x,
                   y: point.y,
                   z: point.z,

@@ -1,7 +1,12 @@
+import { DailyReport } from '../features/agent-report'
+import { useAuth } from '../features/auth'
 import { RecordsView } from '../features/records'
 
-// 내 운동 기록 캘린더. 날짜를 고르면 오른쪽에 그 날의 요약 리포트가 들어올 예정이다.
+// 내 운동 기록 캘린더. 날짜를 고르면 오른쪽 카드에 그 날의 AI 에이전트 리포트가 나온다.
+// 리포트 캐시를 사용자별로 나누도록 로그인한 사용자 번호를 함께 넘긴다.
 function RecordsPage() {
+  const { user } = useAuth()
+
   return (
     <main className="flex-1 bg-primary-soft px-4 py-10 sm:py-12">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
@@ -18,7 +23,11 @@ function RecordsPage() {
             잘한 날도 쉬어간 날도, 나에게 맞는 속도로 쌓아가는 기록이에요.
           </p>
         </header>
-        <RecordsView />
+        <RecordsView
+          renderReport={(date) =>
+            user && <DailyReport date={date} userId={user.id} />
+          }
+        />
       </div>
     </main>
   )
