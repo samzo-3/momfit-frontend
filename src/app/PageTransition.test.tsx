@@ -48,6 +48,22 @@ describe('화면 전환 애니메이션', () => {
     expect(before.isConnected).toBe(false)
   })
 
+  it('같은 경로라도 쿼리가 바뀌면(/workouts?mode=) 애니메이션을 다시 재생한다', async () => {
+    signIn()
+    renderApp('/workouts')
+    const before = wrapper()
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole('link', { name: /운동 모드/ }))
+
+    expect(
+      screen.getByRole('heading', { name: /운동 모드, 어떤 운동/ }),
+    ).toBeInTheDocument()
+    expect(wrapper()).not.toBe(before)
+    expect(before.isConnected).toBe(false)
+  })
+
   it('같은 경로 안에서 입력하거나 상태가 바뀌어도 다시 재생하지 않는다', async () => {
     signOut()
     renderApp('/login')
