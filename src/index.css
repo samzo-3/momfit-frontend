@@ -44,6 +44,18 @@
 
   /* 화면이 바뀔 때 새 화면이 살짝 올라오며 나타난다. 과하지 않게 6px, 220ms */
   --animate-page-in: page-in 220ms ease-out;
+  /* 챗봇 캐릭터가 둥실 떠 있는 느낌. 3초 주기로 3px만 움직인다 */
+  --animate-mascot-float: mascot-float 3s ease-in-out infinite;
+
+  @keyframes mascot-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
 
   @keyframes page-in {
     from {

@@ -6,7 +6,9 @@
 
 ```
 브라우저(React SPA, Vercel) ──HTTPS──▶ FastAPI(가비아 클라우드) ──▶ MySQL
-                                            └──▶ LLM API (AI 에이전트)
+                              │
+                              └─ /api/chat/* ─▶ 챗봇 서비스(FastAPI) ──▶ Qdrant, LLM API
+                                                   └─ 토큰 확인: 백엔드 /api/users/me
 ```
 
 - 프론트엔드는 정적 SPA로 Vercel에 배포한다.
@@ -19,13 +21,14 @@
 | 인증 | 로그인·회원가입 화면, 토큰 보관, 보호 라우트 |
 | API 통신 | 공통 API 클라이언트, 서버 상태 관리(TanStack Query) |
 | 대시보드 | 운동 기록 조회, 주간·장기 차트 |
-| AI 에이전트 | Q&A UI, 맞춤 정보 표시 |
+| AI 에이전트 | Q&A UI, 맞춤 정보 표시. 홈의 플로팅 챗봇 위젯은 [chatbot-api.md](chatbot-api.md) 참고 |
 | 화면·라우팅 | [screens-and-routes.md](screens-and-routes.md) 참고 |
 
 ## 배포 시 주의
 
 - 웹캠 접근은 HTTPS에서만 가능하다. Vercel은 기본 HTTPS를 제공한다.
 - Vercel(HTTPS)에서 백엔드를 호출하려면 백엔드도 **HTTPS**여야 한다(mixed content 차단).
+- 챗봇은 백엔드와 별도 서비스다. 브라우저는 같은 상대 경로 `/api/chat/*`로 호출하고, 개발은 Vite 프록시(`CHATBOT_PROXY_TARGET`)가 챗봇으로 보낸다. 운영(K3s, [momfit-infra](https://github.com/samzo-3/momfit-infra))에서는 프론트 Nginx(`nginx.conf`)가 `/api/chat/`을 챗봇 서비스(`momfit-chatbot.team.svc.cluster.local:8100`)로 프록시한다. Traefik Ingress가 `/api`를 백엔드로 직접 보내는 구성이라면 Ingress에도 `/api/chat` 규칙이 필요하다. 챗봇 배포와 Ingress 설정은 챗봇 저장소의 `docs/deployment.md`를 따른다.
 - 브라우저는 항상 상대 경로 `/api/*`로 호출한다. 운영은 Vercel rewrites(`vercel.json`), 개발은 Vite proxy(`API_PROXY_TARGET`)가 백엔드로 넘겨 same-origin을 유지한다. 그래서 CORS 설정이 필요 없다.
 
 ## 인증
