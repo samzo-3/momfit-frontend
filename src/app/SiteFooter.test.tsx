@@ -19,6 +19,15 @@ describe('SiteFooter', () => {
     expect(screen.getByRole('main')).toHaveClass('bg-primary-soft')
   })
 
+  it('화면을 많이 차지하지 않도록 세로 여백과 문구 간격이 작다', () => {
+    renderApp('/login')
+
+    const footer = screen.getByRole('contentinfo')
+    expect(footer).toHaveClass('py-4')
+    expect(footer).not.toHaveClass('py-8')
+    expect(footer.firstElementChild).toHaveClass('gap-1.5')
+  })
+
   it('의학적 면책 문구를 서비스명 momfit과 함께 보여준다', () => {
     renderApp('/login')
 
