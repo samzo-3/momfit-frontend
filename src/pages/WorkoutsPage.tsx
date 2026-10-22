@@ -13,6 +13,9 @@ function WorkoutsPage() {
         <p className="text-[17px] text-cocoa-secondary">
           조금만 기다려 주세요. 곧 나에게 맞는 운동을 고를 수 있어요.
         </p>
+        <ButtonLink to="/workouts/start" variant="brand">
+          Side Kick 시작
+        </ButtonLink>
         <ButtonLink to="/home" variant="brand-outline">
           홈으로
         </ButtonLink>

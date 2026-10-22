@@ -32,7 +32,12 @@ const STEPS = [
   { no: 5, title: '오른쪽 다리 내리고 준비 자세로 복귀' },
 ] as const
 
-export function SideKickStudyScreen() {
+export function SideKickStudyScreen({
+  runtimeMode,
+}: {
+  /** 사용자 통합 흐름은 PR #18의 STEP Runtime을 쓰되 개발자 URL 판별에 의존하지 않는다. */
+  runtimeMode?: 'STEP_RUNTIME'
+}) {
   const [stepIndex, setStepIndex] = useState(0)
   const [cameraReady, setCameraReady] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -57,6 +62,7 @@ export function SideKickStudyScreen() {
   const stepFeedbackCodesRef = useRef<Map<number, string[]>>(new Map())
   const saveGenerationRef = useRef(0)
   const isDevStudy = window.location.pathname.startsWith('/dev/')
+  const useStepRuntime = isDevStudy || runtimeMode === 'STEP_RUNTIME'
   const lastTrackingOkAtRef = useRef<number>(0)
   const lastTrackingVoiceAtRef = useRef<number | null>(null)
 
@@ -64,7 +70,7 @@ export function SideKickStudyScreen() {
   const { playCue, stopVoice, enabled: voiceEnabled } = voice
 
   useEffect(() => {
-    if (isDevStudy) return
+    if (useStepRuntime) return
 
     let cancelled = false
     dbConfigRef.current = null
@@ -84,7 +90,7 @@ export function SideKickStudyScreen() {
       cancelled = true
       dbConfigRef.current = null
     }
-  }, [isDevStudy])
+  }, [useStepRuntime])
 
   const step = STEPS[stepIndex]
   const completed = studyResult?.status === 'COMPLETED'
@@ -140,7 +146,7 @@ export function SideKickStudyScreen() {
 
       // 개발자 화면: 새 STEP 1~5 Runtime만 실행한다.
       // 기존 점수 기반 Tracker와 DB 저장은 실행하지 않는다.
-      if (isDevStudy) {
+      if (useStepRuntime) {
         const readyEvaluation =
           currentStep === 1 ? scoreSideKickStep(1, frame.landmarks, null) : null
 
@@ -166,7 +172,7 @@ export function SideKickStudyScreen() {
       }
 
       // 운영 화면은 실제 DB 운동/STEP ID 확보 전 학습을 시작하지 않는다.
-      if (!isDevStudy && !dbConfigRef.current) return
+      if (!useStepRuntime && !dbConfigRef.current) return
 
       const evaluation = scoreSideKickStep(
         currentStep as StudyStepNumber,
@@ -231,7 +237,10 @@ export function SideKickStudyScreen() {
         if (event.type === 'STEP_COMPLETED') {
           stopVoice()
 
-          if (!isDevStudy && !savingStepsRef.current.has(event.record.stepNo)) {
+          if (
+            !useStepRuntime &&
+            !savingStepsRef.current.has(event.record.stepNo)
+          ) {
             const config = dbConfigRef.current
             const stepInfo = config?.steps.find(
               (item) => item.step_no === event.record.stepNo,
@@ -283,7 +292,7 @@ export function SideKickStudyScreen() {
         }
       }
     },
-    [playCue, stopVoice, isDevStudy],
+    [playCue, stopVoice, useStepRuntime],
   )
 
   const pose = usePoseLandmarker(
@@ -464,7 +473,7 @@ export function SideKickStudyScreen() {
           </p>
           <p>복귀 판정: {runtimeSnapshot?.returning?.state ?? '-'}</p>
           <p className="text-sm text-gray-500">
-            개발자 테스트 전용. 음성 및 DB 저장은 연결되지 않았습니다.
+            개발자 테스트 전용 정보입니다.
           </p>
           <button
             type="button"
@@ -472,6 +481,26 @@ export function SideKickStudyScreen() {
             className="rounded-lg border px-4 py-2"
           >
             학습 처음부터 다시 시작
+          </button>
+        </section>
+      ) : runtimeMode === 'STEP_RUNTIME' ? (
+        <section className="space-y-3 rounded-xl border p-4">
+          <h2 className="font-semibold">STEP 진행 상태</h2>
+          <p className="font-semibold">
+            {runtimeSnapshot?.flow.completed
+              ? '5개 STEP 학습 완료'
+              : `현재 STEP: ${runtimeSnapshot?.flow.step ?? 1} / 5`}
+          </p>
+          <p className="text-sm text-gray-600">
+            카메라 정면에서 동작을 따라 해 주세요. 인식이 끊기면 STEP 판정은
+            진행되지 않습니다.
+          </p>
+          <button
+            type="button"
+            onClick={restartStudy}
+            className="rounded-lg border px-4 py-2"
+          >
+            처음부터 다시 시작
           </button>
         </section>
       ) : (

@@ -47,4 +47,15 @@ describe('WorkoutsPage', () => {
 
     expect(router.state.location.pathname).toBe('/workouts')
   })
+
+  it('임시 Side Kick 통합 흐름으로 이동할 수 있다', async () => {
+    signIn()
+    const router = renderApp('/workouts')
+
+    await userEvent
+      .setup()
+      .click(screen.getByRole('link', { name: 'Side Kick 시작' }))
+
+    expect(router.state.location.pathname).toBe('/workouts/start')
+  })
 })

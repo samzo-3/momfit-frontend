@@ -16,6 +16,8 @@ import WorkoutsPage from '../pages/WorkoutsPage'
 import { SideKickStudyScreen } from '../features/pose/components/SideKickStudyScreen'
 import SideKickExerciseScreen from '../features/pose/components/SideKickExerciseScreen'
 import YoloEnvironmentCheckPage from '../pages/yolo-environment-check/YoloEnvironmentCheckPage'
+import SideKickStartPage from '../pages/SideKickStartPage'
+import SideKickEnvironmentCheckPage from '../pages/SideKickEnvironmentCheckPage'
 
 export const routes: RouteObject[] = [
   {
@@ -35,6 +37,14 @@ export const routes: RouteObject[] = [
             {
               path: '/dev/yolo',
               element: <YoloEnvironmentCheckPage />,
+            },
+            {
+              path: '/dev/sidekick/start',
+              element: <SideKickStartPage devOnly />,
+            },
+            {
+              path: '/dev/sidekick/check/:mode',
+              element: <SideKickEnvironmentCheckPage devOnly />,
             },
           ]
         : []),
@@ -64,10 +74,15 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/home', element: <HomePage /> },
           { path: '/workouts', element: <WorkoutsPage /> },
+          { path: '/workouts/start', element: <SideKickStartPage /> },
+          {
+            path: '/workouts/sidekick/check/:mode',
+            element: <SideKickEnvironmentCheckPage />,
+          },
           { path: '/records', element: <RecordsPage /> },
           {
             path: '/workouts/sidekick/study',
-            element: <SideKickStudyScreen />,
+            element: <SideKickStudyScreen runtimeMode="STEP_RUNTIME" />,
           },
           {
             path: '/workouts/sidekick/exercise',
