@@ -28,7 +28,7 @@
 
 - 웹캠 접근은 HTTPS에서만 가능하다. Vercel은 기본 HTTPS를 제공한다.
 - Vercel(HTTPS)에서 백엔드를 호출하려면 백엔드도 **HTTPS**여야 한다(mixed content 차단).
-- 챗봇은 백엔드와 별도 서비스다. 브라우저는 같은 상대 경로 `/api/chat/*`로 호출하고, 개발은 Vite 프록시(`CHATBOT_PROXY_TARGET`)가 챗봇으로 보낸다. 운영의 `/api/chat/*` 라우팅(rewrites 또는 Ingress)은 아직 정하지 않았다.
+- 챗봇은 백엔드와 별도 서비스다. 브라우저는 같은 상대 경로 `/api/chat/*`로 호출하고, 개발은 Vite 프록시(`CHATBOT_PROXY_TARGET`)가 챗봇으로 보낸다. 운영(K3s, [momfit-infra](https://github.com/samzo-3/momfit-infra))에서는 프론트 Nginx(`nginx.conf`)가 `/api/chat/`을 챗봇 서비스(`momfit-chatbot.team.svc.cluster.local:8100`)로 프록시한다. Traefik Ingress가 `/api`를 백엔드로 직접 보내는 구성이라면 Ingress에도 `/api/chat` 규칙이 필요하다. 챗봇 배포와 Ingress 설정은 챗봇 저장소의 `docs/deployment.md`를 따른다.
 - 브라우저는 항상 상대 경로 `/api/*`로 호출한다. 운영은 Vercel rewrites(`vercel.json`), 개발은 Vite proxy(`API_PROXY_TARGET`)가 백엔드로 넘겨 same-origin을 유지한다. 그래서 CORS 설정이 필요 없다.
 
 ## 인증
