@@ -6,7 +6,7 @@
 
 - 브라우저는 다른 API와 같이 상대 경로 `/api/chat/*`로 호출한다. 요청은 공통 API 클라이언트(`shared/api`)를 거치므로 Bearer 토큰, `TOKEN_EXPIRED` 재시도, `UNAUTHORIZED` 처리가 그대로 적용된다.
 - 개발: Vite 프록시가 `/api/chat`을 `CHATBOT_PROXY_TARGET`(기본 `http://localhost:8100`)으로, 나머지 `/api`를 `API_PROXY_TARGET`으로 보낸다. 더 구체적인 `/api/chat`을 먼저 둔다.
-- 운영(K3s, `momfit-infra`): 챗봇은 같은 클러스터(`team` 네임스페이스)에 별도 Deployment `momfit-chatbot`(포트 8100)으로 배포하고, `/api/chat/*`만 챗봇으로 보낸다.
+- 운영(K3s, `momfit-infra`): 챗봇은 같은 클러스터(`team` 네임스페이스)에 별도 Deployment `momfit-chatbot`(Pod 포트 8100, Service 포트 8000)으로 배포한다. Ingress가 `/api`를 백엔드로 보내므로 백엔드가 `/api/chat/*`을 챗봇으로 전달한다.
   - 프론트 Nginx(`nginx.conf`)의 `location /api/chat/`이 챗봇 서비스로 프록시한다. 호스트를 변수와 `resolver`로 지정해, 챗봇이 아직 배포되지 않았거나 내려가 있어도 프론트 Nginx가 기동에 실패하지 않고 챗봇 요청만 502가 된다(위젯은 "지금은 답변을 만들 수 없어요"를 보여준다).
   - Traefik Ingress가 `/api`를 백엔드로 직접 보낸다면 Ingress에도 `/api/chat` → 챗봇 규칙이 필요하다(더 긴 경로가 우선). 배포 절차는 챗봇 저장소 `docs/deployment.md`를 따른다.
 - 챗봇은 받은 토큰을 백엔드 `GET /api/users/me`에 물어 확인한다. 임신 주수도 거기서 가져오므로 **프론트가 주수를 보내지 않는다**.
