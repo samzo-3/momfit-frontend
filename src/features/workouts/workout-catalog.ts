@@ -68,8 +68,8 @@ export const WORKOUTS: WorkoutInfo[] = [
     name: 'Side Kick',
     description: '사이드킥과 사이드 벤드 동작으로 구성된 운동이에요.',
     routes: {
-      exercise: '/workouts/sidekick/exercise',
-      study: '/workouts/sidekick/study',
+      exercise: '/workouts/sidekick/check/exercise',
+      study: '/workouts/sidekick/check/study',
     },
     image: sideKickImage,
     imageAlt: '집에서 사이드킥 동작을 하는 임산부',

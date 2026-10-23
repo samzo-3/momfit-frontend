@@ -41,7 +41,7 @@ describe('WorkoutReadyPage', () => {
     ).toBeVisible()
   })
 
-  it('모든 항목을 체크해야 이동할 수 있고, 이동하면 운동 화면이 열린다', async () => {
+  it('모든 항목을 체크해야 이동할 수 있고, 이동하면 환경 점검 화면이 열린다', async () => {
     signIn()
     const router = renderApp('/workouts/sidekick/exercise/ready')
     const user = userEvent.setup()
@@ -55,7 +55,9 @@ describe('WorkoutReadyPage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('체크 완료 4/4')
     await user.click(goButton())
 
-    expect(router.state.location.pathname).toBe('/workouts/sidekick/exercise')
+    expect(router.state.location.pathname).toBe(
+      '/workouts/sidekick/check/exercise',
+    )
   })
 
   it('이동 안내 문구는 체크를 마치면 숨기기만 해서 카드 높이가 변하지 않는다', async () => {
@@ -85,7 +87,7 @@ describe('WorkoutReadyPage', () => {
     expect(goButton()).toBeDisabled()
   })
 
-  it('자세 배우기는 소리 안내 항목이 있고 자세 배우기 화면으로 이동한다', async () => {
+  it('자세 배우기는 소리 안내 항목이 있고 환경 점검(자세 배우기) 화면으로 이동한다', async () => {
     signIn()
     const router = renderApp('/workouts/sidekick/study/ready')
     const user = userEvent.setup()
@@ -95,7 +97,9 @@ describe('WorkoutReadyPage', () => {
     for (const box of screen.getAllByRole('checkbox')) await user.click(box)
     await user.click(goButton())
 
-    expect(router.state.location.pathname).toBe('/workouts/sidekick/study')
+    expect(router.state.location.pathname).toBe(
+      '/workouts/sidekick/check/study',
+    )
   })
 
   it('운동 고르기 링크는 들어온 모드의 목록으로 돌려보낸다', async () => {
