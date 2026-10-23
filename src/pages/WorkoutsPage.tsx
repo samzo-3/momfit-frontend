@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import NoticeIcon from '../features/workouts/components/NoticeIcon'
 import {
   HEALTH_NOTICE,
   ModeChoices,
@@ -46,18 +47,7 @@ function WorkoutsPage() {
           </Link>
         ) : null}
         <p className="flex items-center gap-2.5 rounded-xl bg-sage-soft px-4 py-3 text-sm text-cocoa-secondary ring-1 ring-primary-strong">
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="size-4 shrink-0 text-brand-text"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 11v5M12 8h.01" />
-          </svg>
+          <NoticeIcon />
           {HEALTH_NOTICE}
         </p>
       </div>

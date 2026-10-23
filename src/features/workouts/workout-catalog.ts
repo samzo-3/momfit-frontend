@@ -12,7 +12,7 @@ export interface WorkoutModeInfo {
   // 카드 아래 알약. 운동 선택 단계에서도 고른 모드의 칩과 버튼 문구를 쓴다.
   chips: string[]
   cta: string
-  // 운동 전 준비 페이지의 체크리스트. 모두 체크해야 운동 화면으로 이동할 수 있다.
+  // 운동 전 준비 페이지의 체크리스트. 모두 체크해야 다음(환경 점검) 화면으로 이동할 수 있다.
   checklist: string[]
   image: string
   imageAlt: string
@@ -68,8 +68,8 @@ export const WORKOUTS: WorkoutInfo[] = [
     name: 'Side Kick',
     description: '사이드킥과 사이드 벤드 동작으로 구성된 운동이에요.',
     routes: {
-      exercise: '/workouts/sidekick/exercise',
-      study: '/workouts/sidekick/study',
+      exercise: '/workouts/sidekick/check/exercise',
+      study: '/workouts/sidekick/check/study',
     },
     image: sideKickImage,
     imageAlt: '집에서 사이드킥 동작을 하는 임산부',
