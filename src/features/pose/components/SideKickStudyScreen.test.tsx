@@ -217,6 +217,15 @@ describe('SideKickStudyScreen runtime wiring', () => {
     expect(screen.getByText(/신규 STEP 음성 코칭/)).toBeInTheDocument()
   })
 
+  it('개발 화면은 STEP 1 음성을 자동 재생한 뒤 활성화 상태를 표시한다', async () => {
+    window.history.pushState({}, '', '/dev/sidekick/study')
+    render(<SideKickStudyScreen />)
+
+    expect(
+      await screen.findByRole('button', { name: '테스트 음성 끄기' }),
+    ).toBeInTheDocument()
+  })
+
   it('사용자 음성 켜기는 신규 Player의 현재 STEP 안내를 재생한다', async () => {
     render(<SideKickStudyScreen />)
 

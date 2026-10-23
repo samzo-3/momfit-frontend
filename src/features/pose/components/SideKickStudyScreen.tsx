@@ -92,8 +92,11 @@ export function SideKickStudyScreen() {
   const devVoiceBridgeRef = useRef(new SideKickVoiceBridge())
   const devVoicePlayerRef = useRef<SideKickVoicePlayer | null>(null)
   const devVoiceCuesRef = useRef<SideKickVoiceCueMap>(new Map())
+  const devAutoActivationPlayerRef = useRef<SideKickVoicePlayer | null>(null)
+  const devInitialVoiceDecisionRef = useRef<SideKickVoiceDecision | null>(null)
   const [devVoiceEnabled, setDevVoiceEnabled] = useState(false)
   const devVoiceStatus = '로컬 음성 16종 준비 완료'
+  const [devVoiceError, setDevVoiceError] = useState<string | null>(null)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [voiceError, setVoiceError] = useState<string | null>(null)
 
@@ -165,6 +168,41 @@ export function SideKickStudyScreen() {
       devVoiceCuesRef.current = new Map()
     }
   }, [])
+
+  useEffect(() => {
+    if (!isDevStudy) return
+
+    const player = devVoicePlayerRef.current
+    if (!player || devAutoActivationPlayerRef.current === player) return
+
+    devAutoActivationPlayerRef.current = player
+    const decision: SideKickVoiceDecision = {
+      eventCode: 'SK_READY_START',
+      step: 1,
+      priority: 'NORMAL',
+    }
+    let cancelled = false
+
+    void player.activate(decision).then(
+      () => {
+        if (cancelled) return
+        devInitialVoiceDecisionRef.current = decision
+        setDevVoiceEnabled(true)
+        setDevVoiceError(null)
+      },
+      () => {
+        if (cancelled) return
+        setDevVoiceEnabled(false)
+        setDevVoiceError(
+          '자동 음성 재생이 차단됐습니다. 테스트 음성 켜기 버튼을 눌러 주세요.',
+        )
+      },
+    )
+
+    return () => {
+      cancelled = true
+    }
+  }, [isDevStudy])
 
   useEffect(() => {
     if (isDevStudy) return
@@ -289,10 +327,19 @@ export function SideKickStudyScreen() {
         setRuntimeSnapshot(snapshot)
 
         if (isDevStudy ? devVoiceEnabled : voiceEnabled) {
-          const decisions = devVoiceBridgeRef.current.update(
+          let decisions = devVoiceBridgeRef.current.update(
             frame.timestampMs,
             snapshot,
           )
+          const initialDecision = devInitialVoiceDecisionRef.current
+          if (initialDecision) {
+            decisions = decisions.filter(
+              (decision) =>
+                decision.eventCode !== initialDecision.eventCode ||
+                decision.step !== initialDecision.step,
+            )
+            devInitialVoiceDecisionRef.current = null
+          }
           devVoicePlayerRef.current?.enqueue(decisions)
           feedbackIssuedRef.current = decisions.some((decision) =>
             CORRECTION_EVENTS.has(decision.eventCode),
@@ -401,6 +448,32 @@ export function SideKickStudyScreen() {
     }
   }
 
+  async function enableDevVoice() {
+    const player = devVoicePlayerRef.current
+    if (!player) {
+      setDevVoiceError('음성 안내를 준비하지 못했습니다.')
+      return
+    }
+
+    const step = latestStepRef.current as 1 | 2 | 3 | 4 | 5
+    const decision: SideKickVoiceDecision = {
+      eventCode: STEP_START_EVENTS[step],
+      step,
+      priority: 'NORMAL',
+    }
+
+    try {
+      await player.activate(decision)
+      devInitialVoiceDecisionRef.current = decision
+      devVoiceBridgeRef.current.reset()
+      setDevVoiceEnabled(true)
+      setDevVoiceError(null)
+    } catch {
+      setDevVoiceEnabled(false)
+      setDevVoiceError('브라우저에서 음성 재생이 차단됐습니다.')
+    }
+  }
+
   function restartTrainerVideo() {
     const video = trainerRef.current
     if (!video) return
@@ -424,6 +497,7 @@ export function SideKickStudyScreen() {
     savingStepsRef.current.clear()
     devVoicePlayerRef.current?.stop()
     devVoiceBridgeRef.current.reset()
+    devInitialVoiceDecisionRef.current = null
     feedbackIssuedRef.current = false
     if (!isDevStudy && dbConfigRef.current) {
       stepSessionIdRef.current = crypto.randomUUID()
@@ -558,10 +632,10 @@ export function SideKickStudyScreen() {
                 if (devVoiceEnabled) {
                   devVoicePlayerRef.current?.stop()
                   devVoiceBridgeRef.current.reset()
+                  devInitialVoiceDecisionRef.current = null
                   setDevVoiceEnabled(false)
                 } else {
-                  devVoiceBridgeRef.current.reset()
-                  setDevVoiceEnabled(true)
+                  void enableDevVoice()
                 }
               }}
               className="rounded-lg border px-4 py-2"
@@ -571,6 +645,11 @@ export function SideKickStudyScreen() {
             <p role="status" className="text-sm text-gray-500">
               {devVoiceStatus}
             </p>
+            {devVoiceError && (
+              <p role="alert" className="text-sm text-amber-700">
+                {devVoiceError}
+              </p>
+            )}
           </div>
           <p>
             {runtimeSnapshot?.flow.completed
