@@ -71,10 +71,7 @@ export default function SideKickEnvironmentCheckPage({
 
   if (!selection)
     return (
-      <Navigate
-        to={devOnly ? '/dev/sidekick/start' : '/workouts/start'}
-        replace
-      />
+      <Navigate to={devOnly ? '/dev/sidekick/start' : '/workouts'} replace />
     )
   const result = environment.result
   return (
@@ -129,9 +126,7 @@ export default function SideKickEnvironmentCheckPage({
       )}
       <button
         className="rounded border px-4 py-2"
-        onClick={() =>
-          navigate(devOnly ? '/dev/sidekick/start' : '/workouts/start')
-        }
+        onClick={() => navigate(devOnly ? '/dev/sidekick/start' : '/workouts')}
       >
         취소
       </button>
