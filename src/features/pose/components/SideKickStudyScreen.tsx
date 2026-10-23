@@ -93,7 +93,7 @@ export function SideKickStudyScreen() {
   const devVoicePlayerRef = useRef<SideKickVoicePlayer | null>(null)
   const devVoiceCuesRef = useRef<SideKickVoiceCueMap>(new Map())
   const [devVoiceEnabled, setDevVoiceEnabled] = useState(false)
-  const [devVoiceStatus, setDevVoiceStatus] = useState('음성 데이터 준비 전')
+  const devVoiceStatus = '로컬 음성 16종 준비 완료'
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [voiceError, setVoiceError] = useState<string | null>(null)
 
@@ -160,7 +160,6 @@ export function SideKickStudyScreen() {
     )
 
     devVoiceCuesRef.current = map
-    setDevVoiceStatus('로컬 음성 16종 준비 완료')
 
     return () => {
       devVoiceCuesRef.current = new Map()
