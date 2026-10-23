@@ -32,6 +32,7 @@ import {
 
 type Stage = 'GUIDE' | 'STARTING' | 'EXERCISE' | 'FINISHING' | 'DONE'
 type PauseReason = 'NONE' | 'AUTO' | 'MANUAL'
+type SideKickExerciseMode = 'FRONTEND_ONLY' | 'API_CONNECTED'
 
 const LOSS_MS = 2000
 const RECOVERY_MS = 600
@@ -41,6 +42,12 @@ type Sample = {
   time: number
   left: number
   right: number
+}
+
+function sideKickExerciseMode(): SideKickExerciseMode {
+  return import.meta.env.VITE_SIDEKICK_EXERCISE_MODE === 'frontend_only'
+    ? 'FRONTEND_ONLY'
+    : 'API_CONNECTED'
 }
 
 export default function SideKickExerciseScreen() {
@@ -82,6 +89,7 @@ export default function SideKickExerciseScreen() {
   const [trainerReady, setTrainerReady] = useState(false)
   const [trainerPlaybackBlocked, setTrainerPlaybackBlocked] = useState(false)
   const trainerAutoPlayAttemptRef = useRef<string | null>(null)
+  const isFrontendOnlyMode = sideKickExerciseMode() === 'FRONTEND_ONLY'
 
   const setTrainerVideoRef = useCallback((video: HTMLVideoElement | null) => {
     trainerRef.current = video
@@ -129,6 +137,8 @@ export default function SideKickExerciseScreen() {
 
   // 일반 운동은 STEP 기준 버전과 무관한 설정 경로에서 실제 DB ID를 조회한다.
   useEffect(() => {
+    if (isFrontendOnlyMode) return
+
     let cancelled = false
 
     void getSideKickExerciseConfig()
@@ -146,7 +156,7 @@ export default function SideKickExerciseScreen() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isFrontendOnlyMode])
 
   // 웹캠은 운동 전체에서 하나의 스트림을 유지한다.
   useEffect(() => {
@@ -189,8 +199,16 @@ export default function SideKickExerciseScreen() {
   }, [])
 
   const savePause = useCallback(async () => {
+    if (pauseSavedRef.current) return
+
+    if (isFrontendOnlyMode) {
+      pauseSavedRef.current = true
+      setPauseSaved(true)
+      return
+    }
+
     const id = recordIdRef.current
-    if (id === null || pauseSavedRef.current) return
+    if (id === null) return
 
     const sets = exerciseRef.current.getResult().completedSets
 
@@ -201,23 +219,27 @@ export default function SideKickExerciseScreen() {
       setPauseSaved(true)
       setSavedScore(result.total_score)
     }
-  }, [runServerAction])
+  }, [isFrontendOnlyMode, runServerAction])
 
   const resumeFromPause = useCallback(async () => {
-    const id = recordIdRef.current
-    if (id === null || !pauseSavedRef.current) return
+    if (!pauseSavedRef.current) return
     if (serverBusyRef.current) return
 
-    const result = await runServerAction(() => resumeSideKickExercise(id))
-    if (!result) return
+    if (!isFrontendOnlyMode) {
+      const id = recordIdRef.current
+      if (id === null) return
+
+      const result = await runServerAction(() => resumeSideKickExercise(id))
+      if (!result) return
+
+      setSavedScore(result.total_score)
+    }
 
     pauseSavedRef.current = false
     setPauseSaved(false)
     cancelPartialMotion()
     lastValidAtRef.current = performance.now()
     recoveredSinceRef.current = null
-    setSavedScore(result.total_score)
-
     try {
       const played = await playTrainerVideo(trainerRef.current)
       if (!played) throw new Error('TRAINER_VIDEO_PLAY_FAILED')
@@ -228,7 +250,7 @@ export default function SideKickExerciseScreen() {
       setServerError('영상 재생에 실패했습니다. 페이지를 새로고침하지 마세요.')
       setPause('MANUAL')
     }
-  }, [runServerAction, cancelPartialMotion, setPause])
+  }, [isFrontendOnlyMode, runServerAction, cancelPartialMotion, setPause])
 
   const handleFrame = useCallback(
     (frame: PoseFrame) => {
@@ -389,6 +411,20 @@ export default function SideKickExerciseScreen() {
   const startExercise = useCallback(async () => {
     if (recordIdRef.current !== null) return
 
+    if (isFrontendOnlyMode) {
+      setServerError(null)
+      lastValidAtRef.current = performance.now()
+
+      motionRef.current.reset()
+      exerciseRef.current.reset()
+      setCompletedSets(0)
+
+      setStartVisible(true)
+      setCurrentStage('EXERCISE')
+      window.setTimeout(() => setStartVisible(false), 1200)
+      return
+    }
+
     const exerciseId = exerciseIdRef.current
     if (exerciseId === null) {
       setServerError(
@@ -413,7 +449,7 @@ export default function SideKickExerciseScreen() {
     setStartVisible(true)
     setCurrentStage('EXERCISE')
     window.setTimeout(() => setStartVisible(false), 1200)
-  }, [runServerAction, setCurrentStage])
+  }, [isFrontendOnlyMode, runServerAction, setCurrentStage])
 
   const tryPlayTrainer = useCallback(
     async (userInitiated = false) => {
@@ -468,7 +504,7 @@ export default function SideKickExerciseScreen() {
     cancelPartialMotion()
 
     const recordId = recordIdRef.current
-    if (recordId !== null) {
+    if (!isFrontendOnlyMode && recordId !== null) {
       const sets = exerciseRef.current.getResult().completedSets
       void runServerAction(() => completeSideKickExercise(recordId, sets)).then(
         (saved) => {
@@ -521,6 +557,11 @@ export default function SideKickExerciseScreen() {
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-4">
       <h1 className="text-2xl font-bold">Side Kick &amp; Side Bend</h1>
+      {isFrontendOnlyMode && (
+        <p className="text-xs text-gray-500">
+          체험 모드 · 운동 기록은 저장되지 않습니다.
+        </p>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         <section className="space-y-2">
@@ -605,9 +646,11 @@ export default function SideKickExerciseScreen() {
           {stage === 'DONE' ? '감지 점수' : '점수 미리보기'}:{' '}
           {completedSets * 10}점
         </div>
-        <div className="text-sm">
-          서버 저장 점수: {savedScore === null ? '미저장' : `${savedScore}점`}
-        </div>
+        {!isFrontendOnlyMode && (
+          <div className="text-sm">
+            서버 저장 점수: {savedScore === null ? '미저장' : `${savedScore}점`}
+          </div>
+        )}
 
         {isExercise && pauseReason !== 'MANUAL' && (
           <button
@@ -675,9 +718,11 @@ export default function SideKickExerciseScreen() {
       {stage === 'DONE' && (
         <p className="font-semibold">
           운동 종료: {completedSets}세트 완료.
-          {savedScore === null
-            ? ' 서버 저장 결과를 확인하지 못했습니다.'
-            : ` 서버 기록 점수: ${savedScore}점`}
+          {isFrontendOnlyMode
+            ? ' 체험 모드에서는 운동 기록을 저장하지 않았습니다.'
+            : savedScore === null
+              ? ' 서버 저장 결과를 확인하지 못했습니다.'
+              : ` 서버 기록 점수: ${savedScore}점`}
         </p>
       )}
     </div>
