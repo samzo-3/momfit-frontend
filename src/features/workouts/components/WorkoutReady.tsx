@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../../../shared/components/Button'
+import NoticeIcon from './NoticeIcon'
 import readyWorkoutImage from '../assets/ready-workout.jpg'
 import {
   HEALTH_NOTICE,
@@ -133,10 +134,13 @@ function WorkoutReady({
           </section>
         </div>
 
-        <p className="flex flex-col gap-1 rounded-xl bg-sage-soft px-4 py-3 text-sm text-cocoa-secondary ring-1 ring-primary-strong sm:flex-row sm:items-center sm:gap-3">
-          <span className="font-semibold text-cocoa">{SAFETY_NOTICE}</span>
-          <span>{HEALTH_NOTICE}</span>
-        </p>
+        <div className="flex items-center gap-2.5 rounded-xl bg-sage-soft px-4 py-3 text-sm text-cocoa-secondary ring-1 ring-primary-strong">
+          <NoticeIcon />
+          <p className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <span className="font-semibold text-cocoa">{SAFETY_NOTICE}</span>
+            <span>{HEALTH_NOTICE}</span>
+          </p>
+        </div>
       </div>
     </main>
   )

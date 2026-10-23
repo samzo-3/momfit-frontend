@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import Button from '../shared/components/Button'
+import NoticeIcon from '../features/workouts/components/NoticeIcon'
 import StatusIcon from '../shared/components/StatusIcon'
 import { ENVIRONMENT_CHECK_CONFIG } from '../features/yolo-environment-check/environment-policy'
 import {
@@ -239,10 +240,13 @@ export default function SideKickEnvironmentCheckPage({
           </section>
         </div>
 
-        <p className="flex flex-col gap-1 rounded-xl bg-sage-soft px-4 py-3 text-sm text-cocoa-secondary ring-1 ring-primary-strong sm:flex-row sm:items-center sm:gap-3">
-          <span className="font-semibold text-cocoa">{SAFETY_NOTICE}</span>
-          <span>{HEALTH_NOTICE}</span>
-        </p>
+        <div className="flex items-center gap-2.5 rounded-xl bg-sage-soft px-4 py-3 text-sm text-cocoa-secondary ring-1 ring-primary-strong">
+          <NoticeIcon />
+          <p className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <span className="font-semibold text-cocoa">{SAFETY_NOTICE}</span>
+            <span>{HEALTH_NOTICE}</span>
+          </p>
+        </div>
       </div>
     </main>
   )
