@@ -5,6 +5,14 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Button from '../../../shared/components/Button'
+import ConfirmDialog from '../../../shared/components/ConfirmDialog'
+import { exitFullscreen } from '../../../shared/lib/fullscreen'
+import {
+  WORKOUT_COMPLETE_PATH,
+  type WorkoutOutcome,
+} from '../../workouts/workout-catalog'
 import {
   usePoseLandmarker,
   type PoseFrame,
@@ -44,6 +52,8 @@ type Sample = {
 }
 
 export default function SideKickExerciseScreen() {
+  const navigate = useNavigate()
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false)
   const trainerRef = useRef<HTMLVideoElement>(null)
   const webcamRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -515,171 +525,247 @@ export default function SideKickExerciseScreen() {
     void savePause()
   }
 
+  // 준비 화면에서 켠 전체 화면은 운동 화면을 떠날 때(뒤로가기 포함) 풀어 준다.
+  useEffect(
+    () => () => {
+      void exitFullscreen()
+    },
+    [],
+  )
+
+  // 개발 화면(/dev)에는 마무리 화면이 없으니 개발용 시작 화면으로 돌아간다.
+  async function leaveWorkout(outcome: WorkoutOutcome) {
+    setExitConfirmOpen(false)
+    void exitFullscreen()
+    // 본 운동 중에 나가면 서버 기록을 일시 정지 상태로 남긴다. 실패해도 나가는 것은 막지 않는다.
+    if (stageRef.current === 'EXERCISE') {
+      trainerRef.current?.pause()
+      await savePause()
+    }
+    if (window.location.pathname.startsWith('/dev/')) {
+      navigate('/dev/sidekick/start', { replace: true })
+      return
+    }
+    navigate(WORKOUT_COMPLETE_PATH, {
+      replace: true,
+      state: { outcome, mode: 'exercise', completedSets },
+    })
+  }
+
   const isExercise = stage === 'EXERCISE'
   const paused = pauseReason !== 'NONE'
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-4">
-      <h1 className="text-2xl font-bold">Side Kick &amp; Side Bend</h1>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <section className="space-y-2">
-          <h2 className="font-semibold">트레이너 영상</h2>
-          <video
-            key={stage === 'GUIDE' ? 'guide' : 'exercise'}
-            ref={setTrainerVideoRef}
-            src={trainerVideoSource(stage)}
-            className="aspect-video w-full rounded-xl bg-black object-contain"
-            autoPlay={stage === 'GUIDE'}
-            muted
-            playsInline
-            onLoadedMetadata={() => {
-              ensureTrainerVideoMuted(trainerRef.current)
-              trainerAutoPlayAttemptRef.current = null
-              setTrainerReady(false)
-            }}
-            onCanPlay={() => {
-              ensureTrainerVideoMuted(trainerRef.current)
-              setTrainerReady(true)
-            }}
-            onPlay={() => setTrainerPlaybackBlocked(false)}
-            onEnded={handleTrainerEnded}
-          />
-          <p className="text-sm">
-            {stage === 'GUIDE'
-              ? '운동 가이드 · 자세를 준비하세요'
-              : stage === 'FINISHING'
-                ? '운동 종료 · 결과 준비 중'
-                : stage === 'DONE'
-                  ? '운동 완료'
-                  : paused
-                    ? '일시 정지'
-                    : '본 운동 진행 중'}
+    <main className="flex-1 bg-primary-soft px-4 py-10 sm:py-12">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <header className="flex flex-col items-start gap-3">
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-brand-text">
+            <span
+              aria-hidden="true"
+              className="size-1.5 rounded-full bg-brand"
+            />
+            Side Kick · 운동 모드
           </p>
-        </section>
+          <h1 className="text-4xl font-semibold text-cocoa">
+            Side Kick &amp; Side Bend
+          </h1>
+        </header>
 
-        <section className="space-y-2">
-          <h2 className="font-semibold">내 자세</h2>
-          <div className="relative aspect-video overflow-hidden rounded-xl bg-black">
+        <div className="grid gap-5 lg:grid-cols-2">
+          <section className="flex flex-col gap-3 rounded-3xl bg-white p-5 ring-1 ring-primary-strong">
+            <h2 className="text-xl font-semibold text-cocoa">트레이너 영상</h2>
             <video
-              ref={webcamRef}
-              autoPlay
+              key={stage === 'GUIDE' ? 'guide' : 'exercise'}
+              ref={setTrainerVideoRef}
+              src={trainerVideoSource(stage)}
+              className="aspect-video w-full rounded-2xl bg-cocoa object-contain"
+              autoPlay={stage === 'GUIDE'}
               muted
               playsInline
-              className="absolute inset-0 h-full w-full scale-x-[-1] object-contain"
+              onLoadedMetadata={() => {
+                ensureTrainerVideoMuted(trainerRef.current)
+                trainerAutoPlayAttemptRef.current = null
+                setTrainerReady(false)
+              }}
+              onCanPlay={() => {
+                ensureTrainerVideoMuted(trainerRef.current)
+                setTrainerReady(true)
+              }}
+              onPlay={() => setTrainerPlaybackBlocked(false)}
+              onEnded={handleTrainerEnded}
             />
-            <canvas
-              ref={canvasRef}
-              className="pointer-events-none absolute inset-0 h-full w-full scale-x-[-1] object-contain"
-            />
-            {freezeImage && stage !== 'EXERCISE' && stage !== 'GUIDE' && (
-              <img
-                src={freezeImage}
-                alt="마지막 운동 프레임"
+            <p className="text-sm text-cocoa-secondary">
+              {stage === 'GUIDE'
+                ? '운동 가이드 · 자세를 준비하세요'
+                : stage === 'FINISHING'
+                  ? '운동 종료 · 결과 준비 중'
+                  : stage === 'DONE'
+                    ? '운동 완료'
+                    : paused
+                      ? '일시 정지'
+                      : '본 운동 진행 중'}
+            </p>
+          </section>
+
+          <section className="flex flex-col gap-3 rounded-3xl bg-white p-5 ring-1 ring-primary-strong">
+            <h2 className="text-xl font-semibold text-cocoa">내 자세</h2>
+            <div className="relative aspect-video overflow-hidden rounded-2xl bg-cocoa">
+              <video
+                ref={webcamRef}
+                autoPlay
+                muted
+                playsInline
                 className="absolute inset-0 h-full w-full scale-x-[-1] object-contain"
               />
-            )}
-            {startVisible && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <span className="text-5xl font-bold text-white">START</span>
-              </div>
-            )}
-            {paused && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                <span className="text-3xl font-bold text-white">
-                  {pauseReason === 'AUTO' ? '인식 대기 중' : '일시 정지'}
-                </span>
-              </div>
-            )}
+              <canvas
+                ref={canvasRef}
+                className="pointer-events-none absolute inset-0 h-full w-full scale-x-[-1] object-contain"
+              />
+              {freezeImage && stage !== 'EXERCISE' && stage !== 'GUIDE' && (
+                <img
+                  src={freezeImage}
+                  alt="마지막 운동 프레임"
+                  className="absolute inset-0 h-full w-full scale-x-[-1] object-contain"
+                />
+              )}
+              {startVisible && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <span className="text-5xl font-bold text-white">START</span>
+                </div>
+              )}
+              {paused && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <span className="text-3xl font-bold text-white">
+                    {pauseReason === 'AUTO' ? '인식 대기 중' : '일시 정지'}
+                  </span>
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-cocoa">
+              {cameraError ?? pose.error ?? trackingMessage}
+            </p>
+            <p className="text-xs text-cocoa-secondary">
+              MediaPipe: {pose.status}
+            </p>
+          </section>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 rounded-3xl bg-white p-6 text-cocoa ring-1 ring-primary-strong">
+          <div className="text-2xl font-semibold text-brand-text">
+            {completedSets} / 10세트
           </div>
-          <p className="text-sm">
-            {cameraError ?? pose.error ?? trackingMessage}
-          </p>
-          <p className="text-xs text-gray-500">MediaPipe: {pose.status}</p>
-        </section>
-      </div>
+          <div className="text-lg">
+            {stage === 'DONE' ? '감지 점수' : '점수 미리보기'}:{' '}
+            {completedSets * 10}점
+          </div>
+          <div className="text-sm text-cocoa-secondary">
+            서버 저장 점수: {savedScore === null ? '미저장' : `${savedScore}점`}
+          </div>
 
-      <div className="flex flex-wrap items-center gap-4 rounded-xl border p-4">
-        <div className="text-xl font-bold">{completedSets} / 10세트</div>
-        <div className="text-lg">
-          {stage === 'DONE' ? '감지 점수' : '점수 미리보기'}:{' '}
-          {completedSets * 10}점
-        </div>
-        <div className="text-sm">
-          서버 저장 점수: {savedScore === null ? '미저장' : `${savedScore}점`}
-        </div>
-
-        {isExercise && pauseReason !== 'MANUAL' && (
-          <button
-            type="button"
-            onClick={manualPause}
-            className="rounded-lg border px-4 py-2"
-          >
-            수동 일시 정지
-          </button>
-        )}
-        {isExercise && pauseReason === 'MANUAL' && (
-          <button
-            type="button"
-            onClick={manualResume}
-            disabled={serverBusy || !pauseSaved}
-            className="rounded-lg border px-4 py-2 disabled:opacity-50"
-          >
-            이어하기
-          </button>
-        )}
-      </div>
-
-      {trainerPlaybackBlocked &&
-        (stage === 'GUIDE' || stage === 'EXERCISE') && (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm">
-            <span>영상 자동 재생이 차단되었습니다.</span>
-            <button
-              type="button"
-              onClick={() => void tryPlayTrainer(true)}
-              className="rounded-lg border border-amber-600 px-4 py-2"
+          {stage === 'DONE' ? (
+            <Button
+              variant="brand"
+              size="sm"
+              onClick={() => void leaveWorkout('completed')}
             >
-              영상 재생
-            </button>
+              운동 나가기
+            </Button>
+          ) : (
+            <Button
+              variant="brand-outline"
+              size="sm"
+              onClick={() => setExitConfirmOpen(true)}
+            >
+              나가기
+            </Button>
+          )}
+
+          {isExercise && pauseReason !== 'MANUAL' && (
+            <Button variant="brand-outline" size="sm" onClick={manualPause}>
+              수동 일시 정지
+            </Button>
+          )}
+          {isExercise && pauseReason === 'MANUAL' && (
+            <Button
+              variant="brand"
+              size="sm"
+              onClick={manualResume}
+              disabled={serverBusy || !pauseSaved}
+            >
+              이어하기
+            </Button>
+          )}
+        </div>
+
+        {trainerPlaybackBlocked &&
+          (stage === 'GUIDE' || stage === 'EXERCISE') && (
+            <div className="flex flex-wrap items-center gap-3 rounded-xl bg-primary px-4 py-3 text-sm text-cocoa ring-1 ring-primary-strong">
+              <span>영상 자동 재생이 차단되었습니다.</span>
+              <Button
+                variant="brand"
+                size="sm"
+                onClick={() => void tryPlayTrainer(true)}
+              >
+                영상 재생
+              </Button>
+            </div>
+          )}
+
+        {stage === 'STARTING' && serverError && (
+          <div>
+            <Button
+              variant="brand"
+              size="sm"
+              onClick={() => void startExercise()}
+            >
+              기록 생성 다시 시도
+            </Button>
           </div>
         )}
 
-      {stage === 'STARTING' && serverError && (
-        <button
-          type="button"
-          onClick={() => void startExercise()}
-          className="rounded-lg border px-4 py-2"
-        >
-          기록 생성 다시 시도
-        </button>
-      )}
+        {paused && serverError && !pauseSaved && (
+          <div>
+            <Button
+              variant="brand"
+              size="sm"
+              onClick={retrySave}
+              disabled={serverBusy}
+            >
+              일시 정지 기록 재저장
+            </Button>
+          </div>
+        )}
 
-      {paused && serverError && !pauseSaved && (
-        <button
-          type="button"
-          onClick={retrySave}
-          disabled={serverBusy}
-          className="rounded-lg border px-4 py-2"
-        >
-          일시 정지 기록 재저장
-        </button>
-      )}
+        {serverBusy && (
+          <p role="status" className="text-cocoa-secondary">
+            서버 처리 중...
+          </p>
+        )}
+        {serverError && (
+          <p role="alert" className="text-danger">
+            {serverError}
+          </p>
+        )}
 
-      {serverBusy && <p role="status">서버 처리 중...</p>}
-      {serverError && (
-        <p role="alert" className="text-red-600">
-          {serverError}
-        </p>
-      )}
+        {stage === 'DONE' && (
+          <p className="font-semibold text-cocoa">
+            운동 종료: {completedSets}세트 완료.
+            {savedScore === null
+              ? ' 서버 저장 결과를 확인하지 못했습니다.'
+              : ` 서버 기록 점수: ${savedScore}점`}
+          </p>
+        )}
+      </div>
 
-      {stage === 'DONE' && (
-        <p className="font-semibold">
-          운동 종료: {completedSets}세트 완료.
-          {savedScore === null
-            ? ' 서버 저장 결과를 확인하지 못했습니다.'
-            : ` 서버 기록 점수: ${savedScore}점`}
-        </p>
-      )}
-    </div>
+      <ConfirmDialog
+        open={exitConfirmOpen}
+        title="운동을 그만할까요?"
+        description="나가면 운동 화면이 종료돼요. 무리하지 말고 필요하면 쉬어 가세요."
+        confirmLabel="나가기"
+        cancelLabel="계속하기"
+        onConfirm={() => void leaveWorkout('stopped')}
+        onCancel={() => setExitConfirmOpen(false)}
+      />
+    </main>
   )
 }

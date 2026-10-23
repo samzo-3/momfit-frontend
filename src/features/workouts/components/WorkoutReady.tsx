@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../../../shared/components/Button'
+import { enterFullscreen } from '../../../shared/lib/fullscreen'
 import NoticeIcon from './NoticeIcon'
 import readyWorkoutImage from '../assets/ready-workout.jpg'
 import {
@@ -109,8 +110,8 @@ function WorkoutReady({
             </ul>
 
             <p className="text-sm text-cocoa-secondary">
-              다음 화면에서 카메라 권한을 요청하고 촬영 환경을 확인해요. 카메라
-              영상은 서버로 보내거나 저장하지 않아요.
+              다음 화면부터 전체 화면으로 진행돼요. 카메라 권한을 요청하고 촬영
+              환경을 확인해요. 카메라 영상은 서버로 보내거나 저장하지 않아요.
             </p>
 
             <div className="flex flex-col items-center gap-2">
@@ -119,7 +120,11 @@ function WorkoutReady({
                 fullWidth
                 disabled={!allDone}
                 aria-describedby={allDone ? undefined : hintId}
-                onClick={() => navigate(destination)}
+                onClick={() => {
+                  // 전체 화면은 사용자 클릭 직후에만 켤 수 있다. 환경 점검과 운동 화면까지 유지된다.
+                  void enterFullscreen()
+                  navigate(destination)
+                }}
               >
                 촬영 환경 확인하기 →
               </Button>

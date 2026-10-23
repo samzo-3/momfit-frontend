@@ -1,5 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter } from 'react-router-dom'
 
 const getConfigMock = vi.hoisted(() => vi.fn())
 const startExerciseMock = vi.hoisted(() => vi.fn())
@@ -45,7 +46,11 @@ describe('SideKickExerciseScreen trainer mute', () => {
   })
 
   it('GUIDE와 EXERCISE source 교체 뒤에도 트레이너 DOM을 음소거한다', async () => {
-    const { container } = render(<SideKickExerciseScreen />)
+    const { container } = render(
+      <MemoryRouter>
+        <SideKickExerciseScreen />
+      </MemoryRouter>,
+    )
     const guide = trainer(container)
 
     expect(guide.src).toContain('/videos/sidekick/guide.mp4')
@@ -73,7 +78,11 @@ describe('SideKickExerciseScreen trainer mute', () => {
       .mockRejectedValueOnce(new Error('autoplay blocked'))
       .mockResolvedValue(undefined)
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const { container, getByRole } = render(<SideKickExerciseScreen />)
+    const { container, getByRole } = render(
+      <MemoryRouter>
+        <SideKickExerciseScreen />
+      </MemoryRouter>,
+    )
     const guide = trainer(container)
 
     fireEvent.canPlay(guide)
@@ -87,5 +96,21 @@ describe('SideKickExerciseScreen trainer mute', () => {
       expect(play.mock.calls.length).toBeGreaterThan(callsBeforeRetry),
     )
     expect(guide).toMatchObject({ muted: true, defaultMuted: true })
+  })
+
+  it('나가기를 누르면 확인 창을 띄우고 계속하기로 닫을 수 있다', async () => {
+    const { getByRole, findByText, queryByText } = render(
+      <MemoryRouter>
+        <SideKickExerciseScreen />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(getByRole('button', { name: '나가기' }))
+    expect(await findByText('운동을 그만할까요?')).toBeInTheDocument()
+
+    fireEvent.click(getByRole('button', { name: '계속하기' }))
+    await waitFor(() =>
+      expect(queryByText('운동을 그만할까요?')).not.toBeInTheDocument(),
+    )
   })
 })
