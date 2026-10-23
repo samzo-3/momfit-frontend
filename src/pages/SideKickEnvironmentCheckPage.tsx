@@ -151,7 +151,7 @@ export default function SideKickEnvironmentCheckPage({
         </header>
 
         <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-          <div className="relative aspect-video overflow-hidden rounded-3xl bg-cocoa ring-1 ring-primary-strong">
+          <div className="relative aspect-video overflow-hidden lg:aspect-auto lg:min-h-80 rounded-3xl bg-cocoa ring-1 ring-primary-strong">
             <video
               ref={videoRef}
               className="h-full w-full scale-x-[-1] object-cover"
