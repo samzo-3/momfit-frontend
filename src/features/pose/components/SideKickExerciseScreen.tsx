@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import {
   usePoseLandmarker,
   type PoseFrame,
@@ -16,12 +22,16 @@ import {
   resumeSideKickExercise,
   completeSideKickExercise,
 } from '../api/sideKickExerciseRecord'
+import { getSideKickExerciseConfig } from '../api/getSideKickExerciseConfig'
+import {
+  ensureTrainerVideoMuted,
+  playTrainerVideo,
+  shouldPlayTrainer,
+  trainerVideoSource,
+} from './sideKickTrainerVideo'
 
 type Stage = 'GUIDE' | 'STARTING' | 'EXERCISE' | 'FINISHING' | 'DONE'
 type PauseReason = 'NONE' | 'AUTO' | 'MANUAL'
-
-const GUIDE_URL = '/videos/sidekick/guide.mp4'
-const EXERCISE_URL = '/videos/sidekick/exercise-10sets.mp4'
 
 const LOSS_MS = 2000
 const RECOVERY_MS = 600
@@ -62,12 +72,21 @@ export default function SideKickExerciseScreen() {
   const baselineRef = useRef<{ left: number; right: number } | null>(null)
 
   const recordIdRef = useRef<number | null>(null)
+  const exerciseIdRef = useRef<number | null>(null)
   const serverBusyRef = useRef(false)
   const pauseSavedRef = useRef(false)
   const [pauseSaved, setPauseSaved] = useState(false)
   const [serverBusy, setServerBusy] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [savedScore, setSavedScore] = useState<string | null>(null)
+  const [trainerReady, setTrainerReady] = useState(false)
+  const [trainerPlaybackBlocked, setTrainerPlaybackBlocked] = useState(false)
+  const trainerAutoPlayAttemptRef = useRef<string | null>(null)
+
+  const setTrainerVideoRef = useCallback((video: HTMLVideoElement | null) => {
+    trainerRef.current = video
+    ensureTrainerVideoMuted(video)
+  }, [])
 
   const setPause = useCallback((reason: PauseReason) => {
     pauseRef.current = reason
@@ -106,6 +125,27 @@ export default function SideKickExerciseScreen() {
     exerciseRef.current.update([
       { type: 'MOTION_PAUSED', reason: 'FEATURE_UNAVAILABLE' },
     ])
+  }, [])
+
+  // 일반 운동은 STEP 기준 버전과 무관한 설정 경로에서 실제 DB ID를 조회한다.
+  useEffect(() => {
+    let cancelled = false
+
+    void getSideKickExerciseConfig()
+      .then((config) => {
+        if (!cancelled) exerciseIdRef.current = config.exercise_id
+      })
+      .catch((error) => {
+        if (cancelled) return
+        console.error('Side Kick exercise config failed:', error)
+        setServerError(
+          '운동 설정을 불러오지 못했습니다. 기록을 시작할 수 없습니다.',
+        )
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   // 웹캠은 운동 전체에서 하나의 스트림을 유지한다.
@@ -179,7 +219,8 @@ export default function SideKickExerciseScreen() {
     setSavedScore(result.total_score)
 
     try {
-      await trainerRef.current?.play()
+      const played = await playTrainerVideo(trainerRef.current)
+      if (!played) throw new Error('TRAINER_VIDEO_PLAY_FAILED')
       setPause('NONE')
     } catch {
       // 서버는 재개되었지만 브라우저 재생에 실패한 경우.
@@ -348,7 +389,17 @@ export default function SideKickExerciseScreen() {
   const startExercise = useCallback(async () => {
     if (recordIdRef.current !== null) return
 
-    const record = await runServerAction(() => startSideKickExercise())
+    const exerciseId = exerciseIdRef.current
+    if (exerciseId === null) {
+      setServerError(
+        '운동 설정을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.',
+      )
+      return
+    }
+
+    const record = await runServerAction(() =>
+      startSideKickExercise(exerciseId),
+    )
     if (!record) return
 
     recordIdRef.current = record.id
@@ -364,13 +415,42 @@ export default function SideKickExerciseScreen() {
     window.setTimeout(() => setStartVisible(false), 1200)
   }, [runServerAction, setCurrentStage])
 
-  useEffect(() => {
-    if (stage !== 'EXERCISE' || pauseReason !== 'NONE') return
+  const tryPlayTrainer = useCallback(
+    async (userInitiated = false) => {
+      const playbackKey = `${stage}:${trainerVideoSource(stage)}`
+      if (!userInitiated && trainerAutoPlayAttemptRef.current === playbackKey) {
+        return
+      }
 
-    void trainerRef.current?.play().catch(() => {
-      setServerError('운동 영상을 자동 재생하지 못했습니다.')
-    })
-  }, [stage, pauseReason])
+      if (!userInitiated) trainerAutoPlayAttemptRef.current = playbackKey
+
+      const played = await playTrainerVideo(trainerRef.current)
+      setTrainerPlaybackBlocked(!played)
+    },
+    [stage],
+  )
+
+  // 새 video 노드는 canplay를 이미 발생시킨 뒤 mount될 수도 있다. 이벤트만
+  // 기다리지 않고 현재 readyState도 확인한다.
+  useEffect(() => {
+    const video = trainerRef.current
+    if (!video) return
+
+    trainerAutoPlayAttemptRef.current = null
+    setTrainerPlaybackBlocked(false)
+    setTrainerReady(video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA)
+  }, [stage])
+
+  // source 및 key 변경으로 새 video 노드가 생겨도 paint·재생 전에 muted를 복구한다.
+  useLayoutEffect(() => {
+    ensureTrainerVideoMuted(trainerRef.current)
+  }, [stage])
+
+  useEffect(() => {
+    if (!shouldPlayTrainer(stage, pauseReason, trainerReady)) return
+
+    void tryPlayTrainer()
+  }, [stage, pauseReason, trainerReady, tryPlayTrainer])
 
   // 가이드 종료 후 서버 기록 생성 성공 시 본 운동 자동 시작.
   function handleTrainerEnded() {
@@ -447,11 +527,22 @@ export default function SideKickExerciseScreen() {
           <h2 className="font-semibold">트레이너 영상</h2>
           <video
             key={stage === 'GUIDE' ? 'guide' : 'exercise'}
-            ref={trainerRef}
-            src={stage === 'GUIDE' ? GUIDE_URL : EXERCISE_URL}
+            ref={setTrainerVideoRef}
+            src={trainerVideoSource(stage)}
             className="aspect-video w-full rounded-xl bg-black object-contain"
             autoPlay={stage === 'GUIDE'}
+            muted
             playsInline
+            onLoadedMetadata={() => {
+              ensureTrainerVideoMuted(trainerRef.current)
+              trainerAutoPlayAttemptRef.current = null
+              setTrainerReady(false)
+            }}
+            onCanPlay={() => {
+              ensureTrainerVideoMuted(trainerRef.current)
+              setTrainerReady(true)
+            }}
+            onPlay={() => setTrainerPlaybackBlocked(false)}
             onEnded={handleTrainerEnded}
           />
           <p className="text-sm">
@@ -538,6 +629,20 @@ export default function SideKickExerciseScreen() {
           </button>
         )}
       </div>
+
+      {trainerPlaybackBlocked &&
+        (stage === 'GUIDE' || stage === 'EXERCISE') && (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm">
+            <span>영상 자동 재생이 차단되었습니다.</span>
+            <button
+              type="button"
+              onClick={() => void tryPlayTrainer(true)}
+              className="rounded-lg border border-amber-600 px-4 py-2"
+            >
+              영상 재생
+            </button>
+          </div>
+        )}
 
       {stage === 'STARTING' && serverError && (
         <button

@@ -16,10 +16,14 @@ export type ExerciseRecordResponse = {
   modified_at: string
 }
 
-function validateRecordId(recordId: number): void {
-  if (!Number.isSafeInteger(recordId) || recordId <= 0) {
-    throw new Error('INVALID_EXERCISE_RECORD_ID')
+function validatePositiveId(value: number, code: string): void {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(code)
   }
+}
+
+function validateRecordId(recordId: number): void {
+  validatePositiveId(recordId, 'INVALID_EXERCISE_RECORD_ID')
 }
 
 function validateCompletedSets(completedSets: number): void {
@@ -33,11 +37,13 @@ function validateCompletedSets(completedSets: number): void {
 }
 
 // 최초 운동 시작: exercise_records 신규 생성
-export function startSideKickExercise() {
+export function startSideKickExercise(exerciseId: number) {
+  validatePositiveId(exerciseId, 'INVALID_EXERCISE_ID')
+
   return apiRequest<ExerciseRecordResponse>('/exercise-records', {
     method: 'POST',
     body: {
-      exercise_id: 1,
+      exercise_id: exerciseId,
     },
   })
 }

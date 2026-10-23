@@ -1,28 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSideKickVoice } from '../voice-coaching/useSideKickVoice'
+import { SideKickVoiceBridge } from '../voice/side-kick-voice-bridge'
+import { SideKickVoicePlayer } from '../voice/side-kick-voice-player'
+import type { SideKickVoiceDecision } from '../voice/side-kick-voice-policy'
 import {
   SideKickStudyRuntime,
+  SIDE_KICK_RUNTIME_CRITERIA,
   type SideKickRuntimeSnapshot,
 } from '../analyzers/sideKick/side-kick-study-runtime'
 import {
   getSideKickStudyConfig,
+  matchesSideKickRuntimeCriteriaVersion,
   type SideKickStudyConfig,
 } from '../api/getSideKickStudyConfig'
 import { saveSideKickStep } from '../api/saveSideKickStep'
 import {
   usePoseLandmarker,
   type PoseFrame,
-  type PoseLandmarkPoint,
 } from '../mediapipe/usePoseLandmarker'
-import {
-  SideKickStudyTracker,
-  type StudyResult,
-  type StudyStepNumber,
-} from '../analyzers/sideKick/side-kick-study'
-import {
-  scoreSideKickStep,
-  type ReadyPose,
-} from '../analyzers/sideKick/side-kick-study-score'
+import { scoreSideKickStep } from '../analyzers/sideKick/side-kick-study-score'
+import type { FlowRecord } from '../analyzers/sideKick/side-kick-study-flow'
 
 const STEPS = [
   { no: 1, title: '준비 자세' },
@@ -32,19 +28,49 @@ const STEPS = [
   { no: 5, title: '오른쪽 다리 내리고 준비 자세로 복귀' },
 ] as const
 
-export function SideKickStudyScreen({
-  runtimeMode,
-}: {
-  /** 사용자 통합 흐름은 PR #18의 STEP Runtime을 쓰되 개발자 URL 판별에 의존하지 않는다. */
-  runtimeMode?: 'STEP_RUNTIME'
-}) {
+const CORRECTION_EVENTS = new Set([
+  'SK_LEG_LIFT_MORE',
+  'SK_TORSO_BEND_MORE',
+  'SK_TORSO_ASYMMETRY_MORE',
+])
+
+const STEP_START_EVENTS: Record<
+  1 | 2 | 3 | 4 | 5,
+  SideKickVoiceDecision['eventCode']
+> = {
+  1: 'SK_READY_START',
+  2: 'SK_LEFT_LIFT_START',
+  3: 'SK_LEFT_RETURN',
+  4: 'SK_RIGHT_LIFT_START',
+  5: 'SK_RIGHT_RETURN',
+}
+
+type SideKickVoiceCueMap = Map<
+  number,
+  Map<SideKickVoiceDecision['eventCode'], string>
+>
+
+function flowRecordForEvent(
+  event: string,
+  records: readonly FlowRecord[],
+): FlowRecord | null {
+  const match = /^STEP_([1-5])_(PASS|NON_PASS|NOT_EVALUATED)$/.exec(event)
+  if (!match) return null
+
+  const step = Number(match[1])
+  return records.find((record) => record.step === step) ?? null
+}
+
+export function SideKickStudyScreen() {
   const [stepIndex, setStepIndex] = useState(0)
   const [cameraReady, setCameraReady] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [videoEnded, setVideoEnded] = useState(false)
-  const [studyResult, setStudyResult] = useState<StudyResult | null>(null)
-  const [feedbackCode, setFeedbackCode] = useState<string | null>(null)
+  const [trainerVideoError, setTrainerVideoError] = useState<string | null>(
+    null,
+  )
   const [trackingMessage, setTrackingMessage] = useState<string | null>(null)
+  const [recordSaveError, setRecordSaveError] = useState<string | null>(null)
 
   const webcamRef = useRef<HTMLVideoElement>(null)
   const trainerRef = useRef<HTMLVideoElement>(null)
@@ -53,24 +79,133 @@ export function SideKickStudyScreen({
   const runtimeRef = useRef(new SideKickStudyRuntime())
   const [runtimeSnapshot, setRuntimeSnapshot] =
     useState<SideKickRuntimeSnapshot | null>(null)
-  const trackerRef = useRef<SideKickStudyTracker>(new SideKickStudyTracker())
-  const readyRef = useRef<ReadyPose | null>(null)
-  const readySamplesRef = useRef<PoseLandmarkPoint[][]>([])
   const latestStepRef = useRef(1)
   const dbConfigRef = useRef<SideKickStudyConfig | null>(null)
   const savingStepsRef = useRef<Set<number>>(new Set())
-  const stepFeedbackCodesRef = useRef<Map<number, string[]>>(new Map())
   const saveGenerationRef = useRef(0)
+  const stepSessionIdRef = useRef<string | null>(null)
+  const feedbackIssuedRef = useRef(false)
   const isDevStudy = window.location.pathname.startsWith('/dev/')
-  const useStepRuntime = isDevStudy || runtimeMode === 'STEP_RUNTIME'
   const lastTrackingOkAtRef = useRef<number>(0)
   const lastTrackingVoiceAtRef = useRef<number | null>(null)
 
-  const voice = useSideKickVoice()
-  const { playCue, stopVoice, enabled: voiceEnabled } = voice
+  const devVoiceBridgeRef = useRef(new SideKickVoiceBridge())
+  const devVoicePlayerRef = useRef<SideKickVoicePlayer | null>(null)
+  const devVoiceCuesRef = useRef<SideKickVoiceCueMap>(new Map())
+  const devAutoActivationPlayerRef = useRef<SideKickVoicePlayer | null>(null)
+  const devInitialVoiceDecisionRef = useRef<SideKickVoiceDecision | null>(null)
+  const [devVoiceEnabled, setDevVoiceEnabled] = useState(false)
+  const devVoiceStatus = '로컬 음성 16종 준비 완료'
+  const [devVoiceError, setDevVoiceError] = useState<string | null>(null)
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [voiceError, setVoiceError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (useStepRuntime) return
+    const player = new SideKickVoicePlayer((decision) => {
+      const step =
+        decision.eventCode === 'SK_STUDY_COMPLETED' ? 0 : (decision.step ?? 1)
+      const audioUrl = devVoiceCuesRef.current
+        .get(step)
+        ?.get(decision.eventCode)
+      return audioUrl ? { audioUrl } : null
+    })
+
+    devVoicePlayerRef.current = player
+
+    return () => {
+      player.dispose()
+      if (devVoicePlayerRef.current === player) {
+        devVoicePlayerRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const base = '/audio/pose/sidekick/v2/'
+    const commonCodes = [
+      'SK_WAIT_MOVEMENT',
+      'SK_TRACKING_LOST',
+      'SK_HOLD_POSITION',
+      'SK_HOLD_INTERRUPTED',
+      'SK_LEG_LIFT_MORE',
+      'SK_TORSO_BEND_MORE',
+      'SK_TORSO_ASYMMETRY_MORE',
+      'SK_STEP_COMPLETED',
+      'SK_STEP_NOT_PASSED',
+      'SK_STEP_NOT_EVALUATED',
+    ] as const
+
+    const stepStarts = [
+      'SK_READY_START',
+      'SK_LEFT_LIFT_START',
+      'SK_LEFT_RETURN',
+      'SK_RIGHT_LIFT_START',
+      'SK_RIGHT_RETURN',
+    ] as const
+
+    const map: SideKickVoiceCueMap = new Map()
+
+    for (let step = 1; step <= 5; step++) {
+      const cues = new Map()
+
+      for (const code of commonCodes) {
+        cues.set(code, `${base}${code}.m4a`)
+      }
+
+      cues.set(stepStarts[step - 1], `${base}${stepStarts[step - 1]}.m4a`)
+
+      map.set(step, cues)
+    }
+
+    map.set(
+      0,
+      new Map([['SK_STUDY_COMPLETED', `${base}SK_STUDY_COMPLETED.m4a`]]),
+    )
+
+    devVoiceCuesRef.current = map
+
+    return () => {
+      devVoiceCuesRef.current = new Map()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isDevStudy) return
+
+    const player = devVoicePlayerRef.current
+    if (!player || devAutoActivationPlayerRef.current === player) return
+
+    devAutoActivationPlayerRef.current = player
+    const decision: SideKickVoiceDecision = {
+      eventCode: 'SK_READY_START',
+      step: 1,
+      priority: 'NORMAL',
+    }
+    let cancelled = false
+
+    void player.activate(decision).then(
+      () => {
+        if (cancelled) return
+        devInitialVoiceDecisionRef.current = decision
+        setDevVoiceEnabled(true)
+        setDevVoiceError(null)
+      },
+      () => {
+        if (cancelled) return
+        setDevVoiceEnabled(false)
+        setDevVoiceError(
+          '자동 음성 재생이 차단됐습니다. 테스트 음성 켜기 버튼을 눌러 주세요.',
+        )
+      },
+    )
+
+    return () => {
+      cancelled = true
+    }
+  }, [isDevStudy])
+
+  useEffect(() => {
+    if (isDevStudy) return
 
     let cancelled = false
     dbConfigRef.current = null
@@ -79,6 +214,17 @@ export function SideKickStudyScreen({
       .then((config) => {
         if (cancelled) return
         dbConfigRef.current = config
+        stepSessionIdRef.current = crypto.randomUUID()
+        if (
+          !matchesSideKickRuntimeCriteriaVersion(
+            config,
+            SIDE_KICK_RUNTIME_CRITERIA.criteriaVersion,
+          )
+        ) {
+          setRecordSaveError(
+            '현재 JSON 기준의 DB criteria_version 식별자가 없어 STEP 기록을 저장하지 않습니다.',
+          )
+        }
         console.info('Side Kick DB config ready:', config)
       })
       .catch((error) => {
@@ -90,10 +236,27 @@ export function SideKickStudyScreen({
       cancelled = true
       dbConfigRef.current = null
     }
-  }, [useStepRuntime])
+  }, [isDevStudy])
 
   const step = STEPS[stepIndex]
-  const completed = studyResult?.status === 'COMPLETED'
+  const trainerPlaybackRate = step.no === 1 ? 1 : 0.65
+  const completed = runtimeSnapshot?.flow.completed === true
+
+  useEffect(() => {
+    const video = trainerRef.current
+    if (!video) return
+
+    video.defaultPlaybackRate = trainerPlaybackRate
+    video.playbackRate = trainerPlaybackRate
+
+    void video.play().then(
+      () => setTrainerVideoError(null),
+      () =>
+        setTrainerVideoError(
+          '트레이너 영상을 자동 재생하지 못했습니다. 브라우저 설정을 확인하세요.',
+        ),
+    )
+  }, [step.no, trainerPlaybackRate])
 
   // 카메라는 STEP 변경 시 다시 시작하지 않는다.
   useEffect(() => {
@@ -139,14 +302,15 @@ export function SideKickStudyScreen({
 
   const handlePoseFrame = useCallback(
     (frame: PoseFrame) => {
-      const tracker = trackerRef.current
       const currentStep = latestStepRef.current
 
       if (currentStep > 5) return
 
-      // 개발자 화면: 새 STEP 1~5 Runtime만 실행한다.
-      // 기존 점수 기반 Tracker와 DB 저장은 실행하지 않는다.
-      if (useStepRuntime) {
+      // 사용자용 화면은 실제 DB ID를 받은 뒤 새 Runtime을 시작한다.
+      if (!isDevStudy && !dbConfigRef.current) return
+
+      // 개발/사용자 화면 모두 JSON Runtime 하나만 실행한다.
+      if (isDevStudy || dbConfigRef.current) {
         const readyEvaluation =
           currentStep === 1 ? scoreSideKickStep(1, frame.landmarks, null) : null
 
@@ -156,9 +320,90 @@ export function SideKickStudyScreen({
 
         const snapshot = runtimeRef.current.update(frame, {
           readyPoseValid,
+          feedbackIssued: feedbackIssuedRef.current,
         })
+        feedbackIssuedRef.current = false
 
         setRuntimeSnapshot(snapshot)
+
+        if (isDevStudy ? devVoiceEnabled : voiceEnabled) {
+          let decisions = devVoiceBridgeRef.current.update(
+            frame.timestampMs,
+            snapshot,
+          )
+          const initialDecision = devInitialVoiceDecisionRef.current
+          if (initialDecision) {
+            decisions = decisions.filter(
+              (decision) =>
+                decision.eventCode !== initialDecision.eventCode ||
+                decision.step !== initialDecision.step,
+            )
+            devInitialVoiceDecisionRef.current = null
+          }
+          devVoicePlayerRef.current?.enqueue(decisions)
+          feedbackIssuedRef.current = decisions.some((decision) =>
+            CORRECTION_EVENTS.has(decision.eventCode),
+          )
+        }
+
+        if (!isDevStudy) {
+          const config = dbConfigRef.current
+          const sessionId = stepSessionIdRef.current
+
+          for (const event of snapshot.flow.events) {
+            const record = flowRecordForEvent(event, snapshot.flow.records)
+            if (!record || savingStepsRef.current.has(record.step)) continue
+
+            savingStepsRef.current.add(record.step)
+
+            if (
+              !config ||
+              !sessionId ||
+              !matchesSideKickRuntimeCriteriaVersion(
+                config,
+                SIDE_KICK_RUNTIME_CRITERIA.criteriaVersion,
+              )
+            ) {
+              setRecordSaveError(
+                '현재 JSON 기준의 DB criteria_version 식별자가 없어 STEP 기록을 저장하지 않았습니다.',
+              )
+              continue
+            }
+
+            const stepInfo = config.steps.find(
+              (item) => item.step_no === record.step,
+            )
+            if (!stepInfo) {
+              setRecordSaveError(
+                'STEP ID 설정을 찾지 못해 기록을 저장하지 않았습니다.',
+              )
+              continue
+            }
+
+            const generation = saveGenerationRef.current
+            void saveSideKickStep({
+              record,
+              exerciseId: config.exercise_id,
+              exerciseStepId: stepInfo.exercise_step_id,
+              exerciseCriteriaVersionId: config.exercise_criteria_version_id,
+              criteriaVersion: config.criteria_version,
+              stepSessionId: sessionId,
+              measurementProfileVersion:
+                SIDE_KICK_RUNTIME_CRITERIA.measurementProfileVersion,
+            })
+              .then((saved) => {
+                console.info('STEP DB SAVE OK:', saved.id, record.step)
+              })
+              .catch((error) => {
+                console.error('STEP DB SAVE FAILED:', record.step, error)
+                if (generation === saveGenerationRef.current) {
+                  setRecordSaveError(
+                    'STEP 기록을 저장하지 못했습니다. 판정 결과는 유지됩니다.',
+                  )
+                }
+              })
+          }
+        }
 
         const nextStep = snapshot.flow.step
 
@@ -170,129 +415,8 @@ export function SideKickStudyScreen({
 
         return
       }
-
-      // 운영 화면은 실제 DB 운동/STEP ID 확보 전 학습을 시작하지 않는다.
-      if (!useStepRuntime && !dbConfigRef.current) return
-
-      const evaluation = scoreSideKickStep(
-        currentStep as StudyStepNumber,
-        frame.landmarks,
-        readyRef.current,
-      )
-
-      if (evaluation.judgment.status === 'UNAVAILABLE') {
-        const reason = evaluation.judgment.reason
-        setTrackingMessage(
-          reason === 'FRONT'
-            ? '카메라 정면을 바라봐 주세요.'
-            : '머리부터 양쪽 발목까지 화면에 들어오도록 서 주세요.',
-        )
-      } else {
-        setTrackingMessage(null)
-        lastTrackingOkAtRef.current = Date.now()
-
-        // 추적 실패 안내가 재생 중이었다면 즉시 정지.
-        if (lastTrackingVoiceAtRef.current !== null) {
-          lastTrackingVoiceAtRef.current = null
-          stopVoice()
-        }
-      }
-
-      // 준비 자세는 PASS 직전의 정상 측정 프레임만 보관한다.
-      if (
-        currentStep === 1 &&
-        evaluation.judgment.status === 'EVALUATED' &&
-        evaluation.judgment.score >= 80
-      ) {
-        readySamplesRef.current.push(frame.landmarks.map((p) => ({ ...p })))
-
-        // 메모리에 무한히 쌓지 않는다.
-        if (readySamplesRef.current.length > 10) {
-          readySamplesRef.current.shift()
-        }
-      }
-
-      const result = tracker.update(frame.timestampMs, evaluation.judgment)
-      setStudyResult(result)
-
-      for (const event of result.events) {
-        if (event.type === 'VOICE_CUE') {
-          setFeedbackCode(event.eventCode)
-
-          const codes = stepFeedbackCodesRef.current.get(event.stepNo) ?? []
-          codes.push(event.eventCode)
-          stepFeedbackCodesRef.current.set(event.stepNo, codes)
-
-          // STEP 종료 이벤트가 동시에 발생했다면
-          // 이전 STEP의 음성이 다음 STEP에서 나오지 않게 한다.
-          const stepFinished = result.events.some(
-            (e) => e.type === 'STEP_COMPLETED',
-          )
-
-          if (!stepFinished) {
-            void playCue(event.eventCode)
-          }
-        }
-
-        if (event.type === 'STEP_COMPLETED') {
-          stopVoice()
-
-          if (
-            !useStepRuntime &&
-            !savingStepsRef.current.has(event.record.stepNo)
-          ) {
-            const config = dbConfigRef.current
-            const stepInfo = config?.steps.find(
-              (item) => item.step_no === event.record.stepNo,
-            )
-
-            if (config && stepInfo) {
-              const stepNo = event.record.stepNo
-              const generation = saveGenerationRef.current
-              savingStepsRef.current.add(stepNo)
-
-              void saveSideKickStep(
-                event.record,
-                stepFeedbackCodesRef.current.get(stepNo) ?? [],
-                config.exercise_id,
-                stepInfo.exercise_step_id,
-              )
-                .then((saved) => {
-                  console.info('STEP DB SAVE OK:', saved.id, stepNo)
-                })
-                .catch((error) => {
-                  console.error('STEP DB SAVE FAILED:', stepNo, error)
-                  if (generation === saveGenerationRef.current) {
-                    savingStepsRef.current.delete(stepNo)
-                  }
-                })
-            }
-          }
-          // STEP 1 완료 시 사용자 준비 자세 저장.
-          if (event.record.stepNo === 1) {
-            const samples = readySamplesRef.current
-            const representative = samples[Math.floor(samples.length / 2)]
-
-            if (representative) {
-              readyRef.current = {
-                points: representative.map((p) => ({ ...p })),
-              }
-            }
-          }
-
-          setFeedbackCode(null)
-
-          // 같은 프레임에서 중복 STEP 처리하지 않는다.
-          latestStepRef.current = event.record.stepNo + 1
-
-          if (event.record.stepNo < 5) {
-            setStepIndex(event.record.stepNo)
-            setVideoEnded(false)
-          }
-        }
-      }
     },
-    [playCue, stopVoice, useStepRuntime],
+    [isDevStudy, devVoiceEnabled, voiceEnabled],
   )
 
   const pose = usePoseLandmarker(
@@ -302,60 +426,92 @@ export function SideKickStudyScreen({
     handlePoseFrame,
   )
 
-  useEffect(() => {
-    if (!cameraReady || !voiceEnabled) return
+  async function enableVoice() {
+    const step = latestStepRef.current as 1 | 2 | 3 | 4 | 5
+    const player = devVoicePlayerRef.current
+    if (!player) {
+      setVoiceError('음성 안내를 준비하지 못했습니다.')
+      return
+    }
 
-    const timer = window.setInterval(() => {
-      if (latestStepRef.current > 5) return
+    try {
+      await player.activate({
+        eventCode: STEP_START_EVENTS[step],
+        step,
+        priority: 'NORMAL',
+      })
+      setVoiceEnabled(true)
+      setVoiceError(null)
+    } catch {
+      setVoiceEnabled(false)
+      setVoiceError('브라우저에서 음성 재생이 차단됐습니다.')
+    }
+  }
 
-      const now = Date.now()
-      const lostFor = now - lastTrackingOkAtRef.current
-      const lastVoice = lastTrackingVoiceAtRef.current
+  async function enableDevVoice() {
+    const player = devVoicePlayerRef.current
+    if (!player) {
+      setDevVoiceError('음성 안내를 준비하지 못했습니다.')
+      return
+    }
 
-      // 5초 이상 추적 실패 시 최초 안내.
-      if (lostFor < 5000) return
+    const step = latestStepRef.current as 1 | 2 | 3 | 4 | 5
+    const decision: SideKickVoiceDecision = {
+      eventCode: STEP_START_EVENTS[step],
+      step,
+      priority: 'NORMAL',
+    }
 
-      // 동일 안내를 너무 자주 반복하지 않는다.
-      if (lastVoice !== null && now - lastVoice < 8000) return
-
-      lastTrackingVoiceAtRef.current = now
-      void playCue('TRACKING_LOST')
-    }, 500)
-
-    return () => window.clearInterval(timer)
-  }, [cameraReady, voiceEnabled, playCue])
+    try {
+      await player.activate(decision)
+      devInitialVoiceDecisionRef.current = decision
+      devVoiceBridgeRef.current.reset()
+      setDevVoiceEnabled(true)
+      setDevVoiceError(null)
+    } catch {
+      setDevVoiceEnabled(false)
+      setDevVoiceError('브라우저에서 음성 재생이 차단됐습니다.')
+    }
+  }
 
   function restartTrainerVideo() {
     const video = trainerRef.current
     if (!video) return
 
     video.currentTime = 0
+    video.defaultPlaybackRate = trainerPlaybackRate
+    video.playbackRate = trainerPlaybackRate
     setVideoEnded(false)
 
-    void video.play().catch(() => {
-      // 자동 재생이 차단되면 사용자의 조작을 기다린다.
-    })
+    void video.play().then(
+      () => setTrainerVideoError(null),
+      () =>
+        setTrainerVideoError(
+          '트레이너 영상을 재생하지 못했습니다. 브라우저 설정을 확인하세요.',
+        ),
+    )
   }
 
   function restartStudy() {
     saveGenerationRef.current += 1
     savingStepsRef.current.clear()
-    stepFeedbackCodesRef.current.clear()
-    stopVoice()
+    devVoicePlayerRef.current?.stop()
+    devVoiceBridgeRef.current.reset()
+    devInitialVoiceDecisionRef.current = null
+    feedbackIssuedRef.current = false
+    if (!isDevStudy && dbConfigRef.current) {
+      stepSessionIdRef.current = crypto.randomUUID()
+    }
     lastTrackingOkAtRef.current = Date.now()
     lastTrackingVoiceAtRef.current = null
-    trackerRef.current.reset()
     runtimeRef.current.reset()
     setRuntimeSnapshot(null)
-    readyRef.current = null
-    readySamplesRef.current = []
     latestStepRef.current = 1
 
     setStepIndex(0)
     setVideoEnded(false)
-    setStudyResult(null)
-    setFeedbackCode(null)
     setTrackingMessage(null)
+    setRecordSaveError(null)
 
     // STEP 1에 머물러 있던 경우에도 영상 처음부터 재생.
     restartTrainerVideo()
@@ -379,16 +535,31 @@ export function SideKickStudyScreen({
         <section className="space-y-2">
           <h2 className="font-semibold">트레이너 영상</h2>
 
-          <video
-            key={step.no}
-            ref={trainerRef}
-            src={`/videos/sidekick/step${step.no}.mp4`}
-            className="aspect-video w-full rounded-xl bg-black object-contain"
-            autoPlay
-            muted
-            playsInline
-            onEnded={() => setVideoEnded(true)}
-          />
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+            <video
+              key={step.no}
+              ref={trainerRef}
+              src={`/videos/sidekick/step${step.no}.mp4`}
+              className="absolute inset-0 h-full w-full object-contain pointer-events-none"
+              autoPlay
+              muted
+              playsInline
+              controls={false}
+              controlsList="nodownload noplaybackrate noremoteplayback"
+              disablePictureInPicture
+              onLoadedMetadata={(event) => {
+                event.currentTarget.defaultPlaybackRate = trainerPlaybackRate
+                event.currentTarget.playbackRate = trainerPlaybackRate
+              }}
+              onEnded={() => setVideoEnded(true)}
+            />
+          </div>
+
+          {trainerVideoError && (
+            <p role="alert" className="text-sm text-red-600">
+              {trainerVideoError}
+            </p>
+          )}
 
           <p className="text-sm text-gray-500">
             {videoEnded
@@ -453,6 +624,33 @@ export function SideKickStudyScreen({
       {isDevStudy ? (
         <section className="space-y-3 rounded-xl border p-4">
           <h2 className="font-semibold">실시간 STEP 테스트</h2>
+          <div className="space-y-2 rounded-lg border p-3">
+            <p className="font-semibold">신규 STEP 음성 코칭</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (devVoiceEnabled) {
+                  devVoicePlayerRef.current?.stop()
+                  devVoiceBridgeRef.current.reset()
+                  devInitialVoiceDecisionRef.current = null
+                  setDevVoiceEnabled(false)
+                } else {
+                  void enableDevVoice()
+                }
+              }}
+              className="rounded-lg border px-4 py-2"
+            >
+              {devVoiceEnabled ? '테스트 음성 끄기' : '테스트 음성 켜기'}
+            </button>
+            <p role="status" className="text-sm text-gray-500">
+              {devVoiceStatus}
+            </p>
+            {devVoiceError && (
+              <p role="alert" className="text-sm text-amber-700">
+                {devVoiceError}
+              </p>
+            )}
+          </div>
           <p>
             {runtimeSnapshot?.flow.completed
               ? `최종 결과: ${runtimeSnapshot.flow.finalResult}`
@@ -473,7 +671,8 @@ export function SideKickStudyScreen({
           </p>
           <p>복귀 판정: {runtimeSnapshot?.returning?.state ?? '-'}</p>
           <p className="text-sm text-gray-500">
-            개발자 테스트 전용 정보입니다.
+            개발자 테스트 전용. 신규 음성 이벤트 연결 중이며 STEP 기록 DB 저장은
+            실행하지 않습니다.
           </p>
           <button
             type="button"
@@ -481,26 +680,6 @@ export function SideKickStudyScreen({
             className="rounded-lg border px-4 py-2"
           >
             학습 처음부터 다시 시작
-          </button>
-        </section>
-      ) : runtimeMode === 'STEP_RUNTIME' ? (
-        <section className="space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">STEP 진행 상태</h2>
-          <p className="font-semibold">
-            {runtimeSnapshot?.flow.completed
-              ? '5개 STEP 학습 완료'
-              : `현재 STEP: ${runtimeSnapshot?.flow.step ?? 1} / 5`}
-          </p>
-          <p className="text-sm text-gray-600">
-            카메라 정면에서 동작을 따라 해 주세요. 인식이 끊기면 STEP 판정은
-            진행되지 않습니다.
-          </p>
-          <button
-            type="button"
-            onClick={restartStudy}
-            className="rounded-lg border px-4 py-2"
-          >
-            처음부터 다시 시작
           </button>
         </section>
       ) : (
@@ -512,18 +691,18 @@ export function SideKickStudyScreen({
 
             <button
               type="button"
-              disabled={!voice.ready || voiceEnabled}
-              onClick={() => void voice.enableVoice()}
+              disabled={voiceEnabled}
+              onClick={() => void enableVoice()}
               className="rounded-lg border px-4 py-2 disabled:opacity-40"
             >
               {voiceEnabled ? '음성 켜짐' : '음성 켜기'}
             </button>
 
-            {voice.message && <p role="status">{voice.message}</p>}
+            {voiceEnabled && <p role="status">음성 안내가 켜졌습니다.</p>}
 
-            {voice.error && (
+            {voiceError && (
               <p role="alert" className="text-sm text-red-600">
-                {voice.error}
+                {voiceError}
               </p>
             )}
           </div>
@@ -532,22 +711,17 @@ export function SideKickStudyScreen({
             <p className="font-semibold text-green-700">5개 STEP 학습 완료</p>
           ) : (
             <p className="font-semibold">
-              현재 STEP {studyResult?.stepNo ?? 1}
+              현재 STEP {runtimeSnapshot?.flow.step ?? 1}
             </p>
           )}
 
-          <p>
-            현재 점수: {studyResult?.currentScore?.toFixed(1) ?? '측정 대기'}
-            {' / 100점'}
-          </p>
+          <p>상승 판정: {runtimeSnapshot?.lift?.state ?? '측정 대기'}</p>
+
+          <p>복귀 판정: {runtimeSnapshot?.returning?.state ?? '-'}</p>
 
           <p>
-            최고 점수: {studyResult?.bestScore?.toFixed(1) ?? '-'}
-            {' / 100점'}
-          </p>
-
-          <p>
-            유지 시간: {((studyResult?.holdProgressMs ?? 0) / 1000).toFixed(1)}
+            자세 유지:{' '}
+            {((runtimeSnapshot?.lift?.holdProgressMs ?? 0) / 1000).toFixed(1)}
             {' / 2초'}
           </p>
 
@@ -555,28 +729,27 @@ export function SideKickStudyScreen({
             <div
               className="h-full bg-green-500 transition-all"
               style={{
-                width: `${studyResult?.holdProgressPercent ?? 0}%`,
+                width: `${Math.min(100, ((runtimeSnapshot?.lift?.holdProgressMs ?? 0) / 2000) * 100)}%`,
               }}
             />
           </div>
 
-          <p>코칭 횟수: {studyResult?.feedbackCount ?? 0} / 5회</p>
+          <p>코칭 횟수: {runtimeSnapshot?.flow.feedbackCount ?? 0} / 5회</p>
 
-          {feedbackCode && (
+          {recordSaveError && (
             <p role="status" className="font-semibold text-amber-700">
-              코칭 이벤트: {feedbackCode}
+              {recordSaveError}
             </p>
           )}
 
-          {studyResult && studyResult.records.length > 0 && (
+          {runtimeSnapshot && runtimeSnapshot.flow.records.length > 0 && (
             <div className="space-y-1 rounded-lg bg-gray-50 p-3">
               <p className="font-semibold">STEP별 결과</p>
 
-              {studyResult.records.map((record) => (
-                <p key={record.stepNo}>
-                  STEP {record.stepNo}: {record.status}
-                  {' · '}
-                  {record.stepScore?.toFixed(1) ?? '-'}점{' · 코칭 '}
+              {runtimeSnapshot.flow.records.map((record) => (
+                <p key={record.step}>
+                  STEP {record.step}: {record.outcome}
+                  {' · 코칭 '}
                   {record.feedbackCount}회
                 </p>
               ))}
@@ -584,9 +757,8 @@ export function SideKickStudyScreen({
           )}
 
           <p className="text-sm text-gray-500">
-            실험용 자세 유사도 평가: 80점 이상을 연속 2초 유지하면 PASS입니다.
-            음성 코칭 요청이 5회 발생하면 NON_PASS로 진행합니다. 의료적 안전성을
-            판정하는 점수가 아닙니다.
+            JSON Runtime 기준으로 STEP을 판정합니다. 숫자 점수는 생성하거나
+            표시하지 않습니다.
           </p>
 
           <button
