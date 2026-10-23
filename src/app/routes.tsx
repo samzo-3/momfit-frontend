@@ -18,6 +18,7 @@ import OnboardingPage from '../pages/OnboardingPage'
 import PasswordResetPage from '../pages/PasswordResetPage'
 import RecordsPage from '../pages/RecordsPage'
 import SignupPage from '../pages/SignupPage'
+import WorkoutCompletePage from '../pages/WorkoutCompletePage'
 import WorkoutReadyPage from '../pages/WorkoutReadyPage'
 import WorkoutsPage from '../pages/WorkoutsPage'
 import { SideKickStudyScreen } from '../features/pose/components/SideKickStudyScreen'
@@ -102,6 +103,9 @@ export const routes: RouteObject[] = [
 
               // [추가] Side Kick 사용자용 통합 시작 페이지
               { path: '/workouts/start', element: <SideKickStartPage /> },
+
+              // 운동을 마치거나 중간에 나간 뒤의 마무리 화면
+              { path: '/workouts/complete', element: <WorkoutCompletePage /> },
 
               // [추가] 사용자용 YOLO + MediaPipe 환경 점검
               {
