@@ -16,7 +16,8 @@ COPY . .
 # Vite 환경변수는 빌드 시점에 코드에 박힌다. 런타임 환경변수로는 바꿀 수 없다.
 # Side Kick 자세 배우기 실행 모드 (frontend_only: API·DB 없이 JSON Runtime만 실행)
 ARG VITE_SIDEKICK_STUDY_MODE
-ENV VITE_SIDEKICK_STUDY_MODE=$VITE_SIDEKICK_STUDY_MODE
+ENV VITE_SIDEKICK_STUDY_MODE=${VITE_SIDEKICK_STUDY_MODE}
+
 RUN npm run build
 
 
