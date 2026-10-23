@@ -1,0 +1,134 @@
+{
+  "measurement_profile_version": "side_kick_front_2d_runtime_v1",
+  "status": "DRAFT_EXPERIMENTAL",
+  "study": {
+    "start_step_order": 1,
+    "final_pass_rule": "ALL_IMPORTANT_PASS"
+  },
+  "steps": [
+    {
+      "step_order": 1,
+      "step_code": "READY",
+      "criteria": {
+        "type": "CALIBRATION",
+        "baseline": "USER_READY"
+      }
+    },
+    {
+      "step_order": 2,
+      "step_code": "LEFT_LIFT",
+      "criteria": {
+        "type": "RULES",
+        "logic": "ALL",
+        "rules": [
+          { "metric": "leg_delta_deg", "operator": "GTE", "value": 20 },
+          { "metric": "oriented_bend_deg", "operator": "GTE", "value": 28 },
+          {
+            "metric": "oriented_asymmetry_ratio",
+            "operator": "GTE",
+            "value": 0.4
+          }
+        ],
+        "confirmation": {
+          "candidate_min_frames": 3,
+          "candidate_min_ms": 100,
+          "hold_ms": 2000,
+          "max_frame_gap_ms": 500
+        },
+        "on_missing_metric": "NOT_EVALUATED"
+      }
+    },
+    {
+      "step_order": 3,
+      "step_code": "LEFT_RETURN",
+      "criteria": {
+        "type": "RULES",
+        "logic": "ALL",
+        "rules": [
+          {
+            "metric": "leg_delta_deg",
+            "operator": "LTE",
+            "value": 15,
+            "transform": "ABS"
+          },
+          {
+            "metric": "oriented_bend_deg",
+            "operator": "LTE",
+            "value": 20,
+            "transform": "ABS"
+          },
+          {
+            "metric": "oriented_asymmetry_ratio",
+            "operator": "LTE",
+            "value": 0.3,
+            "transform": "ABS"
+          }
+        ],
+        "confirmation": {
+          "min_frames": 2,
+          "min_duration_ms": 30,
+          "max_frame_gap_ms": 500
+        },
+        "on_missing_metric": "NOT_EVALUATED"
+      }
+    },
+    {
+      "step_order": 4,
+      "step_code": "RIGHT_LIFT",
+      "criteria": {
+        "type": "RULES",
+        "logic": "ALL",
+        "rules": [
+          { "metric": "leg_delta_deg", "operator": "GTE", "value": 20 },
+          { "metric": "oriented_bend_deg", "operator": "GTE", "value": 28 },
+          {
+            "metric": "oriented_asymmetry_ratio",
+            "operator": "GTE",
+            "value": 0.4
+          }
+        ],
+        "confirmation": {
+          "candidate_min_frames": 3,
+          "candidate_min_ms": 100,
+          "hold_ms": 2000,
+          "max_frame_gap_ms": 500
+        },
+        "on_missing_metric": "NOT_EVALUATED"
+      }
+    },
+    {
+      "step_order": 5,
+      "step_code": "RIGHT_RETURN",
+      "criteria": {
+        "type": "RULES",
+        "logic": "ALL",
+        "rules": [
+          {
+            "metric": "leg_delta_deg",
+            "operator": "LTE",
+            "value": 15,
+            "transform": "ABS"
+          },
+          {
+            "metric": "oriented_bend_deg",
+            "operator": "LTE",
+            "value": 20,
+            "transform": "ABS"
+          },
+          {
+            "metric": "oriented_asymmetry_ratio",
+            "operator": "LTE",
+            "value": 0.3,
+            "transform": "ABS"
+          }
+        ],
+        "confirmation": {
+          "min_frames": 2,
+          "min_duration_ms": 30,
+          "max_frame_gap_ms": 500
+        },
+        "on_missing_metric": "NOT_EVALUATED"
+      }
+    }
+  ]
+}

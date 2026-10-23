@@ -8,6 +8,11 @@ export type LiftState =
   'UNDETERMINED' | 'MOVING' | 'CANDIDATE' | 'HOLDING' | 'PASS'
 export type LiftEvent =
   'POSE_CANDIDATE' | 'POSE_HOLD_STARTED' | 'POSE_HOLD_INTERRUPTED' | 'STEP_PASS'
+export type MeasurementStatus = 'VALID' | 'INVALID'
+export type CriterionFailure =
+  | 'LEG_LIFT_INSUFFICIENT'
+  | 'TORSO_BEND_INSUFFICIENT'
+  | 'TORSO_ASYMMETRY_INSUFFICIENT'
 
 export type LiftInput = {
   timestampMs: number
@@ -20,6 +25,8 @@ export type LiftSnapshot = {
   state: LiftState
   events: LiftEvent[]
   valid: boolean
+  measurementStatus: MeasurementStatus
+  criterionFailures: CriterionFailure[]
   movementObserved: boolean
   legDeltaDeg: number | null
   orientedBendDeg: number | null
@@ -29,6 +36,9 @@ export type LiftSnapshot = {
 }
 
 export type LiftPolicy = {
+  minLegDeltaDeg: number
+  minBendDeg: number
+  minAsymmetryRatio: number
   candidateMinFrames: number
   candidateMinMs: number
   holdMs: number
@@ -36,6 +46,9 @@ export type LiftPolicy = {
 }
 
 const DEFAULT_POLICY: LiftPolicy = {
+  minLegDeltaDeg: 20,
+  minBendDeg: 28,
+  minAsymmetryRatio: 0.4,
   candidateMinFrames: 3,
   candidateMinMs: 100,
   holdMs: 2000,
@@ -91,6 +104,9 @@ export class SideKickStepEvaluator {
       this.policy.candidateMinMs < 100 ||
       this.policy.holdMs < 100 ||
       this.policy.maxFrameGapMs <= 0 ||
+      this.policy.minLegDeltaDeg < 0 ||
+      this.policy.minBendDeg < 0 ||
+      this.policy.minAsymmetryRatio < 0 ||
       !Object.values(this.policy).every(Number.isFinite)
     ) {
       throw new Error('INVALID_LIFT_POLICY')
@@ -161,7 +177,10 @@ export class SideKickStepEvaluator {
       delta = leg - this.readyThighLateralDeg
       const movement = delta >= 14 || (bend >= 22 && asym >= 0.3)
       if (movement) this.movementObserved = true
-      const exact = delta >= 20 && bend >= 28 && asym >= 0.4
+      const exact =
+        delta >= this.policy.minLegDeltaDeg &&
+        bend >= this.policy.minBendDeg &&
+        asym >= this.policy.minAsymmetryRatio
       if (exact) {
         this.candidateSince ??= t
         this.candidateFrames++
@@ -190,6 +209,11 @@ export class SideKickStepEvaluator {
       state,
       events,
       valid,
+      measurementStatus: valid ? 'VALID' : 'INVALID',
+      criterionFailures:
+        !valid || state === 'PASS'
+          ? []
+          : this.criterionFailures(delta, bend, asym),
       movementObserved: this.movementObserved,
       legDeltaDeg: delta,
       orientedBendDeg: bend,
@@ -210,5 +234,30 @@ export class SideKickStepEvaluator {
     this.holdSince = null
     this.candidateSince = null
     this.candidateFrames = 0
+  }
+
+  private criterionFailures(
+    legDeltaDeg: number | null,
+    orientedBendDeg: number | null,
+    orientedAsymmetryRatio: number | null,
+  ): CriterionFailure[] {
+    if (
+      !finite(legDeltaDeg) ||
+      !finite(orientedBendDeg) ||
+      !finite(orientedAsymmetryRatio)
+    ) {
+      return []
+    }
+
+    const failures: CriterionFailure[] = []
+
+    if (legDeltaDeg < this.policy.minLegDeltaDeg)
+      failures.push('LEG_LIFT_INSUFFICIENT')
+    if (orientedBendDeg < this.policy.minBendDeg)
+      failures.push('TORSO_BEND_INSUFFICIENT')
+    if (orientedAsymmetryRatio < this.policy.minAsymmetryRatio)
+      failures.push('TORSO_ASYMMETRY_INSUFFICIENT')
+
+    return failures
   }
 }

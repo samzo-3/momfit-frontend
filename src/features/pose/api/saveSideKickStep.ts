@@ -1,56 +1,109 @@
 import { apiRequest } from '../../../shared/api/api-client'
-import type { StudyStepRecord } from '../analyzers/sideKick/side-kick-study'
+import type {
+  FlowRecord,
+  StepOutcome,
+} from '../analyzers/sideKick/side-kick-study-flow'
 
-type StoredStatus = 'PASS' | 'NON_PASS' | 'NOT_EVALUATED'
+export type StoredStepResultStatus = StepOutcome
+
+export type SideKickStepRecordSaveInput = {
+  record: FlowRecord
+  exerciseId: number
+  exerciseStepId: number
+  exerciseCriteriaVersionId: number
+  criteriaVersion: string
+  stepSessionId: string
+  measurementProfileVersion: string
+}
+
+export type SideKickStepRecordPayload = {
+  exercise_id: number
+  exercise_step_id: number
+  exercise_criteria_version_id: number
+  criteria_version: string
+  step_session_id: string
+  step_result_status: StoredStepResultStatus
+  step_report: {
+    schema_version: number
+    measurement_profile_version: string
+    criteria_version: string
+    evaluation_result: {
+      status: StoredStepResultStatus
+      feedback_count: number
+    }
+  }
+}
 
 export type SavedStepRecord = {
   id: number
   user_id: number
   exercise_id: number
   exercise_step_id: number
-  status: StoredStatus
+  status: 'in_progress' | 'completed'
   step_score: string | null
+  step_result_status: StoredStepResultStatus
+  exercise_criteria_version_id: number
+  step_session_id: string
+}
+
+function validPositiveId(value: number): boolean {
+  return Number.isInteger(value) && value > 0
+}
+
+function validSessionId(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  )
+}
+
+export function buildSideKickStepRecordPayload(
+  input: SideKickStepRecordSaveInput,
+): SideKickStepRecordPayload {
+  if (!validPositiveId(input.exerciseId)) {
+    throw new Error('INVALID_EXERCISE_ID')
+  }
+  if (!validPositiveId(input.exerciseStepId)) {
+    throw new Error('INVALID_EXERCISE_STEP_ID')
+  }
+  if (!validPositiveId(input.exerciseCriteriaVersionId)) {
+    throw new Error('INVALID_EXERCISE_CRITERIA_VERSION_ID')
+  }
+  if (!input.criteriaVersion.trim()) {
+    throw new Error('INVALID_CRITERIA_VERSION')
+  }
+  if (!validSessionId(input.stepSessionId)) {
+    throw new Error('INVALID_STEP_SESSION_ID')
+  }
+  if (!input.measurementProfileVersion.trim()) {
+    throw new Error('INVALID_MEASUREMENT_PROFILE_VERSION')
+  }
+
+  return {
+    exercise_id: input.exerciseId,
+    exercise_step_id: input.exerciseStepId,
+    exercise_criteria_version_id: input.exerciseCriteriaVersionId,
+    criteria_version: input.criteriaVersion,
+    step_session_id: input.stepSessionId,
+    step_result_status: input.record.outcome,
+    step_report: {
+      schema_version: 1,
+      measurement_profile_version: input.measurementProfileVersion,
+      criteria_version: input.criteriaVersion,
+      evaluation_result: {
+        status: input.record.outcome,
+        feedback_count: input.record.feedbackCount,
+      },
+    },
+  }
 }
 
 export async function saveSideKickStep(
-  record: StudyStepRecord,
-  feedbackCodes: string[],
-  exerciseId: number,
-  stepId: number,
+  input: SideKickStepRecordSaveInput,
 ): Promise<SavedStepRecord> {
-  if (!Number.isInteger(exerciseId) || exerciseId <= 0) {
-    throw new Error('INVALID_EXERCISE_ID')
-  }
-  if (!Number.isInteger(stepId) || stepId <= 0) {
-    throw new Error('INVALID_EXERCISE_STEP_ID')
-  }
-
-  // 추적 실패 등으로 실제 점수가 없으면 자세 실패로 저장하지 않는다.
-  const status: StoredStatus =
-    record.stepScore === null ? 'NOT_EVALUATED' : record.status
+  const body = buildSideKickStepRecordPayload(input)
 
   return apiRequest<SavedStepRecord>('/exercise-step-records', {
     method: 'POST',
-    body: {
-      exercise_id: exerciseId,
-      exercise_step_id: stepId,
-      status,
-      step_score: record.stepScore,
-      step_report: {
-        schema_version: 1,
-        measurement_profile_version: 'side_step_front_2d_v1',
-        tracking_info: {
-          camera_view: 'FRONT',
-          coordinate_system: 'IMAGE_NORMALIZED_2D',
-          tracking_status:
-            status === 'NOT_EVALUATED' ? 'NOT_EVALUATED' : 'TRACKING_OK',
-        },
-        evaluation_result: {
-          status,
-          feedback_count: record.feedbackCount,
-          feedback_codes: feedbackCodes,
-        },
-      },
-    },
+    body,
   })
 }
