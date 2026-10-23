@@ -29,6 +29,7 @@ const snapshot = vi.hoisted(() => ({
   },
 }))
 const resetMock = vi.hoisted(() => vi.fn())
+const runtimeUpdateMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../mediapipe/usePoseLandmarker', () => ({
   usePoseLandmarker: (
@@ -55,7 +56,8 @@ vi.mock('../analyzers/sideKick/side-kick-study-runtime', () => ({
     measurementProfileVersion: 'side_kick_front_2d_runtime_v1',
   },
   SideKickStudyRuntime: class {
-    update() {
+    update(...args: unknown[]) {
+      runtimeUpdateMock(...args)
       return snapshot.current
     }
     reset() {
@@ -114,6 +116,7 @@ function recordSnapshot(step: number, recordStep: number) {
 
 describe('SideKickStudyScreen runtime wiring', () => {
   beforeEach(() => {
+    runtimeUpdateMock.mockReset()
     window.history.pushState({}, '', '/workouts/sidekick/study')
     getConfigMock.mockResolvedValue(config)
     matchesVersionMock.mockReturnValue(true)
@@ -151,6 +154,7 @@ describe('SideKickStudyScreen runtime wiring', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('criteria version 불일치면 STEP 결과를 저장하지 않고 안내한다', async () => {
@@ -215,6 +219,23 @@ describe('SideKickStudyScreen runtime wiring', () => {
     render(<SideKickStudyScreen />)
     expect(screen.getByText('실시간 STEP 테스트')).toBeInTheDocument()
     expect(screen.getByText(/신규 STEP 음성 코칭/)).toBeInTheDocument()
+  })
+
+  it('frontend_only 모드는 설정 조회나 STEP 저장 없이 JSON Runtime을 실행한다', async () => {
+    vi.stubEnv('VITE_SIDEKICK_STUDY_MODE', 'frontend_only')
+    getConfigMock.mockRejectedValue(new Error('API should not be called'))
+    recordSnapshot(2, 1)
+
+    render(<SideKickStudyScreen />)
+    await waitFor(() => expect(onFrame.current).not.toBeNull())
+    await act(async () => onFrame.current?.(poseFrame(1)))
+
+    expect(getConfigMock).not.toHaveBeenCalled()
+    expect(runtimeUpdateMock).toHaveBeenCalledOnce()
+    expect(saveStepMock).not.toHaveBeenCalled()
+    expect(
+      screen.getByText('체험 모드 · 운동 기록은 저장되지 않습니다.'),
+    ).toBeInTheDocument()
   })
 
   it('개발 화면은 STEP 1 음성을 자동 재생한 뒤 활성화 상태를 표시한다', async () => {

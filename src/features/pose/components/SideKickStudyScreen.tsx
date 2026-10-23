@@ -50,6 +50,14 @@ type SideKickVoiceCueMap = Map<
   Map<SideKickVoiceDecision['eventCode'], string>
 >
 
+type SideKickStudyMode = 'FRONTEND_ONLY' | 'API_CONNECTED'
+
+function sideKickStudyMode(): SideKickStudyMode {
+  return import.meta.env.VITE_SIDEKICK_STUDY_MODE === 'frontend_only'
+    ? 'FRONTEND_ONLY'
+    : 'API_CONNECTED'
+}
+
 function flowRecordForEvent(
   event: string,
   records: readonly FlowRecord[],
@@ -86,6 +94,9 @@ export function SideKickStudyScreen() {
   const stepSessionIdRef = useRef<string | null>(null)
   const feedbackIssuedRef = useRef(false)
   const isDevStudy = window.location.pathname.startsWith('/dev/')
+  const studyMode = sideKickStudyMode()
+  const isFrontendOnlyMode = studyMode === 'FRONTEND_ONLY'
+  const runsRuntimeWithoutApi = isDevStudy || isFrontendOnlyMode
   const lastTrackingOkAtRef = useRef<number>(0)
   const lastTrackingVoiceAtRef = useRef<number | null>(null)
 
@@ -170,7 +181,7 @@ export function SideKickStudyScreen() {
   }, [])
 
   useEffect(() => {
-    if (!isDevStudy) return
+    if (!runsRuntimeWithoutApi) return
 
     const player = devVoicePlayerRef.current
     if (!player || devAutoActivationPlayerRef.current === player) return
@@ -188,13 +199,19 @@ export function SideKickStudyScreen() {
         if (cancelled) return
         devInitialVoiceDecisionRef.current = decision
         setDevVoiceEnabled(true)
+        setVoiceEnabled(true)
         setDevVoiceError(null)
+        setVoiceError(null)
       },
       () => {
         if (cancelled) return
         setDevVoiceEnabled(false)
+        setVoiceEnabled(false)
         setDevVoiceError(
           '자동 음성 재생이 차단됐습니다. 테스트 음성 켜기 버튼을 눌러 주세요.',
+        )
+        setVoiceError(
+          '자동 음성 재생이 차단됐습니다. 음성 켜기 버튼을 눌러 주세요.',
         )
       },
     )
@@ -202,10 +219,10 @@ export function SideKickStudyScreen() {
     return () => {
       cancelled = true
     }
-  }, [isDevStudy])
+  }, [runsRuntimeWithoutApi])
 
   useEffect(() => {
-    if (isDevStudy) return
+    if (runsRuntimeWithoutApi) return
 
     let cancelled = false
     dbConfigRef.current = null
@@ -236,7 +253,7 @@ export function SideKickStudyScreen() {
       cancelled = true
       dbConfigRef.current = null
     }
-  }, [isDevStudy])
+  }, [runsRuntimeWithoutApi])
 
   const step = STEPS[stepIndex]
   const trainerPlaybackRate = step.no === 1 ? 1 : 0.65
@@ -306,11 +323,11 @@ export function SideKickStudyScreen() {
 
       if (currentStep > 5) return
 
-      // 사용자용 화면은 실제 DB ID를 받은 뒤 새 Runtime을 시작한다.
-      if (!isDevStudy && !dbConfigRef.current) return
+      // API_CONNECTED 모드만 실제 DB ID를 받은 뒤 Runtime을 시작한다.
+      if (!runsRuntimeWithoutApi && !dbConfigRef.current) return
 
-      // 개발/사용자 화면 모두 JSON Runtime 하나만 실행한다.
-      if (isDevStudy || dbConfigRef.current) {
+      // 모든 실행 모드는 JSON Runtime 하나만 사용한다.
+      if (runsRuntimeWithoutApi || dbConfigRef.current) {
         const readyEvaluation =
           currentStep === 1 ? scoreSideKickStep(1, frame.landmarks, null) : null
 
@@ -346,7 +363,7 @@ export function SideKickStudyScreen() {
           )
         }
 
-        if (!isDevStudy) {
+        if (!runsRuntimeWithoutApi) {
           const config = dbConfigRef.current
           const sessionId = stepSessionIdRef.current
 
@@ -416,7 +433,7 @@ export function SideKickStudyScreen() {
         return
       }
     },
-    [isDevStudy, devVoiceEnabled, voiceEnabled],
+    [runsRuntimeWithoutApi, isDevStudy, devVoiceEnabled, voiceEnabled],
   )
 
   const pose = usePoseLandmarker(
@@ -499,7 +516,7 @@ export function SideKickStudyScreen() {
     devVoiceBridgeRef.current.reset()
     devInitialVoiceDecisionRef.current = null
     feedbackIssuedRef.current = false
-    if (!isDevStudy && dbConfigRef.current) {
+    if (!runsRuntimeWithoutApi && dbConfigRef.current) {
       stepSessionIdRef.current = crypto.randomUUID()
     }
     lastTrackingOkAtRef.current = Date.now()
@@ -685,6 +702,12 @@ export function SideKickStudyScreen() {
       ) : (
         <section className="space-y-3 rounded-xl border p-4">
           <h2 className="font-semibold">STEP 진행 상태</h2>
+
+          {isFrontendOnlyMode && (
+            <p className="text-sm text-gray-500">
+              체험 모드 · 운동 기록은 저장되지 않습니다.
+            </p>
+          )}
 
           <div className="space-y-2 rounded-lg bg-gray-50 p-3">
             <p className="font-semibold">음성 코칭</p>
