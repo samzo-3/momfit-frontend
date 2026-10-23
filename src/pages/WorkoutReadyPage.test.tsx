@@ -37,9 +37,7 @@ describe('WorkoutReadyPage', () => {
       screen.getByText(/개인의 건강 상태와 의료진의 운동 제한 권고/),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /다음 화면에서 카메라 권한을 요청하고 촬영 환경을 확인해요/,
-      ),
+      screen.getByText(/다음 화면부터 전체 화면으로 진행돼요/),
     ).toBeVisible()
   })
 
@@ -134,5 +132,29 @@ describe('WorkoutReadyPage', () => {
     expect(
       document.querySelector('[data-page-transition]')?.querySelector('h1'),
     ).toHaveTextContent('운동 환경을 준비해 볼까요?')
+  })
+})
+
+describe('WorkoutReadyPage 전체 화면', () => {
+  it('촬영 환경 확인하기를 누르면 전체 화면을 요청하고 환경 점검으로 이동한다', async () => {
+    const requestFullscreen = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+      configurable: true,
+      value: requestFullscreen,
+    })
+    signIn()
+    const router = renderApp('/workouts/sidekick/exercise/ready')
+
+    for (const checkbox of screen.getAllByRole('checkbox')) {
+      await userEvent.click(checkbox)
+    }
+    await userEvent.click(goButton())
+
+    expect(requestFullscreen).toHaveBeenCalledTimes(1)
+    expect(router.state.location.pathname).toBe(
+      '/workouts/sidekick/check/exercise',
+    )
+    delete (HTMLElement.prototype as { requestFullscreen?: unknown })
+      .requestFullscreen
   })
 })

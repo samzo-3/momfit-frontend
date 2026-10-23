@@ -97,3 +97,42 @@ export const SAFETY_NOTICE =
 export function readyPath(workoutId: string, mode: WorkoutMode): string {
   return `/workouts/${workoutId}/${mode}/ready`
 }
+
+// 운동을 마치거나 중간에 나갔을 때 가는 마무리 화면. 이동할 때 outcome을 state로 넘긴다.
+export const WORKOUT_COMPLETE_PATH = '/workouts/complete'
+
+export type WorkoutOutcome = 'completed' | 'stopped'
+
+export interface WorkoutCompleteState {
+  outcome: WorkoutOutcome
+  // 끝난 운동 모드. 마무리 문구를 모드에 맞춘다.
+  mode?: WorkoutMode
+  // 운동 모드에서 해낸 세트 수
+  completedSets?: number
+}
+
+export function parseWorkoutCompleteState(
+  value: unknown,
+): WorkoutCompleteState | null {
+  const state = value as {
+    outcome?: unknown
+    mode?: unknown
+    completedSets?: unknown
+  } | null
+  if (state?.outcome !== 'completed' && state?.outcome !== 'stopped') {
+    return null
+  }
+
+  return {
+    outcome: state.outcome,
+    mode:
+      parseWorkoutMode(typeof state.mode === 'string' ? state.mode : null) ??
+      undefined,
+    completedSets:
+      typeof state.completedSets === 'number' &&
+      Number.isInteger(state.completedSets) &&
+      state.completedSets >= 0
+        ? state.completedSets
+        : undefined,
+  }
+}

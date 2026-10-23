@@ -65,6 +65,8 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
+          build-args: |
+            VITE_SIDEKICK_STUDY_MODE=frontend_only
           tags: |
             ghcr.io/samzo-3/momfit-frontend:sha-${{ github.sha }}
             ghcr.io/samzo-3/momfit-frontend:develop-${{ github.run_number }}
