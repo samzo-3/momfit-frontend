@@ -8,7 +8,7 @@ beforeEach(() => {
 })
 
 const goButton = () =>
-  screen.getByRole('button', { name: /운동 화면으로 이동/ })
+  screen.getByRole('button', { name: /촬영 환경 확인하기/ })
 
 describe('WorkoutReadyPage', () => {
   it('로그인하지 않았으면 로그인 화면으로 보낸다', () => {
@@ -37,7 +37,9 @@ describe('WorkoutReadyPage', () => {
       screen.getByText(/개인의 건강 상태와 의료진의 운동 제한 권고/),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/다음 화면에서 카메라 권한을 요청해요/),
+      screen.getByText(
+        /다음 화면에서 카메라 권한을 요청하고 촬영 환경을 확인해요/,
+      ),
     ).toBeVisible()
   })
 

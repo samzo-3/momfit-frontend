@@ -12,7 +12,7 @@ export interface WorkoutModeInfo {
   // 카드 아래 알약. 운동 선택 단계에서도 고른 모드의 칩과 버튼 문구를 쓴다.
   chips: string[]
   cta: string
-  // 운동 전 준비 페이지의 체크리스트. 모두 체크해야 운동 화면으로 이동할 수 있다.
+  // 운동 전 준비 페이지의 체크리스트. 모두 체크해야 다음(환경 점검) 화면으로 이동할 수 있다.
   checklist: string[]
   image: string
   imageAlt: string

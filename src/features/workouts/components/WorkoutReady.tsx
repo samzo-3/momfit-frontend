@@ -12,14 +12,14 @@ import {
 interface WorkoutReadyProps {
   workout: WorkoutInfo
   modeInfo: WorkoutModeInfo
-  // 모든 항목을 체크한 뒤 이동할 운동 화면 경로
+  // 모든 항목을 체크한 뒤 이동할 경로(촬영 환경 점검 화면)
   destination: string
   // 되돌아갈 운동 고르기 경로(?mode= 포함)
   backTo: string
 }
 
 // 운동 전 준비 페이지. 체크 상태는 이 화면 안에서만 들고 저장하지 않는다.
-// 카메라는 여기서 켜지 않고, 이어지는 운동 화면이 열릴 때 권한을 요청한다.
+// 카메라는 여기서 켜지 않고, 이어지는 환경 점검 화면이 열릴 때 권한을 요청한다.
 function WorkoutReady({
   workout,
   modeInfo,
@@ -108,8 +108,8 @@ function WorkoutReady({
             </ul>
 
             <p className="text-sm text-cocoa-secondary">
-              다음 화면에서 카메라 권한을 요청해요. 카메라 영상은 서버로
-              보내거나 저장하지 않아요.
+              다음 화면에서 카메라 권한을 요청하고 촬영 환경을 확인해요. 카메라
+              영상은 서버로 보내거나 저장하지 않아요.
             </p>
 
             <div className="flex flex-col items-center gap-2">
@@ -120,7 +120,7 @@ function WorkoutReady({
                 aria-describedby={allDone ? undefined : hintId}
                 onClick={() => navigate(destination)}
               >
-                운동 화면으로 이동 →
+                촬영 환경 확인하기 →
               </Button>
               {/* 문구가 나타나고 사라져도 카드 높이가 변하지 않도록 자리는 항상 두고 숨기기만 한다. */}
               <p
